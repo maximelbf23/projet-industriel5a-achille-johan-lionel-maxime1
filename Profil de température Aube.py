@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Style CSS pour raffiner l'interface (Cartes, Tableaux)
+# Style CSS pour raffiner ll'interface (Cartes, Tableaux)
 st.markdown("""
 <style>
     /* Style des métriques KPI */
