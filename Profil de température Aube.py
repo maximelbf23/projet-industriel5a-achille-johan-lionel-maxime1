@@ -201,7 +201,7 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
             height=600, 
             showlegend=True, 
             hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
+            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="left", x=0)
         )
         st.plotly_chart(fig, use_container_width=True)
         
