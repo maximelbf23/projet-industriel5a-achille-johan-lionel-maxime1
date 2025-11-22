@@ -152,19 +152,26 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
         fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.06,
             subplot_titles=("🌡️ Profil de Température", "⬇️ Flux Normal (Q3)", "↔️ Flux Transverse (Q1)"))
         
-        # Zone Critique
-        fig.add_hrect(y0=CONSTANTS['T_crit'], y1=max(np.max(T_vals), 1500), fillcolor="red", opacity=0.05, row=1, col=1)
+        # --- AMÉLIORATION : Zones Matériaux et Lignes de Température ---
+        h1_mm = CONSTANTS['h1'] * 1000
+        h2_mm = CONSTANTS['h2'] * 1000
+        h3_mm = res['h3'] * 1000
+        
+        # 1. Lignes de température critiques
+        fig.add_hline(y=CONSTANTS['T_crit'], line_color="red", line_dash="dash", row=1, col=1, annotation_text="T° Critique", annotation_position="bottom left")
+        fig.add_hline(y=T_secu, line_color="orange", line_dash="dash", row=1, col=1, annotation_text="T° Sécurité", annotation_position="bottom left")
+
+        # 2. Zones matériaux en fond
+        for r in [1, 2, 3]:
+            fig.add_vrect(x0=0, x1=h1_mm, fillcolor="#EAECEE", opacity=0.3, layer="below", line_width=0, row=r, col=1, annotation_text="Alliage", annotation_position="top")
+            fig.add_vrect(x0=h1_mm, x1=h1_mm + h2_mm, fillcolor="#FADBD8", opacity=0.3, layer="below", line_width=0, row=r, col=1, annotation_text="Liaison", annotation_position="top")
+            fig.add_vrect(x0=h1_mm + h2_mm, x1=h1_mm + h2_mm + h3_mm, fillcolor="#D6EAF8", opacity=0.3, layer="below", line_width=0, row=r, col=1, annotation_text="TBC", annotation_position="top")
         
         # Courbes
         fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3)), row=1, col=1)
         fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2)), row=2, col=1)
         fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy'), row=3, col=1)
         
-        # Interfaces
-        interfaces = [CONSTANTS['h1']*1000, (CONSTANTS['h1']+CONSTANTS['h2'])*1000]
-        for xi in interfaces:
-            for r in [1,2,3]: fig.add_vline(x=xi, line_dash="dot", line_color="gray", row=r, col=1)
-
         fig.update_layout(height=600, showlegend=False, hovermode="x unified")
         st.plotly_chart(fig, use_container_width=True)
         
@@ -273,6 +280,8 @@ def display_parametric_study_tab(beta_in, lw_in):
                 fig_trend.update_traces(line_color=PALETTE['temp'])
                 fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', 
                                     annotation_text="Limite Critique", annotation_position="bottom right")
+                fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', 
+                                    annotation_text="Limite Sécurité", annotation_position="bottom right")
                 st.plotly_chart(fig_trend, use_container_width=True)
 
             with col_q:
