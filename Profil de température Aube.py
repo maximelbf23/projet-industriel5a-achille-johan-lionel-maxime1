@@ -165,32 +165,44 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
                       annotation_text="T° Sécurité", annotation_position="bottom left",
                       annotation_font_size=12, annotation_font_color="orange")
 
-        # 2. Zones matériaux en fond (visibilité améliorée)
+        # 2. Zones matériaux en fond (visibilité améliorée avec légende)
         zones = [
             {'x0': 0, 'x1': h1_mm, 'color': "#95a5a6", 'label': "Alliage"},
             {'x0': h1_mm, 'x1': h1_mm + h2_mm, 'color': "#d35400", 'label': "Liaison"},
             {'x0': h1_mm + h2_mm, 'x1': h1_mm + h2_mm + h3_mm, 'color': "#3498db", 'label': "Céramique"}
         ]
         
+        # Ajout de traces invisibles pour créer une légende pour les zones
+        for i, zone in enumerate(zones):
+            fig.add_trace(go.Scatter(
+                x=[None], y=[None], mode='markers',
+                marker=dict(size=12, color=zone['color'], symbol='square'),
+                showlegend=True, name=zone['label'],
+                legendgroup=f"zones",
+                legendgrouptitle_text="Couches" if i == 0 else ""
+            ), row=1, col=1)
+
+        # Création des rectangles de couleur pour les zones
         for r in [1, 2, 3]:
             for zone in zones:
                 fig.add_vrect(
                     x0=zone['x0'], x1=zone['x1'], 
-                    fillcolor=zone['color'], opacity=0.2, 
+                    fillcolor=zone['color'], opacity=0.25, # Opacité légèrement augmentée
                     layer="below", line_width=0, 
-                    row=r, col=1,
-                    annotation_text=zone['label'],
-                    annotation_position="top left",
-                    annotation_font_size=11,
-                    annotation_font_color="#333333"
+                    row=r, col=1
                 )
         
         # Courbes
-        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3)), row=1, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2)), row=2, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy'), row=3, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3), showlegend=True), row=1, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True), row=2, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True), row=3, col=1)
         
-        fig.update_layout(height=600, showlegend=False, hovermode="x unified")
+        fig.update_layout(
+            height=600, 
+            showlegend=True, 
+            hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
+        )
         st.plotly_chart(fig, use_container_width=True)
         
     # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION ---
