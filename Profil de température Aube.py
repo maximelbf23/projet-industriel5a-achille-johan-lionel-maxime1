@@ -1,15 +1,25 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from core.calculation import solve_tbc_model, calculate_profiles
 from core.constants import CONSTANTS, IMPACT_PARAMS
 
+# --- Fonctions de calcul décorées pour la mise en cache ---
+@st.cache_data
+def cached_solve_tbc_model(alpha, beta, lw):
+    """Wrapper pour mettre en cache les résultats de solve_tbc_model."""
+    return solve_tbc_model(alpha, beta, lw)
+
 # ==========================================
 # 1. CONFIGURATION & STYLE (CSS "Premium")
 # ==========================================
+# --- Palette de couleurs pour la cohérence ---
+PALETTE = {'temp': '#2980b9', 'flux_norm': '#c0392b', 'flux_trans': '#27ae60', 'accent': '#f39c12'}
+
 st.set_page_config(
     page_title="TBC Analysis Dashboard",
     page_icon="🛡️",
@@ -83,7 +93,7 @@ with st.sidebar:
 
 def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
     """Affiche l'onglet d'analyse détaillée pour un cas unique."""
-    res = solve_tbc_model(alpha_in, beta_in, lw_in)
+    res = cached_solve_tbc_model(alpha_in, beta_in, lw_in)
     
     if not res['success']:
         st.error(f"Erreur lors du calcul : {res.get('error', 'Erreur inconnue')}")
@@ -91,7 +101,6 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
 
     # Conversion dimensions
     h1_mic = CONSTANTS['h1'] * 1e6
-    h2_mic = CONSTANTS['h2'] * 1e6
     h3_mic = res['h3'] * 1e6
     
     # --- A. VISUALISATION COUPE TRANSVERSALE & KPI ---
@@ -101,7 +110,7 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
             # Petit graph de la coupe
         fig_geo = go.Figure()
         fig_geo.add_trace(go.Bar(y=[''], x=[h1_mic], orientation='h', name='Alliage', marker=dict(color='#95a5a6')))
-        fig_geo.add_trace(go.Bar(y=[''], x=[h2_mic], orientation='h', name='Liaison', marker=dict(color='#d35400')))
+        fig_geo.add_trace(go.Bar(y=[''], x=[CONSTANTS['h2'] * 1e6], orientation='h', name='Liaison', marker=dict(color='#d35400')))
         fig_geo.add_trace(go.Bar(y=[''], x=[h3_mic], orientation='h', name='TBC', marker=dict(color='#d6eaf8')))
         fig_geo.update_layout(barmode='stack', height=100, margin=dict(l=0, r=0, t=0, b=0), showlegend=False, xaxis=dict(visible=False))
         st.plotly_chart(fig_geo, use_container_width=True)
@@ -110,18 +119,19 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
     with col_kpi_val:
         # KPI et STATUT
         T_h1 = res['T_at_h1']
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Épaisseur TBC ($h_3$)", f"{h3_mic:.0f} µm")
-        c2.metric("Conductivité Trans.", f"{res['k_eta_3']:.2f} W/mK")
         delta_T = T_h1 - CONSTANTS['T_crit']
-        c3.metric("T° Interface Alliage", f"{T_h1:.2f} °C", delta=f"{-delta_T:.2f} vs Limite")
-        
-        with c4:
-            if T_h1 > CONSTANTS['T_crit']: st.error(f"🚨 CRITIQUE")
-            elif T_h1 <= T_secu: st.success("✅ SÉCURISÉ")
-            else: st.warning("⚠️ SURVEILLANCE")
+
+        if T_h1 > CONSTANTS['T_crit']: status_icon = "🚨"
+        elif T_h1 <= T_secu: status_icon = "✅"
+        else: status_icon = "⚠️"
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("📏 Épaisseur TBC ($h_3$)", f"{h3_mic:.0f} µm")
+        c2.metric("⚡ Conductivité Trans.", f"{res['k_eta_3']:.2f} W/mK")
+        c3.metric(f"{status_icon} T° Interface Alliage", f"{T_h1:.2f} °C", delta=f"{-delta_T:.2f} vs Limite")
 
     st.divider()
+
 
     # --- TÂCHE 3 : NOTE DE SYNTHÈSE / WARNING ---
     st.markdown("""
@@ -146,9 +156,9 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
         fig.add_hrect(y0=CONSTANTS['T_crit'], y1=max(np.max(T_vals), 1500), fillcolor="red", opacity=0.05, row=1, col=1)
         
         # Courbes
-        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color='#2980b9', width=3)), row=1, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color='#c0392b', width=2)), row=2, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color='#27ae60', width=2), fill='tozeroy'), row=3, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3)), row=1, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2)), row=2, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy'), row=3, col=1)
         
         # Interfaces
         interfaces = [CONSTANTS['h1']*1000, (CONSTANTS['h1']+CONSTANTS['h2'])*1000]
@@ -184,7 +194,7 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
             "Catastrophe": [f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
             "Delta": [f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
         })
-        st.table(df_imp)
+        st.dataframe(df_imp, hide_index=True, use_container_width=True)
 
 
 
@@ -235,8 +245,7 @@ def display_parametric_study_tab(beta_in, lw_in):
         for a in alphas_to_test:
 
             # On utilise Beta de la sidebar, mais Alpha de la boucle
-
-            r = solve_tbc_model(a, beta_in, lw_in)
+            r = cached_solve_tbc_model(a, beta_in, lw_in)
 
             if r['success']:
 
@@ -259,25 +268,17 @@ def display_parametric_study_tab(beta_in, lw_in):
             col_t, col_q = st.columns(2)
 
             with col_t:
-
-                fig_trend = go.Figure()
-
-                fig_trend.add_trace(go.Scatter(x=df_trends['alpha'], y=df_trends['T_h1'], mode='lines+markers', name='T(Alliage)'))
-
-                fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash')
-
-                fig_trend.update_layout(title="Température vs Alpha", xaxis_title="Alpha", yaxis_title="T (°C)")
-
+                fig_trend = px.line(df_trends, x='alpha', y='T_h1', markers=True, 
+                                    title="Température vs Alpha", labels={'alpha': 'Alpha', 'T_h1': 'T (°C)'})
+                fig_trend.update_traces(line_color=PALETTE['temp'])
+                fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', 
+                                    annotation_text="Limite Critique", annotation_position="bottom right")
                 st.plotly_chart(fig_trend, use_container_width=True)
 
             with col_q:
-
-                fig_flux = go.Figure()
-
-                fig_flux.add_trace(go.Scatter(x=df_trends['alpha'], y=df_trends['dQ1_h1'], mode='lines+markers', line_color='orange', name='Saut Q1'))
-
-                fig_flux.update_layout(title="Saut Flux Transverse vs Alpha", xaxis_title="Alpha", yaxis_title="ΔQ1")
-
+                fig_flux = px.line(df_trends, x='alpha', y='dQ1_h1', markers=True,
+                                   title="Saut Flux Transverse vs Alpha", labels={'alpha': 'Alpha', 'dQ1_h1': 'ΔQ1 (W/m²)'})
+                fig_flux.update_traces(line_color=PALETTE['accent'])
                 st.plotly_chart(fig_flux, use_container_width=True)
 
 
@@ -341,8 +342,7 @@ def display_3d_mapping_tab(lw_in):
                 z_row = []
 
                 for a in alpha_vals:
-
-                    r = solve_tbc_model(a, b, lw_in)
+                    r = cached_solve_tbc_model(a, b, lw_in)
 
                     if r['success']:
 
@@ -446,7 +446,7 @@ def display_3d_mapping_tab(lw_in):
 
             if "Flux" in current_type:
 
-                st.info("ℹ️ **Note :** Les variations brusques de cette surface illustrent la réponse discrète du matériau aux changements de géométrie et d'anisotropie.")
+                st.info("ℹ️ **Note :** Les variations brusques sur cette surface illustrent la réponse discrète du matériau aux changements de géométrie et d'anisotropie.")
 
         else:
 
