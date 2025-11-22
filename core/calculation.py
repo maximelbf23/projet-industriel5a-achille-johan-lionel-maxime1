@@ -3,7 +3,7 @@ import streamlit as st
 from .constants import CONSTANTS
 
 @st.cache_data
-def solve_tbc_model(alpha, beta_ceramique, lw_val):
+def solve_tbc_model(alpha, beta_ceramique, lw_val, t_bottom, t_top):
     """
     Résout le système d'équations thermiques pour une configuration donnée.
     Retourne un dictionnaire de résultats et de paramètres pour le traçage.
@@ -39,12 +39,12 @@ def solve_tbc_model(alpha, beta_ceramique, lw_val):
         M = np.zeros((6, 6))
         F = np.zeros(6)
 
-        M[0,0]=1; M[0,1]=1; F[0]=CONSTANTS['T_bottom']
+        M[0,0]=1; M[0,1]=1; F[0]=t_bottom
         M[1,0]=np.exp(l1*x_i1); M[1,1]=np.exp(-l1*x_i1); M[1,2]=-np.exp(l2*x_i1); M[1,3]=-np.exp(-l2*x_i1)
         M[2,0]=C1*np.exp(l1*x_i1); M[2,1]=-C1*np.exp(-l1*x_i1); M[2,2]=-C2*np.exp(l2*x_i1); M[2,3]=C2*np.exp(-l2*x_i1)
         M[3,2]=np.exp(l2*x_i2); M[3,3]=np.exp(-l2*x_i2); M[3,4]=-np.exp(l3*x_i2); M[3,5]=-np.exp(-l3*x_i2)
         M[4,2]=C2*np.exp(l2*x_i2); M[4,3]=-C2*np.exp(-l2*x_i2); M[4,4]=-C3*np.exp(l3*x_i2); M[4,5]=C3*np.exp(-l3*x_i2)
-        M[5,4]=np.exp(l3*H); M[5,5]=np.exp(-l3*H); F[5]=CONSTANTS['T_top']
+        M[5,4]=np.exp(l3*H); M[5,5]=np.exp(-l3*H); F[5]=t_top
 
         coeffs = np.linalg.solve(M, F)
         A1, B1, A2, B2, A3, B3 = coeffs

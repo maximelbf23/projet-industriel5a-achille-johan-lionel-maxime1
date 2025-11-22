@@ -10,9 +10,9 @@ from core.constants import CONSTANTS, IMPACT_PARAMS
 
 # --- Fonctions de calcul décorées pour la mise en cache ---
 @st.cache_data
-def cached_solve_tbc_model(alpha, beta, lw):
+def cached_solve_tbc_model(alpha, beta, lw, t_bottom, t_top):
     """Wrapper pour mettre en cache les résultats de solve_tbc_model."""
-    return solve_tbc_model(alpha, beta, lw)
+    return solve_tbc_model(alpha, beta, lw, t_bottom, t_top)
 
 # ==========================================
 # 1. CONFIGURATION & STYLE (CSS "Premium")
@@ -89,11 +89,30 @@ with st.sidebar:
     )
     
     st.markdown("---")
+    
+    st.subheader("2. Conditions aux Limites")
+    
+    # Valeurs par défaut extraites des constantes
+    t_bottom_default = CONSTANTS['T_bottom']
+    t_top_default = CONSTANTS['T_top']
+
+    # La session_state est automatiquement créée par les clés des widgets
+    t_bottom_in = st.number_input("Température Base (°C)", key="T_bottom", value=t_bottom_default, step=10)
+    t_top_in = st.number_input("Température Surface (°C)", key="T_top", value=t_top_default, step=10)
+
+    def reset_temperatures():
+        """Callback pour réinitialiser les températures."""
+        st.session_state.T_bottom = t_bottom_default
+        st.session_state.T_top = t_top_default
+
+    st.button("Réinitialiser T°", on_click=reset_temperatures, help="Restaure les températures de base et de surface par défaut.")
+    
+    st.markdown("---")
     st.caption(f"**Limites de Température**\n\n- T Critique: {CONSTANTS['T_crit']}°C\n- T Sécurité: {T_secu:.0f}°C")
 
-def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
+def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
     """Affiche l'onglet d'analyse détaillée pour un cas unique."""
-    res = cached_solve_tbc_model(alpha_in, beta_in, lw_in)
+    res = cached_solve_tbc_model(alpha_in, beta_in, lw_in, t_bottom, t_top)
     
     if not res['success']:
         st.error(f"Erreur lors du calcul : {res.get('error', 'Erreur inconnue')}")
@@ -235,54 +254,103 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
 
 
 
-def display_parametric_study_tab(beta_in, lw_in):
+def display_parametric_study_tab(beta_in, lw_in, t_bottom, t_top):
+
+
 
     """Affiche l'onglet d'étude paramétrique pour alpha."""
 
+
+
     st.markdown("### 🔢 Sélection des Valeurs d'Alpha")
 
-    
+
+
+
+
+
 
     mode_input = st.radio("Mode :", ["🎯 Liste Manuelle", "📏 Intervalle (Range)"], horizontal=True)
 
+
+
     alphas_to_test = []
 
-    
+
+
+
+
+
 
     if mode_input == "🎯 Liste Manuelle":
 
+
+
         col_sel1, col_sel2 = st.columns([3, 1])
+
+
 
         with col_sel1:
 
+
+
             options_base = [0.02, 0.04, 0.06, 0.08, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 1.0, 1.5, 2.0]
+
+
 
             alphas_selected = st.multiselect("Valeurs :", options=options_base, default=[0.04, 0.10, 0.25])
 
+
+
         alphas_to_test = sorted(alphas_selected)
+
+
 
     else: 
 
+
+
         c_start, c_end, c_step = st.columns(3)
+
+
 
         with c_start: a_start = st.number_input("Début", 0.05, format="%.2f")
 
+
+
         with c_end: a_end = st.number_input("Fin", 0.50, format="%.2f")
 
+
+
         with c_step: a_step = st.number_input("Pas", 0.05, format="%.2f")
+
+
 
         if a_start < a_end: alphas_to_test = np.arange(a_start, a_end + a_step/100, a_step)
 
 
 
+
+
+
+
     if st.button(f"🚀 Lancer Simulation ({len(alphas_to_test)} cas)", type="primary"):
+
+
 
         results_list = []
 
+
+
         for a in alphas_to_test:
 
+
+
             # On utilise Beta de la sidebar, mais Alpha de la boucle
-            r = cached_solve_tbc_model(a, beta_in, lw_in)
+
+
+
+            r = cached_solve_tbc_model(a, beta_in, lw_in, t_bottom, t_top)
 
             if r['success']:
 
@@ -324,66 +392,127 @@ def display_parametric_study_tab(beta_in, lw_in):
 
 
 
-def display_3d_mapping_tab(lw_in):
+def display_3d_mapping_tab(lw_in, t_bottom, t_top):
+
+
 
     """Affiche l'onglet de cartographie 3D."""
 
+
+
     st.header("🧊 Cartographie 3D : Preuve d'Hétérogénéité")
+
+
 
     st.markdown("""
 
+
+
     Cette visualisation permet de comparer la réponse **continue** (Température) et **discrète/hétérogène** (Saut de Flux).
+
+
 
     Le saut de flux démontre que la matière n'est pas un milieu continu classique.
 
+
+
     """, unsafe_allow_html=True)
 
+
+
     
+
+
 
     col_3d_params, col_3d_viz = st.columns([1, 3])
 
+
+
     
+
+
 
     with col_3d_params:
 
+
+
         st.subheader("Paramètres 3D")
+
+
 
         res_grid = st.slider("Résolution (points/axe)", 5, 20, 10)
 
+
+
         
+
+
 
         plot_type = st.radio(
 
+
+
             "Variable Physique (Axe Z) :",
+
+
 
             ["Température T(h1)", "Saut de Flux ΔQ1(h1)"],
 
+
+
             help="Sélectionnez 'Saut de Flux' pour visualiser la réponse discrète du matériau."
+
+
 
         )
 
+
+
         
+
+
 
         if st.button("🔄 Générer Surface 3D"):
 
+
+
             alpha_vals = np.linspace(0.1, 2.0, res_grid)
+
+
 
             beta_vals = np.linspace(0.1, 2.0, res_grid)
 
+
+
             z_data = []
+
+
 
             
 
+
+
             # Boucle de calcul 2D (Range Alpha x Range Beta)
+
+
 
             progress_bar = st.progress(0)
 
+
+
             for i, b in enumerate(beta_vals):
+
+
 
                 z_row = []
 
+
+
                 for a in alpha_vals:
-                    r = cached_solve_tbc_model(a, b, lw_in)
+
+
+
+                    r = cached_solve_tbc_model(a, b, lw_in, t_bottom, t_top)
 
                     if r['success']:
 
@@ -523,16 +652,30 @@ tab_single, tab_multi, tab_3d = st.tabs([
 
 with tab_single:
 
-    display_detailed_analysis_tab(alpha_in, beta_in, lw_in)
+
+
+    display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom_in, t_top_in)
+
+
+
+
 
 
 
 with tab_multi:
 
-    display_parametric_study_tab(beta_in, lw_in)
+
+
+    display_parametric_study_tab(beta_in, lw_in, t_bottom_in, t_top_in)
+
+
+
+
 
 
 
 with tab_3d:
 
-    display_3d_mapping_tab(lw_in)
+
+
+    display_3d_mapping_tab(lw_in, t_bottom_in, t_top_in)
