@@ -182,13 +182,21 @@ def solve_tbc_model(alpha, beta_ceramique, lw_val):
         return {'success': False, 'error': str(e)}
 
 # ==========================================
-# 4. INTERFACE SIDEBAR
+# 4. INTERFACE SIDEBAR (MODIFIÉE)
 # ==========================================
 with st.sidebar:
     st.title("⚙️ Paramètres")
     st.markdown("---")
     
     st.subheader("1. Paramètres Globaux")
+    
+    # --- MODIFICATION : Alpha est maintenant ici ---
+    alpha_in = st.slider(
+        "Épaisseur Céramique (α)", 
+        min_value=0.05, max_value=2.0, value=0.20, step=0.05,
+        help="Définit l'épaisseur relative de la couche TBC ($h_3 = \\alpha \\cdot h_1$)"
+    )
+    
     beta_in = st.slider(
         "Anisotropie Céramique (β)", 
         min_value=0.1, max_value=2.0, value=0.8, step=0.1,
@@ -220,12 +228,9 @@ tab_single, tab_multi, tab_3d = st.tabs([
 # ONGLET 1 : CAS UNIQUE + TÂCHE 1 (IMPACT) + TÂCHE 3 (WARNING)
 # ------------------------------------------
 with tab_single:
-    col_input, col_kpi = st.columns([1, 3])
-    
-    with col_input:
-        st.markdown("#### Configuration")
-        alpha_single = st.slider("Épaisseur Céramique (α)", 0.05, 2.0, 0.20, 0.05, key="a_single")
-        res = solve_tbc_model(alpha_single, beta_in, lw_in)
+    # MODIFICATION : Suppression de la colonne d'input, car input dans Sidebar
+    # Utilisation directe des variables sidebar (alpha_in, beta_in, lw_in)
+    res = solve_tbc_model(alpha_in, beta_in, lw_in)
     
     if res['success']:
         # Conversion dimensions
@@ -233,40 +238,32 @@ with tab_single:
         h2_mic = CONSTANTS['h2'] * 1e6
         h3_mic = res['h3'] * 1e6
         
-        with col_kpi:
-            # --- A. VISUALISATION COUPE TRANSVERSALE ---
+        # --- A. VISUALISATION COUPE TRANSVERSALE & KPI ---
+        col_visu, col_kpi_val = st.columns([1, 3])
+        
+        with col_visu:
+             # Petit graph de la coupe
             fig_geo = go.Figure()
-            fig_geo.add_trace(go.Bar(
-                y=[''], x=[h1_mic], orientation='h', name='Superalliage',
-                marker=dict(color='#95a5a6', line=dict(width=1)),
-                text=f"<b>Alliage</b><br>{h1_mic:.0f} µm", textposition='auto', hoverinfo='x+name'
-            ))
-            fig_geo.add_trace(go.Bar(
-                y=[''], x=[h2_mic], orientation='h', name='Liaison',
-                marker=dict(color='#d35400', line=dict(width=1)),
-                hoverinfo='x+name'
-            ))
-            fig_geo.add_trace(go.Bar(
-                y=[''], x=[h3_mic], orientation='h', name='Céramique',
-                marker=dict(color='#d6eaf8', line=dict(width=1)),
-                text=f"<b>Céramique (TBC)</b><br>{h3_mic:.0f} µm", textposition='auto', hoverinfo='x+name'
-            ))
-            fig_geo.update_layout(barmode='stack', height=80, margin=dict(l=0, r=0, t=0, b=0), showlegend=False, xaxis=dict(visible=False))
+            fig_geo.add_trace(go.Bar(y=[''], x=[h1_mic], orientation='h', name='Alliage', marker=dict(color='#95a5a6')))
+            fig_geo.add_trace(go.Bar(y=[''], x=[h2_mic], orientation='h', name='Liaison', marker=dict(color='#d35400')))
+            fig_geo.add_trace(go.Bar(y=[''], x=[h3_mic], orientation='h', name='TBC', marker=dict(color='#d6eaf8')))
+            fig_geo.update_layout(barmode='stack', height=100, margin=dict(l=0, r=0, t=0, b=0), showlegend=False, xaxis=dict(visible=False))
             st.plotly_chart(fig_geo, use_container_width=True)
-        
-        # --- B. KPI et STATUT ---
-        T_h1 = res['T_at_h1']
-        
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Épaisseur TBC ($h_3$)", f"{h3_mic:.0f} µm")
-        c2.metric("Conductivité Trans.", f"{res['k_eta_3']:.2f} W/mK")
-        delta_T = T_h1 - CONSTANTS['T_crit']
-        c3.metric("T° Interface Alliage", f"{T_h1:.2f} °C", delta=f"{-delta_T:.2f} vs Limite")
-        
-        with c4:
-            if T_h1 > CONSTANTS['T_crit']: st.error(f"🚨 CRITIQUE")
-            elif T_h1 <= T_secu: st.success("✅ SÉCURISÉ")
-            else: st.warning("⚠️ SURVEILLANCE")
+            st.caption("Coupe (Échelle réelle)")
+
+        with col_kpi_val:
+            # KPI et STATUT
+            T_h1 = res['T_at_h1']
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Épaisseur TBC ($h_3$)", f"{h3_mic:.0f} µm")
+            c2.metric("Conductivité Trans.", f"{res['k_eta_3']:.2f} W/mK")
+            delta_T = T_h1 - CONSTANTS['T_crit']
+            c3.metric("T° Interface Alliage", f"{T_h1:.2f} °C", delta=f"{-delta_T:.2f} vs Limite")
+            
+            with c4:
+                if T_h1 > CONSTANTS['T_crit']: st.error(f"🚨 CRITIQUE")
+                elif T_h1 <= T_secu: st.success("✅ SÉCURISÉ")
+                else: st.warning("⚠️ SURVEILLANCE")
 
         st.divider()
 
@@ -359,6 +356,7 @@ with tab_multi:
     if st.button(f"🚀 Lancer Simulation ({len(alphas_to_test)} cas)", type="primary"):
         results_list = []
         for a in alphas_to_test:
+            # On utilise Beta de la sidebar, mais Alpha de la boucle
             r = solve_tbc_model(a, beta_in, lw_in)
             if r['success']:
                 r['alpha'] = a
@@ -398,7 +396,6 @@ with tab_3d:
         st.subheader("Paramètres 3D")
         res_grid = st.slider("Résolution (points/axe)", 5, 20, 10)
         
-        # --- NOUEAU SELECTEUR POUR LE SUPERVISEUR ---
         plot_type = st.radio(
             "Variable Physique (Axe Z) :",
             ["Température T(h1)", "Saut de Flux ΔQ1(h1)"],
@@ -410,7 +407,7 @@ with tab_3d:
             beta_vals = np.linspace(0.1, 2.0, res_grid)
             z_data = []
             
-            # Boucle de calcul
+            # Boucle de calcul 2D (Range Alpha x Range Beta)
             for b in beta_vals:
                 z_row = []
                 for a in alpha_vals:
@@ -430,15 +427,14 @@ with tab_3d:
             st.session_state['z_3d'] = z_data
             st.session_state['x_3d'] = alpha_vals
             st.session_state['y_3d'] = beta_vals
-            st.session_state['plot_type'] = plot_type # On retient ce qu'on a tracé
+            st.session_state['plot_type'] = plot_type
 
     with col_3d_viz:
         if 'z_3d' in st.session_state:
-            # Adaptation Titres et Couleurs selon la variable
             current_type = st.session_state.get('plot_type', "Température")
             if "Flux" in current_type:
                 z_title = "Saut ΔQ1 (W/m²)"
-                colors = "Plasma" # Couleur différente pour le flux
+                colors = "Plasma" 
                 main_title = "Surface 3D : Discontinuité du Flux (Preuve Hétérogène)"
             else:
                 z_title = "Température (°C)"
