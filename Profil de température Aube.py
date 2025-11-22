@@ -293,16 +293,10 @@ with tab_single:
             # Zone Critique
             fig.add_hrect(y0=CONSTANTS['T_crit'], y1=max(np.max(T_vals), 1500), fillcolor="red", opacity=0.05, row=1, col=1)
             
-            # Courbes (CORRECTION DE L'ERREUR 'FILL' ICI)
+            # Courbes
             fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color='#2980b9', width=3)), row=1, col=1)
             fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color='#c0392b', width=2)), row=2, col=1)
-            
-            # >>> CORRECTION: 'fill' est passé en argument de go.Scatter, pas dans line=dict()
-            fig.add_trace(go.Scatter(
-                x=x_mm, y=Q1_vals, name="Flux Transverse", 
-                line=dict(color='#27ae60', width=2), 
-                fill='tozeroy'
-            ), row=3, col=1)
+            fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color='#27ae60', width=2), fill='tozeroy'), row=3, col=1)
             
             # Interfaces
             interfaces = [CONSTANTS['h1']*1000, (CONSTANTS['h1']+CONSTANTS['h2'])*1000]
@@ -389,43 +383,88 @@ with tab_multi:
                 st.plotly_chart(fig_flux, use_container_width=True)
 
 # ------------------------------------------
-# ONGLET 3 : CARTOGRAPHIE 3D (TÂCHE 2)
+# ONGLET 3 : CARTOGRAPHIE 3D (TÂCHE 2 - MISE À JOUR)
 # ------------------------------------------
 with tab_3d:
-    st.header("🧊 Cartographie Thermique 3D")
-    st.markdown("Température d'interface en fonction de la **Géométrie (Alpha)** et de l'**Anisotropie (Beta)**.")
+    st.header("🧊 Cartographie 3D : Preuve d'Hétérogénéité")
+    st.markdown("""
+    Cette visualisation permet de comparer la réponse **continue** (Température) et **discrète/hétérogène** (Saut de Flux).
+    Le saut de flux démontre que la matière n'est pas un milieu continu classique.
+    """)
     
     col_3d_params, col_3d_viz = st.columns([1, 3])
     
     with col_3d_params:
-        res_grid = st.slider("Résolution (points)", 5, 20, 10)
+        st.subheader("Paramètres 3D")
+        res_grid = st.slider("Résolution (points/axe)", 5, 20, 10)
+        
+        # --- NOUEAU SELECTEUR POUR LE SUPERVISEUR ---
+        plot_type = st.radio(
+            "Variable Physique (Axe Z) :",
+            ["Température T(h1)", "Saut de Flux ΔQ1(h1)"],
+            help="Sélectionnez 'Saut de Flux' pour visualiser la réponse discrète du matériau."
+        )
         
         if st.button("🔄 Générer Surface 3D"):
             alpha_vals = np.linspace(0.1, 2.0, res_grid)
             beta_vals = np.linspace(0.1, 2.0, res_grid)
             z_data = []
             
+            # Boucle de calcul
             for b in beta_vals:
                 z_row = []
                 for a in alpha_vals:
                     r = solve_tbc_model(a, b, lw_in)
-                    z_row.append(r['T_at_h1'] if r['success'] else np.nan)
+                    if r['success']:
+                        # Choix de la variable selon la sélection
+                        if plot_type == "Température T(h1)":
+                            val = r['T_at_h1']
+                        else:
+                            val = r['dQ1_h1'] # Le fameux saut discret
+                    else:
+                        val = np.nan
+                    z_row.append(val)
                 z_data.append(z_row)
             
+            # Stockage des résultats
             st.session_state['z_3d'] = z_data
             st.session_state['x_3d'] = alpha_vals
             st.session_state['y_3d'] = beta_vals
+            st.session_state['plot_type'] = plot_type # On retient ce qu'on a tracé
 
     with col_3d_viz:
         if 'z_3d' in st.session_state:
+            # Adaptation Titres et Couleurs selon la variable
+            current_type = st.session_state.get('plot_type', "Température")
+            if "Flux" in current_type:
+                z_title = "Saut ΔQ1 (W/m²)"
+                colors = "Plasma" # Couleur différente pour le flux
+                main_title = "Surface 3D : Discontinuité du Flux (Preuve Hétérogène)"
+            else:
+                z_title = "Température (°C)"
+                colors = "RdBu_r"
+                main_title = "Surface 3D : Température Interface"
+
             fig_3d = go.Figure(data=[go.Surface(
-                z=st.session_state['z_3d'], x=st.session_state['x_3d'], y=st.session_state['y_3d'],
-                colorscale='RdBu_r', colorbar=dict(title='Temp. T(h1)')
+                z=st.session_state['z_3d'], 
+                x=st.session_state['x_3d'], 
+                y=st.session_state['y_3d'],
+                colorscale=colors, 
+                colorbar=dict(title=z_title)
             )])
+            
             fig_3d.update_layout(
-                scene=dict(xaxis_title='Alpha', yaxis_title='Beta', zaxis_title='Temp (°C)'),
-                height=600, margin=dict(l=0, r=0, b=0, t=0)
+                title=main_title,
+                scene=dict(
+                    xaxis_title='Alpha (Épaisseur)', 
+                    yaxis_title='Beta (Anisotropie)', 
+                    zaxis_title=z_title
+                ),
+                height=650, margin=dict(l=0, r=0, b=0, t=30)
             )
             st.plotly_chart(fig_3d, use_container_width=True)
+            
+            if "Flux" in current_type:
+                st.info("ℹ️ **Note :** Les variations brusques de cette surface illustrent la réponse discrète du matériau aux changements de géométrie et d'anisotropie.")
         else:
-            st.info("👈 Cliquez sur le bouton pour générer la carte 3D.")
+            st.info("👈 Sélectionnez la variable et cliquez sur le bouton pour générer.")
