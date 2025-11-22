@@ -160,10 +160,10 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
         # 1. Lignes de température critiques (visibilité améliorée)
         fig.add_hline(y=CONSTANTS['T_crit'], line_color="red", line_dash="dash", row=1, col=1, 
                       annotation_text="T° Critique", annotation_position="top left",
-                      annotation=dict(font=dict(color="red", size=14), align="left", y=1.0))
+                      annotation_font_size=12, annotation_font_color="red")
         fig.add_hline(y=T_secu, line_color="orange", line_dash="dash", row=1, col=1, 
                       annotation_text="T° Sécurité", annotation_position="bottom left",
-                      annotation=dict(font=dict(color="orange", size=14), align="left"))
+                      annotation_font_size=12, annotation_font_color="orange")
 
         # 2. Zones matériaux en fond (visibilité améliorée)
         zones = [
@@ -174,15 +174,15 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
         
         for r in [1, 2, 3]:
             for zone in zones:
-                fig.add_vrect(x0=zone['x0'], x1=zone['x1'], fillcolor=zone['color'], opacity=0.2, layer="below", line_width=0, row=r, col=1)
-        
-        # Ajout des annotations de zone en haut, pour chaque subplot, pour garantir la visibilité
-        for r in [1, 2, 3]:
-            for zone in zones:
-                fig.add_annotation(
-                    x=(zone['x0'] + zone['x1']) / 2, y=1.02, yref=f'y{r} domain',
-                    text=zone['label'], showarrow=False, font=dict(color="#333", size=10),
-                    row=r, col=1
+                fig.add_vrect(
+                    x0=zone['x0'], x1=zone['x1'], 
+                    fillcolor=zone['color'], opacity=0.2, 
+                    layer="below", line_width=0, 
+                    row=r, col=1,
+                    annotation_text=zone['label'],
+                    annotation_position="top left",
+                    annotation_font_size=11,
+                    annotation_font_color="#333333"
                 )
         
         # Courbes
@@ -298,10 +298,10 @@ def display_parametric_study_tab(beta_in, lw_in):
                 fig_trend.update_traces(line_color=PALETTE['temp'])
                 fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', 
                                     annotation_text="Limite Critique", annotation_position="top left",
-                                    annotation=dict(font=dict(color="red", size=14), align="left"))
+                                    annotation_font_size=12, annotation_font_color="red")
                 fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', 
                                     annotation_text="Limite Sécurité", annotation_position="top left",
-                                    annotation=dict(font=dict(color="orange", size=14), align="left"))
+                                    annotation_font_size=12, annotation_font_color="orange")
                 st.plotly_chart(fig_trend, use_container_width=True)
 
             with col_q:
