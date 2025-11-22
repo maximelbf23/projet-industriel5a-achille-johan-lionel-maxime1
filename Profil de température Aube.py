@@ -157,15 +157,33 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
         h2_mm = CONSTANTS['h2'] * 1000
         h3_mm = res['h3'] * 1000
         
-        # 1. Lignes de température critiques
-        fig.add_hline(y=CONSTANTS['T_crit'], line_color="red", line_dash="dash", row=1, col=1, annotation_text="T° Critique", annotation_position="bottom left")
-        fig.add_hline(y=T_secu, line_color="orange", line_dash="dash", row=1, col=1, annotation_text="T° Sécurité", annotation_position="bottom left")
+        # 1. Lignes de température critiques (visibilité améliorée)
+        fig.add_hline(y=CONSTANTS['T_crit'], line_color="red", line_dash="dash", row=1, col=1, 
+                      annotation_text="T° Critique", annotation_position="top left",
+                      annotation=dict(font=dict(color="red", size=14), align="left", y=1.0))
+        fig.add_hline(y=T_secu, line_color="orange", line_dash="dash", row=1, col=1, 
+                      annotation_text="T° Sécurité", annotation_position="bottom left",
+                      annotation=dict(font=dict(color="orange", size=14), align="left"))
 
-        # 2. Zones matériaux en fond
+        # 2. Zones matériaux en fond (visibilité améliorée)
+        zones = [
+            {'x0': 0, 'x1': h1_mm, 'color': "#95a5a6", 'label': "Alliage"},
+            {'x0': h1_mm, 'x1': h1_mm + h2_mm, 'color': "#d35400", 'label': "Liaison"},
+            {'x0': h1_mm + h2_mm, 'x1': h1_mm + h2_mm + h3_mm, 'color': "#3498db", 'label': "Céramique"}
+        ]
+        
         for r in [1, 2, 3]:
-            fig.add_vrect(x0=0, x1=h1_mm, fillcolor="#EAECEE", opacity=0.3, layer="below", line_width=0, row=r, col=1, annotation_text="Alliage", annotation_position="top")
-            fig.add_vrect(x0=h1_mm, x1=h1_mm + h2_mm, fillcolor="#FADBD8", opacity=0.3, layer="below", line_width=0, row=r, col=1, annotation_text="Liaison", annotation_position="top")
-            fig.add_vrect(x0=h1_mm + h2_mm, x1=h1_mm + h2_mm + h3_mm, fillcolor="#D6EAF8", opacity=0.3, layer="below", line_width=0, row=r, col=1, annotation_text="TBC", annotation_position="top")
+            for zone in zones:
+                fig.add_vrect(x0=zone['x0'], x1=zone['x1'], fillcolor=zone['color'], opacity=0.2, layer="below", line_width=0, row=r, col=1)
+        
+        # Ajout des annotations de zone en haut, pour chaque subplot, pour garantir la visibilité
+        for r in [1, 2, 3]:
+            for zone in zones:
+                fig.add_annotation(
+                    x=(zone['x0'] + zone['x1']) / 2, y=1.02, yref=f'y{r} domain',
+                    text=zone['label'], showarrow=False, font=dict(color="#333", size=10),
+                    row=r, col=1
+                )
         
         # Courbes
         fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3)), row=1, col=1)
@@ -279,9 +297,11 @@ def display_parametric_study_tab(beta_in, lw_in):
                                     title="Température vs Alpha", labels={'alpha': 'Alpha', 'T_h1': 'T (°C)'})
                 fig_trend.update_traces(line_color=PALETTE['temp'])
                 fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', 
-                                    annotation_text="Limite Critique", annotation_position="bottom right")
+                                    annotation_text="Limite Critique", annotation_position="top left",
+                                    annotation=dict(font=dict(color="red", size=14), align="left"))
                 fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', 
-                                    annotation_text="Limite Sécurité", annotation_position="bottom right")
+                                    annotation_text="Limite Sécurité", annotation_position="top left",
+                                    annotation=dict(font=dict(color="orange", size=14), align="left"))
                 st.plotly_chart(fig_trend, use_container_width=True)
 
             with col_q:
