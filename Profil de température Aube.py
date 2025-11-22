@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from core.calculation import solve_tbc_model
+from core.calculation import solve_tbc_model, calculate_profiles
 from core.constants import CONSTANTS, IMPACT_PARAMS
 
 # ==========================================
@@ -82,208 +82,109 @@ with st.sidebar:
     st.caption(f"**Limites de Température**\n\n- T Critique: {CONSTANTS['T_crit']}°C\n- T Sécurité: {T_secu:.0f}°C")
 
 def display_detailed_analysis_tab(alpha_in, beta_in, lw_in):
-
     """Affiche l'onglet d'analyse détaillée pour un cas unique."""
-
     res = solve_tbc_model(alpha_in, beta_in, lw_in)
-
     
+    if not res['success']:
+        st.error(f"Erreur lors du calcul : {res.get('error', 'Erreur inconnue')}")
+        return
 
-    if res['success']:
+    # Conversion dimensions
+    h1_mic = CONSTANTS['h1'] * 1e6
+    h2_mic = CONSTANTS['h2'] * 1e6
+    h3_mic = res['h3'] * 1e6
+    
+    # --- A. VISUALISATION COUPE TRANSVERSALE & KPI ---
+    col_visu, col_kpi_val = st.columns([1, 3])
+    
+    with col_visu:
+            # Petit graph de la coupe
+        fig_geo = go.Figure()
+        fig_geo.add_trace(go.Bar(y=[''], x=[h1_mic], orientation='h', name='Alliage', marker=dict(color='#95a5a6')))
+        fig_geo.add_trace(go.Bar(y=[''], x=[h2_mic], orientation='h', name='Liaison', marker=dict(color='#d35400')))
+        fig_geo.add_trace(go.Bar(y=[''], x=[h3_mic], orientation='h', name='TBC', marker=dict(color='#d6eaf8')))
+        fig_geo.update_layout(barmode='stack', height=100, margin=dict(l=0, r=0, t=0, b=0), showlegend=False, xaxis=dict(visible=False))
+        st.plotly_chart(fig_geo, use_container_width=True)
+        st.caption("Coupe (Échelle réelle)")
 
-        # Conversion dimensions
-
-        h1_mic = CONSTANTS['h1'] * 1e6
-
-        h2_mic = CONSTANTS['h2'] * 1e6
-
-        h3_mic = res['h3'] * 1e6
-
+    with col_kpi_val:
+        # KPI et STATUT
+        T_h1 = res['T_at_h1']
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Épaisseur TBC ($h_3$)", f"{h3_mic:.0f} µm")
+        c2.metric("Conductivité Trans.", f"{res['k_eta_3']:.2f} W/mK")
+        delta_T = T_h1 - CONSTANTS['T_crit']
+        c3.metric("T° Interface Alliage", f"{T_h1:.2f} °C", delta=f"{-delta_T:.2f} vs Limite")
         
+        with c4:
+            if T_h1 > CONSTANTS['T_crit']: st.error(f"🚨 CRITIQUE")
+            elif T_h1 <= T_secu: st.success("✅ SÉCURISÉ")
+            else: st.warning("⚠️ SURVEILLANCE")
 
-        # --- A. VISUALISATION COUPE TRANSVERSALE & KPI ---
+    st.divider()
 
-        col_visu, col_kpi_val = st.columns([1, 3])
+    # --- TÂCHE 3 : NOTE DE SYNTHÈSE / WARNING ---
+    st.markdown("""
+    <div class="warning-box">
+        ⚠️ NOTE DE SYNTHÈSE :<br>
+        Attention, l'optimisation thermique (baisse de T°) implique souvent une augmentation de l'épaisseur (Alpha).
+        Cela induit des contraintes mécaniques (masse/stress centrifuge) non calculées ici.
+    </div>
+    """, unsafe_allow_html=True)
 
+    # --- C. GRAPHIQUES DÉTAILLÉS ---
+    col_graphes, col_impact = st.columns([2, 1])
+    
+    with col_graphes:
+        x_plot, T_vals, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
+        x_mm = x_plot * 1000
         
-
-        with col_visu:
-
-             # Petit graph de la coupe
-
-            fig_geo = go.Figure()
-
-            fig_geo.add_trace(go.Bar(y=[''], x=[h1_mic], orientation='h', name='Alliage', marker=dict(color='#95a5a6')))
-
-            fig_geo.add_trace(go.Bar(y=[''], x=[h2_mic], orientation='h', name='Liaison', marker=dict(color='#d35400')))
-
-            fig_geo.add_trace(go.Bar(y=[''], x=[h3_mic], orientation='h', name='TBC', marker=dict(color='#d6eaf8')))
-
-            fig_geo.update_layout(barmode='stack', height=100, margin=dict(l=0, r=0, t=0, b=0), showlegend=False, xaxis=dict(visible=False))
-
-            st.plotly_chart(fig_geo, use_container_width=True)
-
-            st.caption("Coupe (Échelle réelle)")
-
-
-
-        with col_kpi_val:
-
-            # KPI et STATUT
-
-            T_h1 = res['T_at_h1']
-
-            c1, c2, c3, c4 = st.columns(4)
-
-            c1.metric("Épaisseur TBC ($h_3$)", f"{h3_mic:.0f} µm")
-
-            c2.metric("Conductivité Trans.", f"{res['k_eta_3']:.2f} W/mK")
-
-            delta_T = T_h1 - CONSTANTS['T_crit']
-
-            c3.metric("T° Interface Alliage", f"{T_h1:.2f} °C", delta=f"{-delta_T:.2f} vs Limite")
-
-            
-
-            with c4:
-
-                if T_h1 > CONSTANTS['T_crit']: st.error(f"🚨 CRITIQUE")
-
-                elif T_h1 <= T_secu: st.success("✅ SÉCURISÉ")
-
-                else: st.warning("⚠️ SURVEILLANCE")
-
-
-
-        st.divider()
-
-
-
-        # --- TÂCHE 3 : NOTE DE SYNTHÈSE / WARNING ---
-
-        st.markdown("""
-
-        <div class="warning-box">
-
-            ⚠️ NOTE DE SYNTHÈSE :<br>
-
-            Attention, l'optimisation thermique (baisse de T°) implique souvent une augmentation de l'épaisseur (Alpha).
-
-            Cela induit des contraintes mécaniques (masse/stress centrifuge) non calculées ici.
-
-        </div>
-
-        """, unsafe_allow_html=True)
-
-
-
-        # --- C. GRAPHIQUES DÉTAILLÉS ---
-
-        col_graphes, col_impact = st.columns([2, 1])
-
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.06,
+            subplot_titles=("🌡️ Profil de Température", "⬇️ Flux Normal (Q3)", "↔️ Flux Transverse (Q1)"))
         
+        # Zone Critique
+        fig.add_hrect(y0=CONSTANTS['T_crit'], y1=max(np.max(T_vals), 1500), fillcolor="red", opacity=0.05, row=1, col=1)
+        
+        # Courbes
+        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color='#2980b9', width=3)), row=1, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color='#c0392b', width=2)), row=2, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color='#27ae60', width=2), fill='tozeroy'), row=3, col=1)
+        
+        # Interfaces
+        interfaces = [CONSTANTS['h1']*1000, (CONSTANTS['h1']+CONSTANTS['h2'])*1000]
+        for xi in interfaces:
+            for r in [1,2,3]: fig.add_vline(x=xi, line_dash="dot", line_color="gray", row=r, col=1)
 
-        with col_graphes:
+        fig.update_layout(height=600, showlegend=False, hovermode="x unified")
+        st.plotly_chart(fig, use_container_width=True)
+        
+    # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION ---
+    with col_impact:
+        st.markdown("#### 📊 Impact Global")
+        st.markdown("Comparaison **Nominal** (actuel) vs **Catastrophe** (α=2.0).")
+        
+        # Calcul des impacts
+        alpha_cata = 2.0
+        h3_nom = res['h3']
+        h3_cata = alpha_cata * CONSTANTS['h1']
+        
+        def get_metrics(h_val):
+            vol = h_val * 1.0 # Base 1m²
+            mass = vol * IMPACT_PARAMS['rho_ceram']
+            cost = vol * IMPACT_PARAMS['cost_per_vol']
+            co2 = mass * IMPACT_PARAMS['co2_per_kg']
+            return mass, cost, co2
 
-            x_plot = np.linspace(0, res['H'], 500)
-
-            T_vals, Q1_vals, Q3_vals = res['get_profiles'](x_plot)
-
-            x_mm = x_plot * 1000
-
-            
-
-            fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.06,
-
-                subplot_titles=("🌡️ Profil de Température", "⬇️ Flux Normal (Q3)", "↔️ Flux Transverse (Q1)"))
-
-            
-
-            # Zone Critique
-
-            fig.add_hrect(y0=CONSTANTS['T_crit'], y1=max(np.max(T_vals), 1500), fillcolor="red", opacity=0.05, row=1, col=1)
-
-            
-
-            # Courbes
-
-            fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color='#2980b9', width=3)), row=1, col=1)
-
-            fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color='#c0392b', width=2)), row=2, col=1)
-
-            fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color='#27ae60', width=2), fill='tozeroy'), row=3, col=1)
-
-            
-
-            # Interfaces
-
-            interfaces = [CONSTANTS['h1']*1000, (CONSTANTS['h1']+CONSTANTS['h2'])*1000]
-
-            for xi in interfaces:
-
-                for r in [1,2,3]: fig.add_vline(x=xi, line_dash="dot", line_color="gray", row=r, col=1)
-
-
-
-            fig.update_layout(height=600, showlegend=False, hovermode="x unified")
-
-            st.plotly_chart(fig, use_container_width=True)
-
-            
-
-        # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION ---
-
-        with col_impact:
-
-            st.markdown("#### 📊 Impact Global")
-
-            st.markdown("Comparaison **Nominal** (actuel) vs **Catastrophe** (α=2.0).")
-
-            
-
-            # Calcul des impacts
-
-            alpha_cata = 2.0
-
-            h3_nom = res['h3']
-
-            h3_cata = alpha_cata * CONSTANTS['h1']
-
-            
-
-            def get_metrics(h_val):
-
-                vol = h_val * 1.0 # Base 1m²
-
-                mass = vol * IMPACT_PARAMS['rho_ceram']
-
-                cost = vol * IMPACT_PARAMS['cost_per_vol']
-
-                co2 = mass * IMPACT_PARAMS['co2_per_kg']
-
-                return mass, cost, co2
-
-
-
-            m1, c1, co1 = get_metrics(h3_nom)
-
-            m2, c2, co2 = get_metrics(h3_cata)
-
-            
-
-            df_imp = pd.DataFrame({
-
-                "Critère": ["Surcharge (kg/m²)", "Coût (€/m²)", "Carbone (kgCO2)"],
-
-                "Nominal": [f"{m1:.2f}", f"{c1:.0f}", f"{co1:.1f}"],
-
-                "Catastrophe": [f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
-
-                "Delta": [f" +{m2-m1:.2f}", f" +{c2-c1:.0f}", f" +{co2-co1:.1f}"]
-
-            })
-
-            st.table(df_imp)
+        m1, c1, co1 = get_metrics(h3_nom)
+        m2, c2, co2 = get_metrics(h3_cata)
+        
+        df_imp = pd.DataFrame({
+            "Critère": ["Surcharge (kg/m²)", "Coût (€/m²)", "Carbone (kgCO2)"],
+            "Nominal": [f"{m1:.2f}", f"{c1:.0f}", f"{co1:.1f}"],
+            "Catastrophe": [f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
+            "Delta": [f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
+        })
+        st.table(df_imp)
 
 
 
