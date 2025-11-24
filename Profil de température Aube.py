@@ -315,7 +315,9 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
             h3_cata = alpha_cata * CONSTANTS['h1']
             
             def get_metrics(h_val):
-                vol = h_val * 1.0 # Base 1m²
+                """Calcule le volume, la masse et le coût sur la base de la géométrie de l'aube."""
+                blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
+                vol = h_val * blade_surface
                 mass = vol * IMPACT_PARAMS['rho_ceram']
                 cost = vol * IMPACT_PARAMS['cost_per_vol']
                 co2 = mass * IMPACT_PARAMS['co2_per_kg']
@@ -325,10 +327,10 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
             m2, c2, co2 = get_metrics(h3_cata)
             
             df_imp = pd.DataFrame({
-                "Critère": ["Alpha (α) calculé", "Surcharge (kg/m²)", "Coût (€/m²)", "Carbone (kgCO2)"],
-                "Nominal": [f"{alpha_in:.2f}", f"{m1:.2f}", f"{c1:.0f}", f"{co1:.1f}"],
-                "Catastrophe": [f"{alpha_cata:.2f}", f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
-                "Delta": [f"{alpha_cata - alpha_in:+.2f}", f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
+                "Critère": ["Alpha (α) calculé", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
+                "Nominal": [f"{alpha_in:.2f}", f"{m1:.3f}", f"{c1:.2f}", f"{co1:.2f}"],
+                "Catastrophe": [f"{alpha_cata:.2f}", f"{m2:.3f}", f"{c2:.2f}", f"{co2:.2f}"],
+                "Delta": [f"{alpha_cata - alpha_in:+.2f}", f"+{m2-m1:.3f}", f"+{c2-c1:.2f}", f"+{co2-co1:.2f}"]
             })
             st.dataframe(df_imp, hide_index=True, use_container_width=True)
             st.caption(f"Le scénario catastrophe est l'épaisseur requise pour maintenir {target_temp_cata}°C à l'interface avec T_bottom={t_bottom_catastrophe_in}°C et T_top={t_top_catastrophe_in}°C.")

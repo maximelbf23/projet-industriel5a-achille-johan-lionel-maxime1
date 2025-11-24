@@ -17,5 +17,9 @@ CONSTANTS = {
 IMPACT_PARAMS = {
     'rho_ceram': 6050,      # Masse volumique (kg/m^3)
     'cost_per_vol': 25000,  # Coût estimé par volume (€/m^3)
-    'co2_per_kg': 15.5      # Empreinte carbone (kgCO2/kg matière)
+    'co2_per_kg': 15.5,      # Empreinte carbone (kgCO2/kg matière)
+    
+    # --- Paramètres pour une géométrie d'aube simplifiée ---
+    'blade_height': 0.1,    # Hauteur de l'aube (m)
+    'blade_chord': 0.05     # Corde de l'aube (m)
 }
