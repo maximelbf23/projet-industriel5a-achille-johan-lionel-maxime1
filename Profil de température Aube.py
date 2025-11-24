@@ -243,11 +243,13 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
         h3_mm = res['h3'] * 1000
         
         # 1. Lignes de température critiques (visibilité améliorée)
-        fig.add_hline(y=CONSTANTS['T_crit'], line_color="red", line_dash="dash", row=1, col=1, 
-                      annotation_text="T° Critique", annotation_position="top left",
+        fig.add_hline(y=CONSTANTS['T_crit'], line_color="red", line_dash="dash", row=1, col=1,
+                      line_width=2,
+                      annotation_text="T° Critique", annotation_position="top right",
                       annotation_font_size=12, annotation_font_color="red")
-        fig.add_hline(y=T_secu, line_color="orange", line_dash="dash", row=1, col=1, 
-                      annotation_text="T° Sécurité", annotation_position="bottom left",
+        fig.add_hline(y=T_secu, line_color="orange", line_dash="dash", row=1, col=1,
+                      line_width=2,
+                      annotation_text="T° Sécurité", annotation_position="bottom right",
                       annotation_font_size=12, annotation_font_color="orange")
 
         # 2. Zones matériaux en fond (visibilité améliorée avec légende)
@@ -463,11 +465,11 @@ def display_parametric_study_tab(beta_in, lw_in, t_bottom, t_top):
                 fig_trend = px.line(df_trends, x='alpha', y='T_h1', markers=True, 
                                     title="Température vs Alpha", labels={'alpha': 'Alpha', 'T_h1': 'T (°C)'})
                 fig_trend.update_traces(line_color=PALETTE['temp'])
-                fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', 
-                                    annotation_text="Limite Critique", annotation_position="top left",
+                fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', line_width=2,
+                                    annotation_text="Limite Critique", annotation_position="top right",
                                     annotation_font_size=12, annotation_font_color="red")
-                fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', 
-                                    annotation_text="Limite Sécurité", annotation_position="top left",
+                fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', line_width=2,
+                                    annotation_text="Limite Sécurité", annotation_position="top right",
                                     annotation_font_size=12, annotation_font_color="orange")
                 st.plotly_chart(fig_trend, use_container_width=True)
 
