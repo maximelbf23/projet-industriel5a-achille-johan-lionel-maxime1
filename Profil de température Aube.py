@@ -158,6 +158,13 @@ with st.sidebar:
     st.markdown("---")
 
     st.subheader("3. Scénario Catastrophe")
+    t_bottom_catastrophe_in = st.number_input(
+        "Température Base Catastrophe (°C)",
+        value=t_bottom_default,
+        step=10,
+        key="t_bottom_cata",
+        help="Définit le T_bottom pour le scénario catastrophe."
+    )
     t_top_catastrophe_in = st.number_input(
         "Température Surface Catastrophe (°C)",
         value=t_top_default + 100,
@@ -290,18 +297,18 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
         # La température cible pour le scénario catastrophe est toujours T_crit.
         target_temp_cata = CONSTANTS['T_crit']
 
-        # Recherche de l'alpha "catastrophe" en utilisant le T_top catastrophe.
+        # Recherche de l'alpha "catastrophe" en utilisant les T° catastrophes.
         cata_res = find_alpha_for_temp(
             target_temp=target_temp_cata,
             beta=beta_in,
             lw=lw_in,
-            t_bottom=t_bottom_in,
+            t_bottom=t_bottom_catastrophe_in, # Utilise le T_bottom du scénario catastrophe
             t_top=t_top_catastrophe_in  # Utilise le T_top du scénario catastrophe
         )
 
         if cata_res['success']:
             alpha_cata = cata_res['alpha']
-            st.markdown(f"Comparaison **Nominal** (actuel) vs **Catastrophe** (α={alpha_cata:.2f})")
+            st.markdown(f"Comparaison **Nominal** (α={alpha_in:.2f}) vs **Catastrophe** (α={alpha_cata:.2f})")
 
             # Calcul des impacts
             h3_nom = res['h3']
@@ -318,13 +325,13 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
             m2, c2, co2 = get_metrics(h3_cata)
             
             df_imp = pd.DataFrame({
-                "Critère": ["Surcharge (kg/m²)", "Coût (€/m²)", "Carbone (kgCO2)"],
-                "Nominal": [f"{m1:.2f}", f"{c1:.0f}", f"{co1:.1f}"],
-                "Catastrophe": [f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
-                "Delta": [f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
+                "Critère": ["Alpha (α) calculé", "Surcharge (kg/m²)", "Coût (€/m²)", "Carbone (kgCO2)"],
+                "Nominal": [f"{alpha_in:.2f}", f"{m1:.2f}", f"{c1:.0f}", f"{co1:.1f}"],
+                "Catastrophe": [f"{alpha_cata:.2f}", f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
+                "Delta": [f"{alpha_cata - alpha_in:+.2f}", f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
             })
             st.dataframe(df_imp, hide_index=True, use_container_width=True)
-            st.caption(f"Le scénario catastrophe est l'épaisseur requise pour maintenir {target_temp_cata}°C à l'interface avec un T_top de {t_top_catastrophe_in}°C.")
+            st.caption(f"Le scénario catastrophe est l'épaisseur requise pour maintenir {target_temp_cata}°C à l'interface avec T_bottom={t_bottom_catastrophe_in}°C et T_top={t_top_catastrophe_in}°C.")
 
         else:
             st.warning(f"Calcul du scénario catastrophe impossible: {cata_res.get('message', 'Erreur inconnue')}")
