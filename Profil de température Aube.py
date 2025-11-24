@@ -158,11 +158,12 @@ with st.sidebar:
     st.markdown("---")
 
     st.subheader("3. Scénario Catastrophe")
-    t_catastrophe_in = st.number_input(
-        "Température Catastrophe (°C)",
-        value=CONSTANTS['T_crit'],
-        step=5,
-        help="La T° à l'interface pour laquelle on calcule l'épaisseur 'catastrophe'."
+    t_top_catastrophe_in = st.number_input(
+        "Température Surface Catastrophe (°C)",
+        value=t_top_default + 100,
+        step=10,
+        key="t_top_cata",
+        help="Définit un T_top élevé pour lequel l'épaisseur 'alpha' sera calculée afin de maintenir l'interface à T_crit."
     )
 
     st.markdown("---")
@@ -286,8 +287,17 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
     with col_impact:
         st.markdown("#### 📊 Impact Global")
 
-        # Recherche de l'alpha "catastrophe" basé sur la T° de catastrophe choisie
-        cata_res = find_alpha_for_temp(t_catastrophe_in, beta_in, lw_in, t_bottom, t_top)
+        # La température cible pour le scénario catastrophe est toujours T_crit.
+        target_temp_cata = CONSTANTS['T_crit']
+
+        # Recherche de l'alpha "catastrophe" en utilisant le T_top catastrophe.
+        cata_res = find_alpha_for_temp(
+            target_temp=target_temp_cata,
+            beta=beta_in,
+            lw=lw_in,
+            t_bottom=t_bottom_in,
+            t_top=t_top_catastrophe_in  # Utilise le T_top du scénario catastrophe
+        )
 
         if cata_res['success']:
             alpha_cata = cata_res['alpha']
@@ -314,7 +324,7 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
                 "Delta": [f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
             })
             st.dataframe(df_imp, hide_index=True, use_container_width=True)
-            st.caption(f"Le scénario catastrophe est calculé pour atteindre {t_catastrophe_in}°C à l'interface.")
+            st.caption(f"Le scénario catastrophe est l'épaisseur requise pour maintenir {target_temp_cata}°C à l'interface avec un T_top de {t_top_catastrophe_in}°C.")
 
         else:
             st.warning(f"Calcul du scénario catastrophe impossible: {cata_res.get('message', 'Erreur inconnue')}")
