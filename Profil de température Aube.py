@@ -284,6 +284,12 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
         fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True), row=2, col=1)
         fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True), row=3, col=1)
         
+        # Mettre à jour la plage de l'axe Y pour inclure les températures critiques
+        if len(T_vals) > 0:
+            min_y_range = min(T_vals.min(), T_secu) * 0.98
+            max_y_range = max(T_vals.max(), CONSTANTS['T_crit']) * 1.02
+            fig.update_yaxes(range=[min_y_range, max_y_range], row=1, col=1)
+
         fig.update_layout(
             height=600, 
             showlegend=True, 
