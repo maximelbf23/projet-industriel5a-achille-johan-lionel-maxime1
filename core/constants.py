@@ -16,7 +16,7 @@ CONSTANTS = {
 # --- TÂCHE 1 : CONSTANTES POUR L'IMPACT ---
 IMPACT_PARAMS = {
     'rho_ceram': 8700,      # Masse volumique (kg/m^3)
-    'cost_per_vol': 4800000,  # Coût estimé par volume (€/m^3)
+    'cost_per_vol': 32000000,  # Coût estimé par volume (€/m^3)
     'co2_per_kg': 15.5,      # Empreinte carbone (kgCO2/kg matière)
     
     # --- Paramètres pour une géométrie d'aube simplifiée ---
