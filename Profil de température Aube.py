@@ -14,6 +14,54 @@ def cached_solve_tbc_model(alpha, beta, lw, t_bottom, t_top):
     """Wrapper pour mettre en cache les résultats de solve_tbc_model."""
     return solve_tbc_model(alpha, beta, lw, t_bottom, t_top)
 
+@st.cache_data
+def find_alpha_for_temp(target_temp, beta, lw, t_bottom, t_top, alpha_min=0.01, alpha_max=8.0, tol=1e-3, max_iter=30):
+    """
+    Trouve la valeur d'alpha qui résulte en une température cible donnée à l'interface h1,
+    en utilisant la méthode de la bissection.
+    """
+    
+    def get_temp_at_alpha(alpha):
+        """Fonction objective : retourne la température pour un alpha donné."""
+        res = cached_solve_tbc_model(alpha, beta, lw, t_bottom, t_top)
+        if res['success']:
+            return res['T_at_h1']
+        return 1e9 # Retourne un nombre élevé en cas d'échec du calcul
+
+    # La température diminue lorsque alpha augmente, donc f(alpha) est décroissante.
+    # f(alpha) = T(alpha) - target_temp
+    # Pour la bissection, nous avons besoin de f(alpha_min) > 0 et f(alpha_max) < 0.
+    
+    f_min = get_temp_at_alpha(alpha_min) - target_temp
+    f_max = get_temp_at_alpha(alpha_max) - target_temp
+
+    if np.sign(f_min) == np.sign(f_max):
+        return {'success': False, 'message': "La T° cible est hors de l'intervalle de recherche. Essayez d'autres paramètres."}
+
+    # Inversion si l'utilisateur a entré une plage incorrecte
+    if f_min < f_max:
+        alpha_min, alpha_max = alpha_max, alpha_min
+        f_min, f_max = f_max, f_min
+
+    for i in range(max_iter):
+        alpha_mid = (alpha_min + alpha_max) / 2
+        if alpha_mid == alpha_min or alpha_mid == alpha_max: # Précision atteinte
+             return {'success': True, 'alpha': alpha_mid}
+
+        f_mid = get_temp_at_alpha(alpha_mid) - target_temp
+
+        if abs(f_mid) < tol:
+            return {'success': True, 'alpha': alpha_mid}
+
+        if np.sign(f_mid) == np.sign(f_min):
+            alpha_min = alpha_mid
+            f_min = f_mid
+        else:
+            alpha_max = alpha_mid
+    
+    return {'success': False, 'message': "Le solveur n'a pas convergé. La solution est peut-être hors de la plage de recherche."}
+
+
 # ==========================================
 # 1. CONFIGURATION & STYLE (CSS "Premium")
 # ==========================================
@@ -107,6 +155,16 @@ with st.sidebar:
 
     st.button("Réinitialiser T°", on_click=reset_temperatures, help="Restaure les températures de base et de surface par défaut.")
     
+    st.markdown("---")
+
+    st.subheader("3. Scénario Catastrophe")
+    t_catastrophe_in = st.number_input(
+        "Température Catastrophe (°C)",
+        value=CONSTANTS['T_crit'],
+        step=5,
+        help="La T° à l'interface pour laquelle on calcule l'épaisseur 'catastrophe'."
+    )
+
     st.markdown("---")
     st.caption(f"**Limites de Température**\n\n- T Critique: {CONSTANTS['T_crit']}°C\n- T Sécurité: {T_secu:.0f}°C")
 
@@ -227,30 +285,40 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
     # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION ---
     with col_impact:
         st.markdown("#### 📊 Impact Global")
-        st.markdown("Comparaison **Nominal** (actuel) vs **Catastrophe** (α=2.0).")
-        
-        # Calcul des impacts
-        alpha_cata = 2.0
-        h3_nom = res['h3']
-        h3_cata = alpha_cata * CONSTANTS['h1']
-        
-        def get_metrics(h_val):
-            vol = h_val * 1.0 # Base 1m²
-            mass = vol * IMPACT_PARAMS['rho_ceram']
-            cost = vol * IMPACT_PARAMS['cost_per_vol']
-            co2 = mass * IMPACT_PARAMS['co2_per_kg']
-            return mass, cost, co2
 
-        m1, c1, co1 = get_metrics(h3_nom)
-        m2, c2, co2 = get_metrics(h3_cata)
-        
-        df_imp = pd.DataFrame({
-            "Critère": ["Surcharge (kg/m²)", "Coût (€/m²)", "Carbone (kgCO2)"],
-            "Nominal": [f"{m1:.2f}", f"{c1:.0f}", f"{co1:.1f}"],
-            "Catastrophe": [f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
-            "Delta": [f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
-        })
-        st.dataframe(df_imp, hide_index=True, use_container_width=True)
+        # Recherche de l'alpha "catastrophe" basé sur la T° de catastrophe choisie
+        cata_res = find_alpha_for_temp(t_catastrophe_in, beta_in, lw_in, t_bottom, t_top)
+
+        if cata_res['success']:
+            alpha_cata = cata_res['alpha']
+            st.markdown(f"Comparaison **Nominal** (actuel) vs **Catastrophe** (α={alpha_cata:.2f})")
+
+            # Calcul des impacts
+            h3_nom = res['h3']
+            h3_cata = alpha_cata * CONSTANTS['h1']
+            
+            def get_metrics(h_val):
+                vol = h_val * 1.0 # Base 1m²
+                mass = vol * IMPACT_PARAMS['rho_ceram']
+                cost = vol * IMPACT_PARAMS['cost_per_vol']
+                co2 = mass * IMPACT_PARAMS['co2_per_kg']
+                return mass, cost, co2
+
+            m1, c1, co1 = get_metrics(h3_nom)
+            m2, c2, co2 = get_metrics(h3_cata)
+            
+            df_imp = pd.DataFrame({
+                "Critère": ["Surcharge (kg/m²)", "Coût (€/m²)", "Carbone (kgCO2)"],
+                "Nominal": [f"{m1:.2f}", f"{c1:.0f}", f"{co1:.1f}"],
+                "Catastrophe": [f"{m2:.2f}", f"{c2:.0f}", f"{co2:.1f}"],
+                "Delta": [f"+{m2-m1:.2f}", f"+{c2-c1:.0f}", f"+{co2-co1:.1f}"]
+            })
+            st.dataframe(df_imp, hide_index=True, use_container_width=True)
+            st.caption(f"Le scénario catastrophe est calculé pour atteindre {t_catastrophe_in}°C à l'interface.")
+
+        else:
+            st.warning(f"Calcul du scénario catastrophe impossible: {cata_res.get('message', 'Erreur inconnue')}")
+            st.markdown("Comparaison **Nominal** (actuel) vs **Catastrophe** (N/A)")
 
 
 
