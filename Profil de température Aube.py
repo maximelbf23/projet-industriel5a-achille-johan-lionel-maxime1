@@ -430,328 +430,89 @@ def display_parametric_study_tab(beta_in, lw_in, t_bottom, t_top):
 
 
     if st.button(f"🚀 Lancer Simulation ({len(alphas_to_test)} cas)", type="primary"):
-
-
-
         results_list = []
-
-
-
         for a in alphas_to_test:
-
-
-
             # On utilise Beta de la sidebar, mais Alpha de la boucle
-
-
-
             r = cached_solve_tbc_model(a, beta_in, lw_in, t_bottom, t_top)
-
             if r['success']:
-
                 r['alpha'] = a
-
                 results_list.append(r)
-
-            
-
-                if results_list:
-
-            
-
-                    # --- TÂCHE 2 : Données étendues pour tableau et graphiques ---
-
-            
-
-                    processed_data = []
-
-            
-
-                    for r in results_list:
-
-            
-
-                        h3 = r['h3']
-
-            
-
-                        blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
-
-            
-
-                        vol = h3 * blade_surface
-
-            
-
-                        mass = vol * IMPACT_PARAMS['rho_ceram']
-
-            
-
-                        cost = vol * IMPACT_PARAMS['cost_per_vol']
-
-            
-
-                        co2 = mass * IMPACT_PARAMS['co2_per_kg']
-
-            
-
-                        
-
-            
-
-                        processed_data.append({
-
-            
-
-                            'alpha': r['alpha'],
-
-            
-
-                            'T_h1': r['T_at_h1'],
-
-            
-
-                            'dQ1_h1': r['dQ1_h1'],
-
-            
-
-                            'h3_um': h3 * 1e6,
-
-            
-
-                            'surface_m2': blade_surface,
-
-            
-
-                            'volume_m3': vol,
-
-            
-
-                            'mass_kg': mass,
-
-            
-
-                            'cost_eur': cost,
-
-            
-
-                            'co2_kg': co2,
-
-            
-
-                        })
-
-            
-
         
-
+        if results_list:
+            # --- TÂCHE 2 : Données étendues pour tableau et graphiques ---
+            processed_data = []
+            for r in results_list:
+                h3 = r['h3']
+                blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
+                vol = h3 * blade_surface
+                mass = vol * IMPACT_PARAMS['rho_ceram']
+                cost = vol * IMPACT_PARAMS['cost_per_vol']
+                co2 = mass * IMPACT_PARAMS['co2_per_kg']
+                
+                processed_data.append({
+                    'alpha': r['alpha'],
+                    'T_h1': r['T_at_h1'],
+                    'dQ1_h1': r['dQ1_h1'],
+                    'h3_um': h3 * 1e6,
+                    'surface_m2': blade_surface,
+                    'volume_m3': vol,
+                    'mass_kg': mass,
+                    'cost_eur': cost,
+                    'co2_kg': co2,
+                })
+    
+            df_results = pd.DataFrame(processed_data)
+    
+            # --- GRAPHIQUES ---
+            col_t, col_q = st.columns(2)
+            with col_t:
+                fig_trend = px.line(df_results, x='alpha', y='T_h1', markers=True, 
+                                    title="Température vs Alpha", labels={'alpha': 'Alpha', 'T_h1': 'T (°C)'})
+                fig_trend.update_traces(line_color=PALETTE['temp'])
+                fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', line_width=2,
+                                    annotation_text="Limite Critique", annotation_position="top right",
+                                    annotation_font_size=12, annotation_font_color="red")
+                fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', line_width=2,
+                                    annotation_text="Limite Sécurité", annotation_position="top right",
+                                    annotation_font_size=12, annotation_font_color="orange")
+                st.plotly_chart(fig_trend, use_container_width=True)
+    
+            with col_q:
+                fig_flux = px.line(df_results, x='alpha', y='dQ1_h1', markers=True,
+                                   title="Saut Flux Transverse vs Alpha", labels={'alpha': 'Alpha', 'dQ1_h1': 'ΔQ1 (W/m²)'})
+                fig_flux.update_traces(line_color=PALETTE['accent'])
+                st.plotly_chart(fig_flux, use_container_width=True)
+    
+            # --- TABLEAU DE RÉSULTATS ---
+            st.markdown("### 📊 Tableau de synthèse")
             
-
-                    df_results = pd.DataFrame(processed_data)
-
-            
-
-        
-
-            
-
-                    # --- GRAPHIQUES ---
-
-            
-
-                    col_t, col_q = st.columns(2)
-
-            
-
-                    with col_t:
-
-            
-
-                        fig_trend = px.line(df_results, x='alpha', y='T_h1', markers=True, 
-
-            
-
-                                            title="Température vs Alpha", labels={'alpha': 'Alpha', 'T_h1': 'T (°C)'})
-
-            
-
-                        fig_trend.update_traces(line_color=PALETTE['temp'])
-
-            
-
-                        fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', line_width=2,
-
-            
-
-                                            annotation_text="Limite Critique", annotation_position="top right",
-
-            
-
-                                            annotation_font_size=12, annotation_font_color="red")
-
-            
-
-                        fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', line_width=2,
-
-            
-
-                                            annotation_text="Limite Sécurité", annotation_position="top right",
-
-            
-
-                                            annotation_font_size=12, annotation_font_color="orange")
-
-            
-
-                        st.plotly_chart(fig_trend, use_container_width=True)
-
-            
-
-        
-
-            
-
-                    with col_q:
-
-            
-
-                        fig_flux = px.line(df_results, x='alpha', y='dQ1_h1', markers=True,
-
-            
-
-                                           title="Saut Flux Transverse vs Alpha", labels={'alpha': 'Alpha', 'dQ1_h1': 'ΔQ1 (W/m²)'})
-
-            
-
-                        fig_flux.update_traces(line_color=PALETTE['accent'])
-
-            
-
-                        st.plotly_chart(fig_flux, use_container_width=True)
-
-            
-
-        
-
-            
-
-                    # --- TABLEAU DE RÉSULTATS ---
-
-            
-
-                    st.markdown("### 📊 Tableau de synthèse")
-
-            
-
-                    
-
-            
-
-                    df_display = df_results.rename(columns={
-
-            
-
-                        'alpha': 'Alpha (α)',
-
-            
-
-                        'T_h1': 'T° Interface (°C)',
-
-            
-
-                        'dQ1_h1': 'Saut de Flux (W/m²)',
-
-            
-
-                        'h3_um': 'Épaisseur TBC (µm)',
-
-            
-
-                        'surface_m2': 'Surface (m²)',
-
-            
-
-                        'volume_m3': 'Volume (m³)',
-
-            
-
-                        'mass_kg': 'Surcharge (kg/aube)',
-
-            
-
-                        'cost_eur': 'Coût (€/aube)',
-
-            
-
-                        'co2_kg': 'Carbone (kgCO2/aube)'
-
-            
-
-                    })[[
-
-            
-
-                        'Alpha (α)', 'Épaisseur TBC (µm)', 'T° Interface (°C)', 
-
-            
-
-                        'Surface (m²)', 'Volume (m³)', 'Surcharge (kg/aube)',
-
-            
-
-                        'Coût (€/aube)', 'Carbone (kgCO2/aube)', 'Saut de Flux (W/m²)'
-
-            
-
-                    ]]
-
-            
-
-        
-
-            
-
-                    st.dataframe(df_display.style.format({
-
-            
-
-                        "Alpha (α)": "{:.2f}",
-
-            
-
-                        "Épaisseur TBC (µm)": "{:.0f}",
-
-            
-
-                        "T° Interface (°C)": "{:.1f}",
-
-            
-
-                        "Surface (m²)": "{:.4f}",
-
-            
-
-                        "Volume (m³)": "{:.6f}",
-
-            
-
-                        "Surcharge (kg/aube)": "{:.3f}",
-
-            
-
-                        "Coût (€/aube)": "{:.2f}",
-
-            
-
-                        "Carbone (kgCO2/aube)": "{:.2f}",
-
-            
-
-                        "Saut de Flux (W/m²)": "{:.2e}",
-
-            
-
-                    }), use_container_width=True)
+            df_display = df_results.rename(columns={
+                'alpha': 'Alpha (α)',
+                'T_h1': 'T° Interface (°C)',
+                'dQ1_h1': 'Saut de Flux (W/m²)',
+                'h3_um': 'Épaisseur TBC (µm)',
+                'surface_m2': 'Surface (m²)',
+                'volume_m3': 'Volume (m³)',
+                'mass_kg': 'Surcharge (kg/aube)',
+                'cost_eur': 'Coût (€/aube)',
+                'co2_kg': 'Carbone (kgCO2/aube)'
+            })[[
+                'Alpha (α)', 'Épaisseur TBC (µm)', 'T° Interface (°C)', 
+                'Surface (m²)', 'Volume (m³)', 'Surcharge (kg/aube)',
+                'Coût (€/aube)', 'Carbone (kgCO2/aube)', 'Saut de Flux (W/m²)'
+            ]]
+    
+            st.dataframe(df_display.style.format({
+                "Alpha (α)": "{:.2f}",
+                "Épaisseur TBC (µm)": "{:.0f}",
+                "T° Interface (°C)": "{:.1f}",
+                "Surface (m²)": "{:.4f}",
+                "Volume (m³)": "{:.6f}",
+                "Surcharge (kg/aube)": "{:.3f}",
+                "Coût (€/aube)": "{:.2f}",
+                "Carbone (kgCO2/aube)": "{:.2f}",
+                "Saut de Flux (W/m²)": "{:.2e}",
+            }), use_container_width=True)
 
 
 
