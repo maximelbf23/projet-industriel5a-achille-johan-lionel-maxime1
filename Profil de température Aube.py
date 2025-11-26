@@ -120,7 +120,7 @@ with st.sidebar:
     # --- MODIFICATION : Alpha est maintenant ici ---
     alpha_in = st.slider(
         "Épaisseur Céramique (α)", 
-        min_value=0.0, max_value=2.0, value=0.20, step=0.05,
+        min_value=0.0, max_value=3.0, value=0.20, step=0.05,
         help="Définit l'épaisseur relative de la couche TBC ($h_3 = \alpha \cdot h_1$)"
     )
     
