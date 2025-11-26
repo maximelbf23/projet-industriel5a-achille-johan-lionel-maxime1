@@ -401,27 +401,27 @@ def display_parametric_study_tab(beta_in, lw_in, t_bottom, t_top):
 
 
 
-    else: 
+        else: 
 
 
 
-        c_start, c_end, c_step = st.columns(3)
+            c_start, c_end, c_step = st.columns(3)
 
 
 
-                with c_start: a_start = st.number_input("Début", min_value=0.0, max_value=3.0, value=0.05, format="%.2f")
+            with c_start: a_start = st.number_input("Début", min_value=0.0, max_value=3.0, value=0.05, format="%.2f")
 
 
 
-                with c_end: a_end = st.number_input("Fin", min_value=0.0, max_value=3.0, value=0.50, format="%.2f")
+            with c_end: a_end = st.number_input("Fin", min_value=0.0, max_value=3.0, value=0.50, format="%.2f")
 
 
 
-                with c_step: a_step = st.number_input("Pas", min_value=0.01, value=0.05, format="%.2f")
+            with c_step: a_step = st.number_input("Pas", min_value=0.01, value=0.05, format="%.2f")
 
 
 
-        if a_start < a_end: alphas_to_test = np.arange(a_start, a_end + a_step/100, a_step)
+            if a_start < a_end: alphas_to_test = np.arange(a_start, a_end + a_step/100, a_step)
 
 
 
