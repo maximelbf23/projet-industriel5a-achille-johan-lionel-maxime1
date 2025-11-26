@@ -133,7 +133,7 @@ with st.sidebar:
     lw_in = st.number_input(
         "Longueur d'Onde $L_w$ (m)", 
         min_value=0.01, max_value=5.0, value=0.1, step=0.01,
-        help="Taille caractéristique du défaut."
+        help="Modélise la taille d'une variation de température latérale (un 'point chaud'). Un petit Lw simule un défaut intense et localisé, tandis qu'un grand Lw représente une variation thermique graduelle."
     )
     
     st.markdown("---")
