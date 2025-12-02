@@ -636,121 +636,55 @@ def display_3d_mapping_tab(lw_in, t_bottom, t_top):
 
 
     with col_3d_params:
-
-
-
         st.subheader("Paramètres 3D")
-
-
+        
+        # --- AMÉLIORATION : Plages Configurables ---
+        with st.expander("🛠️ Plages de Simulation", expanded=True):
+            c_a1, c_a2 = st.columns(2)
+            with c_a1: a_min = st.number_input("Alpha Min", 0.05, 5.0, 0.1, 0.05)
+            with c_a2: a_max = st.number_input("Alpha Max", 0.05, 5.0, 2.0, 0.05)
+            
+            c_b1, c_b2 = st.columns(2)
+            with c_b1: b_min = st.number_input("Beta Min", 0.05, 5.0, 0.1, 0.05)
+            with c_b2: b_max = st.number_input("Beta Max", 0.05, 5.0, 2.0, 0.05)
 
         res_grid = st.slider("Résolution (points/axe)", 5, 20, 10)
-
-
-
         
-
-
-
         plot_type = st.radio(
-
-
-
             "Variable Physique (Axe Z) :",
-
-
-
             ["Température T(h1)", "Saut de Flux ΔQ1(h1)"],
-
-
-
             help="Sélectionnez 'Saut de Flux' pour visualiser la réponse discrète du matériau."
-
-
-
         )
-
-
-
         
-
-
-
         if st.button("🔄 Générer Surface 3D"):
-
-
-
-            alpha_vals = np.linspace(0.1, 2.0, res_grid)
-
-
-
-            beta_vals = np.linspace(0.1, 2.0, res_grid)
-
-
-
+            # Utilisation des plages configurées
+            alpha_vals = np.linspace(a_min, a_max, res_grid)
+            beta_vals = np.linspace(b_min, b_max, res_grid)
             z_data = []
-
-
-
             
-
-
-
             # Boucle de calcul 2D (Range Alpha x Range Beta)
-
-
-
             progress_bar = st.progress(0)
-
-
-
             for i, b in enumerate(beta_vals):
-
-
-
                 z_row = []
-
-
-
                 for a in alpha_vals:
-
-
-
                     r = cached_solve_tbc_model(a, b, lw_in, t_bottom, t_top)
-
                     if r['success']:
-
                         # Choix de la variable selon la sélection
-
                         if plot_type == "Température T(h1)":
-
                             val = r['T_at_h1']
-
                         else:
-
                             val = r['dQ1_h1'] # Le fameux saut discret
-
                     else:
-
                         val = np.nan
-
                     z_row.append(val)
-
                 z_data.append(z_row)
-
                 progress_bar.progress((i + 1) / res_grid)
-
             
-
             # Stockage des résultats
-
             st.session_state['z_3d'] = z_data
-
             st.session_state['x_3d'] = alpha_vals
-
             st.session_state['y_3d'] = beta_vals
-
             st.session_state['plot_type'] = plot_type
-
             progress_bar.empty()
 
 
