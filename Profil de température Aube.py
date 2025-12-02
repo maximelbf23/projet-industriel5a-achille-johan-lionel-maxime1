@@ -76,32 +76,112 @@ st.set_page_config(
 )
 
 # Style CSS pour raffiner l'interface
+# Style CSS pour raffiner l'interface
 st.markdown("""
 <style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+    html, body, [class*="css"]  {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* H1 Title Styling */
+    h1 {
+        color: #1e3a8a; /* Dark Blue */
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    /* H2/H3 Headers */
+    h2, h3 {
+        color: #334155;
+        font-weight: 600;
+    }
+    
+    h3 {
+        border-bottom: 2px solid #3b82f6; /* Blue-500 */
+        padding-bottom: 8px;
+        margin-top: 20px;
+    }
+
+    /* Metric Cards - Premium Look */
     div[data-testid="stMetric"] {
         background-color: #ffffff;
-        border: 1px solid #e0e0e0;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    h3 {
-        color: #2c3e50;
-        border-bottom: 2px solid #3498db;
-        padding-bottom: 10px;
+    
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-color: #3b82f6;
     }
-    /* Style pour la Tâche 3 : Warning Box */
+    
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.9rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+    
+    div[data-testid="stMetricValue"] {
+        font-size: 1.5rem;
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    /* Warning/Info Boxes */
     .warning-box {
-        background-color: #fff3cd;
-        border-left: 5px solid #ffc107;
-        padding: 15px;
-        color: #856404;
-        font-weight: bold;
-        margin-top: 10px;
-        margin-bottom: 10px;
-        border-radius: 4px;
+        background-color: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 16px;
+        color: #92400e;
+        font-weight: 500;
+        border-radius: 0 8px 8px 0;
+        margin: 16px 0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    .block-container { padding-top: 2rem; }
+    
+    /* Tabs Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: #f1f5f9;
+        border-radius: 8px 8px 0 0;
+        gap: 1px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background-color: #ffffff;
+        color: #3b82f6;
+        border-top: 2px solid #3b82f6;
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #f8fafc;
+        border-right: 1px solid #e2e8f0;
+    }
+    
+    /* Custom Divider */
+    hr {
+        margin: 2em 0;
+        border: 0;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .block-container { padding-top: 2rem; padding-bottom: 4rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -234,7 +314,7 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
         x_plot, T_vals, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
         x_mm = x_plot * 1000
         
-        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.06,
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08,
             subplot_titles=("🌡️ Profil de Température", "⬇️ Flux Normal (Q3)", "↔️ Flux Transverse (Q1)"))
         
         # --- AMÉLIORATION : Zones Matériaux et Lignes de Température ---
@@ -242,21 +322,21 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
         h2_mm = CONSTANTS['h2'] * 1000
         h3_mm = res['h3'] * 1000
         
-        # 1. Lignes de température critiques (visibilité améliorée)
-        fig.add_hline(y=CONSTANTS['T_crit'], line_color="red", line_dash="dash", row=1, col=1,
+        # 1. Lignes de température critiques
+        fig.add_hline(y=CONSTANTS['T_crit'], line_color="#ef4444", line_dash="dash", row=1, col=1,
                       line_width=2,
                       annotation_text="T° Critique", annotation_position="top right",
-                      annotation_font_size=12, annotation_font_color="red")
-        fig.add_hline(y=T_secu, line_color="orange", line_dash="dash", row=1, col=1,
+                      annotation_font_size=12, annotation_font_color="#ef4444")
+        fig.add_hline(y=T_secu, line_color="#f97316", line_dash="dash", row=1, col=1,
                       line_width=2,
                       annotation_text="T° Sécurité", annotation_position="bottom right",
-                      annotation_font_size=12, annotation_font_color="orange")
+                      annotation_font_size=12, annotation_font_color="#f97316")
 
-        # 2. Zones matériaux en fond (visibilité améliorée avec légende)
+        # 2. Zones matériaux en fond
         zones = [
-            {'x0': 0, 'x1': h1_mm, 'color': "#95a5a6", 'label': "Alliage"},
-            {'x0': h1_mm, 'x1': h1_mm + h2_mm, 'color': "#d35400", 'label': "Liaison"},
-            {'x0': h1_mm + h2_mm, 'x1': h1_mm + h2_mm + h3_mm, 'color': "#3498db", 'label': "Céramique"}
+            {'x0': 0, 'x1': h1_mm, 'color': "#cbd5e1", 'label': "Alliage"}, # Slate-300
+            {'x0': h1_mm, 'x1': h1_mm + h2_mm, 'color': "#fdba74", 'label': "Liaison"}, # Orange-300
+            {'x0': h1_mm + h2_mm, 'x1': h1_mm + h2_mm + h3_mm, 'color': "#bae6fd", 'label': "Céramique"} # Sky-200
         ]
         
         # Ajout de traces invisibles pour créer une légende pour les zones
@@ -274,12 +354,12 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
             for zone in zones:
                 fig.add_vrect(
                     x0=zone['x0'], x1=zone['x1'], 
-                    fillcolor=zone['color'], opacity=0.25, # Opacité légèrement augmentée
+                    fillcolor=zone['color'], opacity=0.3,
                     layer="below", line_width=0, 
                     row=r, col=1
                 )
         
-        # Courbes
+        # Courbes avec style premium
         fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3), showlegend=True), row=1, col=1)
         fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True), row=2, col=1)
         fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True), row=3, col=1)
@@ -290,12 +370,24 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
             max_y_range = max(T_vals.max(), CONSTANTS['T_crit']) * 1.02
             fig.update_yaxes(range=[min_y_range, max_y_range], row=1, col=1)
 
+        # Layout Premium
         fig.update_layout(
-            height=600, 
+            height=700, 
             showlegend=True, 
             hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="left", x=0)
+            legend=dict(
+                orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+                bgcolor="rgba(255,255,255,0.8)", bordercolor="#e2e8f0", borderwidth=1
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text'])
         )
+        
+        # Grilles
+        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
+        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
+
         st.plotly_chart(fig, use_container_width=True)
         
     # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION ---
@@ -424,19 +516,37 @@ def display_parametric_study_tab(beta_in, lw_in, t_bottom, t_top):
             with col_t:
                 fig_trend = px.line(df_results, x='alpha', y='T_h1', markers=True, 
                                     title="Température vs Alpha", labels={'alpha': 'Alpha', 'T_h1': 'T (°C)'})
-                fig_trend.update_traces(line_color=PALETTE['temp'])
-                fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='red', line_dash='dash', line_width=2,
+                fig_trend.update_traces(line_color=PALETTE['temp'], line_width=3, marker=dict(size=8, color=PALETTE['temp'], line=dict(width=1, color='white')))
+                fig_trend.add_hline(y=CONSTANTS['T_crit'], line_color='#ef4444', line_dash='dash', line_width=2,
                                     annotation_text="Limite Critique", annotation_position="top right",
-                                    annotation_font_size=12, annotation_font_color="red")
-                fig_trend.add_hline(y=T_secu, line_color='orange', line_dash='dash', line_width=2,
+                                    annotation_font_size=12, annotation_font_color="#ef4444")
+                fig_trend.add_hline(y=T_secu, line_color='#f97316', line_dash='dash', line_width=2,
                                     annotation_text="Limite Sécurité", annotation_position="top right",
-                                    annotation_font_size=12, annotation_font_color="orange")
+                                    annotation_font_size=12, annotation_font_color="#f97316")
+                
+                fig_trend.update_layout(
+                    plot_bgcolor='white', paper_bgcolor='white',
+                    font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text']),
+                    hovermode="x unified"
+                )
+                fig_trend.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+                fig_trend.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+                
                 st.plotly_chart(fig_trend, use_container_width=True)
     
             with col_q:
                 fig_flux = px.line(df_results, x='alpha', y='dQ1_h1', markers=True,
                                    title="Saut Flux Transverse vs Alpha", labels={'alpha': 'Alpha', 'dQ1_h1': 'ΔQ1 (W/m²)'})
-                fig_flux.update_traces(line_color=PALETTE['accent'])
+                fig_flux.update_traces(line_color=PALETTE['accent'], line_width=3, marker=dict(size=8, color=PALETTE['accent'], line=dict(width=1, color='white')))
+                
+                fig_flux.update_layout(
+                    plot_bgcolor='white', paper_bgcolor='white',
+                    font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text']),
+                    hovermode="x unified"
+                )
+                fig_flux.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+                fig_flux.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+                
                 st.plotly_chart(fig_flux, use_container_width=True)
     
             # --- TABLEAU DE RÉSULTATS ---
@@ -673,21 +783,17 @@ def display_3d_mapping_tab(lw_in, t_bottom, t_top):
             
 
             fig_3d.update_layout(
-
-                title=main_title,
-
+                title=dict(text=main_title, font=dict(size=20, color=PALETTE['text'])),
                 scene=dict(
-
-                    xaxis_title='Alpha (Épaisseur)', 
-
-                    yaxis_title='Beta (Anisotropie)', 
-
-                    zaxis_title=z_title
-
+                    xaxis=dict(title='Alpha (Épaisseur)', backgroundcolor='white', gridcolor=PALETTE['grid'], showbackground=True),
+                    yaxis=dict(title='Beta (Anisotropie)', backgroundcolor='white', gridcolor=PALETTE['grid'], showbackground=True),
+                    zaxis=dict(title=z_title, backgroundcolor='white', gridcolor=PALETTE['grid'], showbackground=True),
+                    camera=dict(eye=dict(x=1.5, y=1.5, z=1.2))
                 ),
-
-                height=650, margin=dict(l=0, r=0, b=0, t=30)
-
+                height=700, 
+                margin=dict(l=0, r=0, b=0, t=50),
+                paper_bgcolor='white',
+                font=dict(family="Inter, sans-serif", color=PALETTE['text'])
             )
 
             st.plotly_chart(fig_3d, use_container_width=True)
