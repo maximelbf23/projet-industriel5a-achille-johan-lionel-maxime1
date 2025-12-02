@@ -331,14 +331,20 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
         h3_mm = res['h3'] * 1000
         
         # 1. Lignes de température critiques
-        fig.add_hline(y=CONSTANTS['T_crit'], line_color="#ef4444", line_dash="dash", row=1, col=1,
-                      line_width=2,
-                      annotation_text="T° Critique", annotation_position="top right",
-                      annotation_font_size=12, annotation_font_color="#ef4444")
-        fig.add_hline(y=T_secu, line_color="#f97316", line_dash="dash", row=1, col=1,
-                      line_width=2,
-                      annotation_text="T° Sécurité", annotation_position="bottom right",
-                      annotation_font_size=12, annotation_font_color="#f97316")
+        # 1. Lignes de température critiques (Traces explicites pour visibilité et légende)
+        fig.add_trace(go.Scatter(
+            x=[x_mm[0], x_mm[-1]], y=[CONSTANTS['T_crit'], CONSTANTS['T_crit']],
+            mode='lines', name='T° Critique',
+            line=dict(color='#ef4444', width=2, dash='dash'),
+            hoverinfo='name+y'
+        ), row=1, col=1)
+        
+        fig.add_trace(go.Scatter(
+            x=[x_mm[0], x_mm[-1]], y=[T_secu, T_secu],
+            mode='lines', name='T° Sécurité',
+            line=dict(color='#f97316', width=2, dash='dash'),
+            hoverinfo='name+y'
+        ), row=1, col=1)
 
         # 2. Zones matériaux en fond
         zones = [
