@@ -300,52 +300,66 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
         
     # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION ---
     with col_impact:
-        st.markdown("#### 📊 Impact Global")
+        st.markdown("#### 📊 Impact Global (Approche Inverse)")
+        st.caption("Comparaison des épaisseurs requises pour maintenir la T° critique (1100°C) à l'interface.")
 
-        # La température cible pour le scénario catastrophe est toujours T_crit.
-        target_temp_cata = CONSTANTS['T_crit']
+        # La température cible est toujours T_crit.
+        target_temp = CONSTANTS['T_crit']
 
-        # Recherche de l'alpha "catastrophe" en utilisant les T° catastrophes.
-        cata_res = find_alpha_for_temp(
-            target_temp=target_temp_cata,
+        # 1. Calcul Alpha Nominal (Optimisé)
+        nom_res = find_alpha_for_temp(
+            target_temp=target_temp,
             beta=beta_in,
             lw=lw_in,
-            t_bottom=t_bottom_catastrophe_in, # Utilise le T_bottom du scénario catastrophe
-            t_top=t_top_catastrophe_in  # Utilise le T_top du scénario catastrophe
+            t_bottom=t_bottom,
+            t_top=t_top
         )
 
-        if cata_res['success']:
-            alpha_cata = cata_res['alpha']
-            st.markdown(f"Comparaison **Nominal** (α={alpha_in:.2f}) vs **Catastrophe** (α={alpha_cata:.2f})")
+        # 2. Calcul Alpha Catastrophe (Optimisé)
+        cata_res = find_alpha_for_temp(
+            target_temp=target_temp,
+            beta=beta_in,
+            lw=lw_in,
+            t_bottom=t_bottom_catastrophe_in,
+            t_top=t_top_catastrophe_in
+        )
 
-            # Calcul des impacts
-            h3_nom = res['h3']
-            h3_cata = alpha_cata * CONSTANTS['h1']
+        if nom_res['success'] and cata_res['success']:
+            alpha_nom = nom_res['alpha']
+            alpha_cata = cata_res['alpha']
             
-            def get_metrics(h_val):
-                """Calcule la surface, le volume, la masse et le coût sur la base de la géométrie de l'aube."""
+            # Calcul des impacts
+            def get_metrics(alpha_val):
+                h3_val = alpha_val * CONSTANTS['h1']
                 blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
-                vol = h_val * blade_surface
+                vol = h3_val * blade_surface
                 mass = vol * IMPACT_PARAMS['rho_ceram']
                 cost = vol * IMPACT_PARAMS['cost_per_vol']
                 co2 = mass * IMPACT_PARAMS['co2_per_kg']
-                return blade_surface, vol, mass, cost, co2
+                return h3_val, blade_surface, vol, mass, cost, co2
 
-            s1, v1, m1, c1, co1 = get_metrics(h3_nom)
-            s2, v2, m2, c2, co2 = get_metrics(h3_cata)
+            h3_n, s_n, v_n, m_n, c_n, co_n = get_metrics(alpha_nom)
+            h3_c, s_c, v_c, m_c, c_c, co_c = get_metrics(alpha_cata)
+            
+            # Comparaison avec l'actuel (Slider)
+            # On peut ajouter une colonne "Actuel" si besoin, mais la demande est Nominal vs Catastrophe
             
             df_imp = pd.DataFrame({
-                "Critère": ["Alpha (α) calculé", "Surface (m²)", "Volume (m³)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
-                "Nominal": [f"{alpha_in:.2f}", f"{s1:.4f}", f"{v1:.6f}", f"{m1:.3f}", f"{c1:.2f}", f"{co1:.2f}"],
-                "Catastrophe": [f"{alpha_cata:.2f}", f"{s2:.4f}", f"{v2:.6f}", f"{m2:.3f}", f"{c2:.2f}", f"{co2:.2f}"],
-                "Delta": [f"{alpha_cata - alpha_in:+.2f}", f"{s2-s1:+.4f}", f"{v2-v1:+.6f}", f"+{m2-m1:.3f}", f"+{c2-c1:.2f}", f"+{co2-co1:.2f}"]
+                "Critère": ["Alpha (α) requis", "Épaisseur (µm)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
+                "Nominal (Calculé)": [f"{alpha_nom:.2f}", f"{h3_n*1e6:.0f}", f"{m_n:.3f}", f"{c_n:.2f}", f"{co_n:.2f}"],
+                "Catastrophe (Calculé)": [f"{alpha_cata:.2f}", f"{h3_c*1e6:.0f}", f"{m_c:.3f}", f"{c_c:.2f}", f"{co_c:.2f}"],
+                "Delta": [f"{alpha_cata - alpha_nom:+.2f}", f"{(h3_c-h3_n)*1e6:+.0f}", f"+{m_c-m_n:.3f}", f"+{c_c-c_n:.2f}", f"+{co_c-co_n:.2f}"]
             })
             st.dataframe(df_imp, hide_index=True, use_container_width=True)
-            st.caption(f"Le scénario catastrophe est l'épaisseur requise pour maintenir {target_temp_cata}°C à l'interface avec T_bottom={t_bottom_catastrophe_in}°C et T_top={t_top_catastrophe_in}°C.")
+            
+            st.info(f"""
+            **Analyse :**
+            Pour résister au scénario catastrophe ({t_top_catastrophe_in}°C ext), il faut une épaisseur **{alpha_cata/alpha_nom:.1f}x** plus importante que pour le cas nominal ({t_top}°C ext).
+            Cela engendre un surcoût de **{c_c - c_n:.2f} €** par aube.
+            """)
 
         else:
-            st.warning(f"Calcul du scénario catastrophe impossible: {cata_res.get('message', 'Erreur inconnue')}")
-            st.markdown("Comparaison **Nominal** (actuel) vs **Catastrophe** (N/A)")
+            st.warning("Calcul impossible pour l'un des scénarios (hors limites).")
 
 
 
@@ -679,8 +693,14 @@ def display_3d_mapping_tab(lw_in, t_bottom, t_top):
             
 
             if "Flux" in current_type:
-
                 st.info("ℹ️ **Note :** Les variations brusques sur cette surface illustrent la réponse discrète du matériau aux changements de géométrie et d'anisotropie.")
+            else:
+                st.info("""
+                ℹ️ **Note Physique : Invariance selon Beta**
+                Vous remarquerez que la température ne varie pas selon l'axe Beta (Anisotropie).
+                C'est normal : le modèle 1D résout l'équation de la chaleur selon l'axe normal (x3). 
+                La température dépend uniquement de la conductivité normale ($K_{33}$), alors que Beta modifie la conductivité transverse ($K_{11}$).
+                """)
 
         else:
 
