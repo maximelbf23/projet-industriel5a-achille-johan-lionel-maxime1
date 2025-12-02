@@ -336,14 +336,16 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
             x=[x_mm[0], x_mm[-1]], y=[CONSTANTS['T_crit'], CONSTANTS['T_crit']],
             mode='lines', name='T° Critique',
             line=dict(color='#ef4444', width=2, dash='dash'),
-            hoverinfo='name+y'
+            hoverinfo='name+y',
+            legendgroup="limits", legendgrouptitle_text="Limites"
         ), row=1, col=1)
         
         fig.add_trace(go.Scatter(
             x=[x_mm[0], x_mm[-1]], y=[T_secu, T_secu],
             mode='lines', name='T° Sécurité',
             line=dict(color='#f97316', width=2, dash='dash'),
-            hoverinfo='name+y'
+            hoverinfo='name+y',
+            legendgroup="limits"
         ), row=1, col=1)
 
         # 2. Zones matériaux en fond
@@ -374,9 +376,9 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
                 )
         
         # Courbes avec style premium
-        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3), showlegend=True), row=1, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True), row=2, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True), row=3, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3), showlegend=True, legendgroup="curves", legendgrouptitle_text="Profils"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True, legendgroup="curves"), row=2, col=1)
+        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True, legendgroup="curves"), row=3, col=1)
         
         # Mettre à jour la plage de l'axe Y pour inclure les températures critiques
         if len(T_vals) > 0:
