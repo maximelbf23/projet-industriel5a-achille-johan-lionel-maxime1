@@ -315,162 +315,159 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
     </div>
     """, unsafe_allow_html=True)
 
-    # --- C. GRAPHIQUES DÉTAILLÉS ---
-    col_graphes, col_impact = st.columns([2, 1])
+    # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION (Full Width) ---
+    st.markdown("#### 📊 Impact Global (Approche Inverse)")
+    st.caption("Comparaison des épaisseurs requises pour maintenir la T° critique (1100°C) à l'interface.")
+
+    # La température cible est toujours T_crit.
+    target_temp = CONSTANTS['T_crit']
+
+    # 1. Calcul Alpha Nominal (Optimisé)
+    nom_res = find_alpha_for_temp(
+        target_temp=target_temp,
+        beta=beta_in,
+        lw=lw_in,
+        t_bottom=t_bottom,
+        t_top=t_top
+    )
+
+    # 2. Calcul Alpha Catastrophe (Optimisé)
+    cata_res = find_alpha_for_temp(
+        target_temp=target_temp,
+        beta=beta_in,
+        lw=lw_in,
+        t_bottom=t_bottom_catastrophe_in,
+        t_top=t_top_catastrophe_in
+    )
+
+    if nom_res['success'] and cata_res['success']:
+        alpha_nom = nom_res['alpha']
+        alpha_cata = cata_res['alpha']
+        
+        # Calcul des impacts
+        def get_metrics(alpha_val):
+            h3_val = alpha_val * CONSTANTS['h1']
+            blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
+            vol = h3_val * blade_surface
+            mass = vol * IMPACT_PARAMS['rho_ceram']
+            cost = vol * IMPACT_PARAMS['cost_per_vol']
+            co2 = mass * IMPACT_PARAMS['co2_per_kg']
+            return h3_val, blade_surface, vol, mass, cost, co2
+
+        # 1. Nominal Optimisé
+        h3_n, s_n, v_n, m_n, c_n, co_n = get_metrics(alpha_nom)
+        # 2. Catastrophe Optimisé
+        h3_c, s_c, v_c, m_c, c_c, co_c = get_metrics(alpha_cata)
+        # 3. Simulé (Manuel)
+        h3_s, s_s, v_s, m_s, c_s, co_s = get_metrics(alpha_in)
+        
+        df_imp = pd.DataFrame({
+            "Critère": ["Alpha (α)", "Épaisseur (µm)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
+            "Nominal (Calculé)": [f"{alpha_nom:.2f}", f"{h3_n*1e6:.0f}", f"{m_n:.3f}", f"{c_n:.2f}", f"{co_n:.2f}"],
+            "Catastrophe (Calculé)": [f"{alpha_cata:.2f}", f"{h3_c*1e6:.0f}", f"{m_c:.3f}", f"{c_c:.2f}", f"{co_c:.2f}"],
+            "Simulé (Manuel)": [f"{alpha_in:.2f}", f"{h3_s*1e6:.0f}", f"{m_s:.3f}", f"{c_s:.2f}", f"{co_s:.2f}"]
+        })
+        st.dataframe(df_imp, hide_index=True, use_container_width=True)
+        
+        st.info(f"""
+        **Analyse :**
+        - **Nominal (Calculé)** : Épaisseur min. pour T_top={t_top}°C.
+        - **Catastrophe (Calculé)** : Épaisseur min. pour T_top={t_top_catastrophe_in}°C.
+        - **Simulé (Manuel)** : Valeurs actuelles avec votre Alpha={alpha_in:.2f}.
+        """)
+
+    else:
+        st.warning("Calcul impossible pour l'un des scénarios (hors limites).")
+
+    st.divider()
+
+    # --- C. GRAPHIQUES DÉTAILLÉS (Full Width) ---
+    x_plot, T_vals, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
+    x_mm = x_plot * 1000
     
-    with col_graphes:
-        x_plot, T_vals, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
-        x_mm = x_plot * 1000
-        
-        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08,
-            subplot_titles=("🌡️ Profil de Température", "⬇️ Flux Normal (Q3)", "↔️ Flux Transverse (Q1)"))
-        
-        # --- AMÉLIORATION : Zones Matériaux et Lignes de Température ---
-        h1_mm = CONSTANTS['h1'] * 1000
-        h2_mm = CONSTANTS['h2'] * 1000
-        h3_mm = res['h3'] * 1000
-        
-        # 1. Lignes de température critiques
-        # 1. Lignes de température critiques (Traces explicites pour visibilité et légende)
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08,
+        subplot_titles=("🌡️ Profil de Température", "⬇️ Flux Normal (Q3)", "↔️ Flux Transverse (Q1)"))
+    
+    # --- AMÉLIORATION : Zones Matériaux et Lignes de Température ---
+    h1_mm = CONSTANTS['h1'] * 1000
+    h2_mm = CONSTANTS['h2'] * 1000
+    h3_mm = res['h3'] * 1000
+    
+    # 1. Lignes de température critiques (Traces explicites pour visibilité et légende)
+    fig.add_trace(go.Scatter(
+        x=[x_mm[0], x_mm[-1]], y=[CONSTANTS['T_crit'], CONSTANTS['T_crit']],
+        mode='lines', name='T° Critique',
+        line=dict(color='#ef4444', width=2, dash='dash'),
+        hoverinfo='name+y',
+        legendgroup="limits", legendgrouptitle_text="Limites"
+    ), row=1, col=1)
+    
+    fig.add_trace(go.Scatter(
+        x=[x_mm[0], x_mm[-1]], y=[T_secu, T_secu],
+        mode='lines', name='T° Sécurité',
+        line=dict(color='#f97316', width=2, dash='dash'),
+        hoverinfo='name+y',
+        legendgroup="limits"
+    ), row=1, col=1)
+
+    # 2. Zones matériaux en fond
+    zones = [
+        {'x0': 0, 'x1': h1_mm, 'color': "#cbd5e1", 'label': "Alliage"}, # Slate-300
+        {'x0': h1_mm, 'x1': h1_mm + h2_mm, 'color': "#fdba74", 'label': "Liaison"}, # Orange-300
+        {'x0': h1_mm + h2_mm, 'x1': h1_mm + h2_mm + h3_mm, 'color': "#bae6fd", 'label': "Céramique"} # Sky-200
+    ]
+    
+    # Ajout de traces invisibles pour créer une légende pour les zones
+    for i, zone in enumerate(zones):
         fig.add_trace(go.Scatter(
-            x=[x_mm[0], x_mm[-1]], y=[CONSTANTS['T_crit'], CONSTANTS['T_crit']],
-            mode='lines', name='T° Critique',
-            line=dict(color='#ef4444', width=2, dash='dash'),
-            hoverinfo='name+y',
-            legendgroup="limits", legendgrouptitle_text="Limites"
-        ), row=1, col=1)
-        
-        fig.add_trace(go.Scatter(
-            x=[x_mm[0], x_mm[-1]], y=[T_secu, T_secu],
-            mode='lines', name='T° Sécurité',
-            line=dict(color='#f97316', width=2, dash='dash'),
-            hoverinfo='name+y',
-            legendgroup="limits"
+            x=[None], y=[None], mode='markers',
+            marker=dict(size=12, color=zone['color'], symbol='square'),
+            showlegend=True, name=zone['label'],
+            legendgroup=f"zones",
+            legendgrouptitle_text="Couches" if i == 0 else ""
         ), row=1, col=1)
 
-        # 2. Zones matériaux en fond
-        zones = [
-            {'x0': 0, 'x1': h1_mm, 'color': "#cbd5e1", 'label': "Alliage"}, # Slate-300
-            {'x0': h1_mm, 'x1': h1_mm + h2_mm, 'color': "#fdba74", 'label': "Liaison"}, # Orange-300
-            {'x0': h1_mm + h2_mm, 'x1': h1_mm + h2_mm + h3_mm, 'color': "#bae6fd", 'label': "Céramique"} # Sky-200
-        ]
+    # Création des rectangles de couleur pour les zones
+    for r in [1, 2, 3]:
+        for zone in zones:
+            fig.add_vrect(
+                x0=zone['x0'], x1=zone['x1'], 
+                fillcolor=zone['color'], opacity=0.3,
+                layer="below", line_width=0, 
+                row=r, col=1
+            )
+    
+    # Courbes avec style premium
+    fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3), showlegend=True, legendgroup="curves", legendgrouptitle_text="Profils"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True, legendgroup="curves"), row=2, col=1)
+    fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True, legendgroup="curves"), row=3, col=1)
+    
+    # Mettre à jour la plage de l'axe Y pour inclure les températures critiques
+    if len(T_vals) > 0:
+        min_y_range = min(T_vals.min(), T_secu) * 0.98
+        max_y_range = max(T_vals.max(), CONSTANTS['T_crit']) * 1.02
+        fig.update_yaxes(range=[min_y_range, max_y_range], row=1, col=1)
+
+    # Layout Premium
+    fig.update_layout(
+        height=700, 
+        showlegend=True, 
+        hovermode="x unified",
+        legend=dict(
+            orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+            bgcolor="rgba(255,255,255,0.8)", bordercolor="#e2e8f0", borderwidth=1
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text'])
+    )
+    
+    # Grilles
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
+
+    st.plotly_chart(fig, use_container_width=True)
         
-        # Ajout de traces invisibles pour créer une légende pour les zones
-        for i, zone in enumerate(zones):
-            fig.add_trace(go.Scatter(
-                x=[None], y=[None], mode='markers',
-                marker=dict(size=12, color=zone['color'], symbol='square'),
-                showlegend=True, name=zone['label'],
-                legendgroup=f"zones",
-                legendgrouptitle_text="Couches" if i == 0 else ""
-            ), row=1, col=1)
-
-        # Création des rectangles de couleur pour les zones
-        for r in [1, 2, 3]:
-            for zone in zones:
-                fig.add_vrect(
-                    x0=zone['x0'], x1=zone['x1'], 
-                    fillcolor=zone['color'], opacity=0.3,
-                    layer="below", line_width=0, 
-                    row=r, col=1
-                )
-        
-        # Courbes avec style premium
-        fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3), showlegend=True, legendgroup="curves", legendgrouptitle_text="Profils"), row=1, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True, legendgroup="curves"), row=2, col=1)
-        fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True, legendgroup="curves"), row=3, col=1)
-        
-        # Mettre à jour la plage de l'axe Y pour inclure les températures critiques
-        if len(T_vals) > 0:
-            min_y_range = min(T_vals.min(), T_secu) * 0.98
-            max_y_range = max(T_vals.max(), CONSTANTS['T_crit']) * 1.02
-            fig.update_yaxes(range=[min_y_range, max_y_range], row=1, col=1)
-
-        # Layout Premium
-        fig.update_layout(
-            height=700, 
-            showlegend=True, 
-            hovermode="x unified",
-            legend=dict(
-                orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-                bgcolor="rgba(255,255,255,0.8)", bordercolor="#e2e8f0", borderwidth=1
-            ),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text'])
-        )
-        
-        # Grilles
-        fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
-        fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
-
-        st.plotly_chart(fig, use_container_width=True)
-        
-    # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION ---
-    with col_impact:
-        st.markdown("#### 📊 Impact Global (Approche Inverse)")
-        st.caption("Comparaison des épaisseurs requises pour maintenir la T° critique (1100°C) à l'interface.")
-
-        # La température cible est toujours T_crit.
-        target_temp = CONSTANTS['T_crit']
-
-        # 1. Calcul Alpha Nominal (Optimisé)
-        nom_res = find_alpha_for_temp(
-            target_temp=target_temp,
-            beta=beta_in,
-            lw=lw_in,
-            t_bottom=t_bottom,
-            t_top=t_top
-        )
-
-        # 2. Calcul Alpha Catastrophe (Optimisé)
-        cata_res = find_alpha_for_temp(
-            target_temp=target_temp,
-            beta=beta_in,
-            lw=lw_in,
-            t_bottom=t_bottom_catastrophe_in,
-            t_top=t_top_catastrophe_in
-        )
-
-        if nom_res['success'] and cata_res['success']:
-            alpha_nom = nom_res['alpha']
-            alpha_cata = cata_res['alpha']
-            
-            # Calcul des impacts
-            def get_metrics(alpha_val):
-                h3_val = alpha_val * CONSTANTS['h1']
-                blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
-                vol = h3_val * blade_surface
-                mass = vol * IMPACT_PARAMS['rho_ceram']
-                cost = vol * IMPACT_PARAMS['cost_per_vol']
-                co2 = mass * IMPACT_PARAMS['co2_per_kg']
-                return h3_val, blade_surface, vol, mass, cost, co2
-
-            # 1. Nominal Optimisé
-            h3_n, s_n, v_n, m_n, c_n, co_n = get_metrics(alpha_nom)
-            # 2. Catastrophe Optimisé
-            h3_c, s_c, v_c, m_c, c_c, co_c = get_metrics(alpha_cata)
-            # 3. Simulé (Manuel)
-            h3_s, s_s, v_s, m_s, c_s, co_s = get_metrics(alpha_in)
-            
-            df_imp = pd.DataFrame({
-                "Critère": ["Alpha (α)", "Épaisseur (µm)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
-                "Nominal (Calculé)": [f"{alpha_nom:.2f}", f"{h3_n*1e6:.0f}", f"{m_n:.3f}", f"{c_n:.2f}", f"{co_n:.2f}"],
-                "Catastrophe (Calculé)": [f"{alpha_cata:.2f}", f"{h3_c*1e6:.0f}", f"{m_c:.3f}", f"{c_c:.2f}", f"{co_c:.2f}"],
-                "Simulé (Manuel)": [f"{alpha_in:.2f}", f"{h3_s*1e6:.0f}", f"{m_s:.3f}", f"{c_s:.2f}", f"{co_s:.2f}"]
-            })
-            st.dataframe(df_imp, hide_index=True, use_container_width=True)
-            
-            st.info(f"""
-            **Analyse :**
-            - **Nominal (Calculé)** : Épaisseur min. pour T_top={t_top}°C.
-            - **Catastrophe (Calculé)** : Épaisseur min. pour T_top={t_top_catastrophe_in}°C.
-            - **Simulé (Manuel)** : Valeurs actuelles avec votre Alpha={alpha_in:.2f}.
-            """)
-
-        else:
-            st.warning("Calcul impossible pour l'un des scénarios (hors limites).")
-
 
 
 def display_parametric_study_tab(beta_in, lw_in, t_bottom, t_top):
