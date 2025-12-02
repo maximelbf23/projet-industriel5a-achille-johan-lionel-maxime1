@@ -338,24 +338,26 @@ def display_detailed_analysis_tab(alpha_in, beta_in, lw_in, t_bottom, t_top):
                 co2 = mass * IMPACT_PARAMS['co2_per_kg']
                 return h3_val, blade_surface, vol, mass, cost, co2
 
+            # 1. Nominal Optimisé
             h3_n, s_n, v_n, m_n, c_n, co_n = get_metrics(alpha_nom)
+            # 2. Catastrophe Optimisé
             h3_c, s_c, v_c, m_c, c_c, co_c = get_metrics(alpha_cata)
-            
-            # Comparaison avec l'actuel (Slider)
-            # On peut ajouter une colonne "Actuel" si besoin, mais la demande est Nominal vs Catastrophe
+            # 3. Simulé (Manuel)
+            h3_s, s_s, v_s, m_s, c_s, co_s = get_metrics(alpha_in)
             
             df_imp = pd.DataFrame({
-                "Critère": ["Alpha (α) requis", "Épaisseur (µm)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
+                "Critère": ["Alpha (α)", "Épaisseur (µm)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
                 "Nominal (Calculé)": [f"{alpha_nom:.2f}", f"{h3_n*1e6:.0f}", f"{m_n:.3f}", f"{c_n:.2f}", f"{co_n:.2f}"],
                 "Catastrophe (Calculé)": [f"{alpha_cata:.2f}", f"{h3_c*1e6:.0f}", f"{m_c:.3f}", f"{c_c:.2f}", f"{co_c:.2f}"],
-                "Delta": [f"{alpha_cata - alpha_nom:+.2f}", f"{(h3_c-h3_n)*1e6:+.0f}", f"+{m_c-m_n:.3f}", f"+{c_c-c_n:.2f}", f"+{co_c-co_n:.2f}"]
+                "Simulé (Manuel)": [f"{alpha_in:.2f}", f"{h3_s*1e6:.0f}", f"{m_s:.3f}", f"{c_s:.2f}", f"{co_s:.2f}"]
             })
             st.dataframe(df_imp, hide_index=True, use_container_width=True)
             
             st.info(f"""
             **Analyse :**
-            Pour résister au scénario catastrophe ({t_top_catastrophe_in}°C ext), il faut une épaisseur **{alpha_cata/alpha_nom:.1f}x** plus importante que pour le cas nominal ({t_top}°C ext).
-            Cela engendre un surcoût de **{c_c - c_n:.2f} €** par aube.
+            - **Nominal (Calculé)** : Épaisseur min. pour T_top={t_top}°C.
+            - **Catastrophe (Calculé)** : Épaisseur min. pour T_top={t_top_catastrophe_in}°C.
+            - **Simulé (Manuel)** : Valeurs actuelles avec votre Alpha={alpha_in:.2f}.
             """)
 
         else:
