@@ -66,7 +66,15 @@ def find_alpha_for_temp(target_temp, beta, lw, t_bottom, t_top, alpha_min=0.01, 
 # 1. CONFIGURATION & STYLE (CSS "Premium")
 # ==========================================
 # --- Palette de couleurs pour la cohérence ---
-PALETTE = {'temp': '#2980b9', 'flux_norm': '#c0392b', 'flux_trans': '#27ae60', 'accent': '#f39c12'}
+PALETTE = {
+    'temp': '#3b82f6',       # Blue-500
+    'flux_norm': '#ef4444',  # Red-500
+    'flux_trans': '#10b981', # Emerald-500
+    'accent': '#f59e0b',     # Amber-500
+    'grid': '#e2e8f0',       # Slate-200
+    'text': '#334155',       # Slate-700
+    'bg': '#ffffff'          # White
+}
 
 st.set_page_config(
     page_title="TBC Analysis Dashboard",
