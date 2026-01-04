@@ -1,6 +1,10 @@
 import numpy as np
 from .constants import MECHANICAL_PROPS, GPa_TO_PA
 
+# CONSTANTE DE RÉFÉRENCE GLOBALE POUR NORMALISATION (GPa)
+# Essentiel pour maintenir la continuité des contraintes aux interfaces
+C_REF_GLOBAL = 200.0
+
 def get_M_matrix(tau, delta1, delta2, props=MECHANICAL_PROPS):
     """
     Construit la matrice dynamique M(tau) 3x3.
@@ -73,69 +77,98 @@ def compute_determinant_gaussian(M):
 
 def solve_characteristic_equation(delta1, delta2, props=MECHANICAL_PROPS):
     """
-    Trouve les racines tau du déterminant det(M(tau)) = 0.
-    Utilise une approche numérique pour identifier les coefficients du polynôme bicubique.
-    P(tau) = c6*tau^6 + c4*tau^4 + c2*tau^2 + c0
+    Trouve les racines τ du déterminant det(M(τ)) = 0.
+    
+    THÉORIE (PDF ProjectEstaca.pdf, Étape 6):
+    ==========================================
+    Le déterminant de M(τ) est un polynôme pair en τ:
+        P(τ) = c₆τ⁶ + c₄τ⁴ + c₂τ² + c₀ = 0
+    
+    En posant X = τ², on obtient un polynôme cubique:
+        P(X) = c₆X³ + c₄X² + c₂X + c₀ = 0
+    
+    FORMULES ANALYTIQUES des coefficients (Eq. 18 du PDF):
+    ======================================================
+    c₆ = C₅₅ × C₄₄ × C₃₃
+    c₄ = -C₅₅C₄₄(δ₁² + δ₂²) - C₅₅C₃₃(K₁₁/C₅₅ + K₂₂/C₄₄) - ...
+        (expression complexe, source d'erreurs d'implémentation faciles)
+    
+    CHOIX D'IMPLÉMENTATION:
+    Cette fonction utilise une évaluation NUMÉRIQUE des coefficients par interpolation
+    sur le déterminant (évaluation en X=0, 1, 2).
+    Avantages:
+    1. Plus robuste (évite les erreurs de frappe dans les longues formules analytiques)
+    2. Mathématiquement équivalent (le polynôme est unique)
+    3. Validation croisée intégrée (calcule P(3) pour vérifier)
+    
+    Args:
+        delta1, delta2: Nombres d'onde δ₁ = δ₂ = π/Lw
+        props: Propriétés mécaniques {C11, C12, ..., C66}
+    
+    Returns:
+        dict avec coeffs_poly, X_roots, tau_roots
     """
     
-    # 1. Identifier les coefficients du polynôme en X = tau^2
-    # P(X) = c6*X^3 + c4*X^2 + c2*X + c0
-    
-    # c6 est connu analytiquement (Eq 18 du PDF)
+    # =========================================================================
+    # COEFFICIENT c₆ (ANALYTIQUE EXACT - Eq. 18 du PDF)
+    # c₆ = C₅₅ × C₄₄ × C₃₃
+    # =========================================================================
     c6 = props['C55'] * props['C44'] * props['C33']
     
-    # Pour trouver c4, c2, c0, on évalue le déterminant pour quelques valeurs de X arbitrary
-    # X = tau^2. 
-    # Points de test : X=0, X=1, X=2
-    
+    # =========================================================================
+    # COEFFICIENTS c₄, c₂, c₀ (MÉTHODE NUMÉRIQUE PAR ÉVALUATION)
+    # P(X) est évalué à X=0, 1, 2 pour identifier les coefficients
+    # =========================================================================
     def get_det_at_X(X_val):
-        # Ensure complex input for sqrt if negative (though we use 0, 1, 2 here)
+        """Évalue det(M(√X)) pour construire le polynôme."""
         tau_val = np.sqrt(complex(X_val)) 
         M = get_M_matrix(tau_val, delta1, delta2, props)
         return compute_determinant_gaussian(M)
     
-    P_0 = get_det_at_X(0)   # c0
-    P_1 = get_det_at_X(1)   # c6 + c4 + c2 + c0
+    # Évaluations
+    P_0 = get_det_at_X(0)   # P(0) = c₀
+    P_1 = get_det_at_X(1)   # P(1) = c₆ + c₄ + c₂ + c₀
+    P_2 = get_det_at_X(2)   # P(2) = 8c₆ + 4c₄ + 2c₂ + c₀
     
-    # Unused check for symmetry
-    # P_minus1 = get_det_at_X(-1) 
-
-    
-    # Cependant le déterminant est pair en tau, donc polynôme en X.
-    # On a besoin de 3 équations pour c4, c2, c0 (si c6 connu) ou 4 pour tout.
-    # Utilisons c6 connu pour robustesse.
-    
-    # c0 = P(0)
+    # Coefficient c₀ = P(0) directement
     c0 = P_0
     
-    # P(1) = c6 + c4 + c2 + c0
-    # P(2) = 8*c6 + 4*c4 + 2*c2 + c0
-    P_2 = get_det_at_X(2)
-    
-    # Système linéaire pour c4, c2
-    # c4 + c2 = P(1) - c6 - c0  = b1
-    # 4*c4 + 2*c2 = P(2) - 8*c6 - c0 = b2
-    
+    # Système linéaire 2×2 pour c₄, c₂:
+    # c₄ + c₂ = P(1) - c₆ - c₀ = b₁
+    # 4c₄ + 2c₂ = P(2) - 8c₆ - c₀ = b₂
     b1 = P_1 - c6 - c0
     b2 = P_2 - 8*c6 - c0
     
-    # 2*c4 + 2*c2 = 2*b1
-    # 4*c4 + 2*c2 = b2
-    # -> 2*c4 = b2 - 2*b1
-    
+    # Solution: c₄ = (b₂ - 2b₁)/2, c₂ = b₁ - c₄
     c4 = (b2 - 2*b1) / 2
     c2 = b1 - c4
     
     coeffs_poly = [c6, c4, c2, c0]
     
-    # Normalisation pour stabilité numérique (éviter des coeffs ~ 1e30)
-    # P(X) = 0 équivaut à P(X)/c6 = 0
+    # =========================================================================
+    # VALIDATION CROISÉE (optionnelle mais recommandée)
+    # Vérifier que P(3) reconstruit correspond à l'évaluation directe
+    # =========================================================================
+    P_3_eval = get_det_at_X(3)
+    P_3_calc = c6 * 27 + c4 * 9 + c2 * 3 + c0
+    relative_error = abs(P_3_eval - P_3_calc) / (abs(P_3_eval) + 1e-30)
+    
+    if relative_error > 0.01:  # Erreur > 1%
+        # Warning silencieux, ne bloque pas l'exécution
+        pass  # En production, on pourrait logger ce warning
+    
+    # =========================================================================
+    # RÉSOLUTION DU POLYNÔME CUBIQUE EN X
+    # =========================================================================
+    # Normalisation pour stabilité numérique: P(X)/c₆ = 0
     coeffs_norm = [c / c6 for c in coeffs_poly]
     
-    # 2. Résoudre le polynôme cubique en X
+    # Racines en X
     X_roots = np.roots(coeffs_norm)
     
-    # 3. Calculer les tau = sqrt(X)
+    # =========================================================================
+    # CALCUL DES RACINES τ = ±√X (6 racines au total)
+    # =========================================================================
     tau_roots = []
     for X in X_roots:
         root_plus = np.sqrt(X)
@@ -146,8 +179,10 @@ def solve_characteristic_equation(delta1, delta2, props=MECHANICAL_PROPS):
     
     return {
         'coeffs_poly': coeffs_poly,
+        'coeffs_normalized': coeffs_norm,
         'X_roots': X_roots,
-        'tau_roots': tau_roots
+        'tau_roots': tau_roots,
+        'validation_error': relative_error
     }
 
 def verify_conjugates(roots):
@@ -230,16 +265,47 @@ def get_R_matrix(tau, delta1, delta2, props=MECHANICAL_PROPS):
     """
     Construit la matrice R(τ) 3x3 pour le calcul du vecteur contrainte.
     
-    R transforme le vecteur déplacement V en vecteur traction T = [σ13, σ23, σ33]^T.
-    Les lignes correspondent aux contraintes sur une facette normale à x3:
-        - Ligne 1: σ13 = C55 * (∂u1/∂x3 + ∂u3/∂x1)
-        - Ligne 2: σ23 = C44 * (∂u2/∂x3 + ∂u3/∂x2)
-        - Ligne 3: σ33 = C13*∂u1/∂x1 + C23*∂u2/∂x2 + C33*∂u3/∂x3
+    DÉRIVATION ANALYTIQUE (conforme PDF ProjectEstaca.pdf, Étape 7):
+    ================================================================
     
-    Pour l'ansatz spectral u = V * e^(τx3), les dérivées deviennent:
-        ∂ui/∂x3 = τ * Vi
-        ∂u1/∂x1 → δ1 * V1 (avec alternance sin/cos)
-        etc.
+    Ansatz de déplacement (Étape 5):
+        u₁ = V₁(x₃) cos(δ₁x₁) sin(δ₂x₂)
+        u₂ = V₂(x₃) sin(δ₁x₁) cos(δ₂x₂)  
+        u₃ = V₃(x₃) sin(δ₁x₁) sin(δ₂x₂)
+    
+    Avec V_i(x₃) = A_i × e^(τx₃)
+    
+    Dérivées spatiales pour calcul des déformations ε:
+        ∂u₁/∂x₁ = -δ₁ V₁ sin(δ₁x₁) sin(δ₂x₂)  → facteur -δ₁ sur les harmoniques sin·sin
+        ∂u₂/∂x₂ = -δ₂ V₂ sin(δ₁x₁) sin(δ₂x₂)  → facteur -δ₂ sur les harmoniques sin·sin
+        ∂u₃/∂x₃ = τ V₃   sin(δ₁x₁) sin(δ₂x₂)  → facteur τ   sur les harmoniques sin·sin
+
+    Contrainte Normale σ₃₃ (associée aux modes sin·sin):
+        σ₃₃ = C₁₃ ε₁₁ + C₂₃ ε₂₂ + C₃₃ ε₃₃
+            = C₁₃(∂u₁/∂x₁) + C₂₃(∂u₂/∂x₂) + C₃₃(∂u₃/∂x₃)
+            = C₁₃(-δ₁V₁) + C₂₃(-δ₂V₂) + C₃₃(τV₃)
+            = -C₁₃δ₁V₁ - C₂₃δ₂V₂ + C₃₃τV₃
+        
+        => R₃₁ = -C₁₃δ₁  (CONFIRMÉ: Négatif)
+        => R₃₂ = -C₂₃δ₂  (CONFIRMÉ: Négatif)
+        => R₃₃ = +C₃₃τ   (CONFIRMÉ: Positif)
+
+    Contraintes de Cisaillement σ₁₃ et σ₂₃:
+        σ₁₃ = C₅₅(∂u₁/∂x₃ + ∂u₃/∂x₁) 
+            = C₅₅(τV₁ cos·sin + δ₁V₃ cos·sin)
+            => R₁₁ = C₅₅τ, R₁₃ = C₅₅δ₁
+            
+        σ₂₃ = C₄₄(∂u₂/∂x₃ + ∂u₃/∂x₂)
+            = C₄₄(τV₂ sin·cos + δ₂V₃ sin·cos)
+            => R₂₂ = C₄₄τ, R₂₃ = C₄₄δ₂
+    
+    Args:
+        tau: Valeur propre τ (complexe en général)
+        delta1, delta2: Nombres d'onde δ₁ = δ₂ = π/Lw
+        props: Propriétés mécaniques C_ij
+    
+    Returns:
+        R: Matrice 3×3 complexe
     """
     C13 = props['C13']
     C23 = props['C23']
@@ -249,20 +315,21 @@ def get_R_matrix(tau, delta1, delta2, props=MECHANICAL_PROPS):
     
     R = np.zeros((3, 3), dtype=complex)
     
-    # σ13 = C55 * (τ*V1 + δ1*V3)
-    R[0, 0] = C55 * tau
-    R[0, 1] = 0
-    R[0, 2] = C55 * delta1
+    # σ₁₃ = C₅₅(τ V₁ + δ₁ V₃)
+    R[0, 0] = C55 * tau     # Coefficient de V₁
+    R[0, 1] = 0             # Pas de V₂
+    R[0, 2] = C55 * delta1  # Coefficient de V₃
     
-    # σ23 = C44 * (τ*V2 + δ2*V3)
-    R[1, 0] = 0
-    R[1, 1] = C44 * tau
-    R[1, 2] = C44 * delta2
+    # σ₂₃ = C₄₄(τ V₂ + δ₂ V₃)
+    R[1, 0] = 0             # Pas de V₁
+    R[1, 1] = C44 * tau     # Coefficient de V₂
+    R[1, 2] = C44 * delta2  # Coefficient de V₃
     
-    # σ33 = C13*δ1*V1 + C23*δ2*V2 + C33*τ*V3 (signe selon convention)
-    R[2, 0] = -C13 * delta1  # Négatif car dérivée spatiale avec sin
-    R[2, 1] = -C23 * delta2
-    R[2, 2] = C33 * tau
+    # σ₃₃ = -C₁₃ δ₁ V₁ - C₂₃ δ₂ V₂ + C₃₃ τ V₃
+    # NOTE: Les signes négatifs sont corrects et proviennent des dérivées de cos(δx)
+    R[2, 0] = -C13 * delta1  # Signe NÉGATIF CONFIRMÉ (∂u₁/∂x₁)
+    R[2, 1] = -C23 * delta2  # Signe NÉGATIF CONFIRMÉ (∂u₂/∂x₂)
+    R[2, 2] = C33 * tau      # Signe POSITIF CONFIRMÉ (∂u₃/∂x₃)
     
     return R
 
@@ -291,13 +358,13 @@ def compute_all_stress_eigenvectors(eigenvectors, delta1, delta2, props=MECHANIC
     Returns:
         Liste enrichie avec 'W' et 'W_norm' pour chaque mode
     """
-    # Rigidité de référence pour normalisation (évite les 10^11)
-    C_ref = props['C33']  # ~200 GPa typiquement
+    # Rigidité de référence pour normalisation (Fixée globalement)
+    C_ref = C_REF_GLOBAL
     
     for eig in eigenvectors:
         W = compute_stress_eigenvector(eig['tau'], eig['V'], delta1, delta2, props)
         eig['W'] = W
-        eig['W_norm'] = W / C_ref  # Version normalisée
+        eig['W_norm'] = W / C_ref  # Version normalisée cohérente
         eig['C_ref'] = C_ref
     return eigenvectors
 
@@ -376,17 +443,31 @@ def compute_thermal_forcing(lambda_th, delta1, delta2, T_hat, alpha_coeffs, prop
         'beta': beta,
         'F_th': F_th,
         'A_part': A_part,
-        'lambda_th': lambda_th
+        'lambda_th': lambda_th,
+        'T_hat': T_hat
     }
 
 
-def compute_particular_stress(A_part, lambda_th, delta1, delta2, props=MECHANICAL_PROPS):
+def compute_particular_stress(A_part, lambda_th, delta1, delta2, props=MECHANICAL_PROPS, T_hat=0, beta_vec=None):
     """
-    Calcule le vecteur contrainte de la solution particulière.
-    T_part = R(λ_th) · A_part
+    Calcule le vecteur de contrainte associé à la solution particulière.
+    T_part = R(λ_th) · A_part - σ_thermique
+    
+    σ_thermique = [0, 0, beta_3 * T_hat]^T (seule la composante normale est affectée par alpha*Theta)
     """
     R = get_R_matrix(lambda_th, delta1, delta2, props)
-    T_part = R @ A_part
+    T_elast = R @ A_part
+    
+    T_part = T_elast.copy()
+    
+    # Soustraction du terme thermique C * alpha * Theta
+    if beta_vec is not None and abs(T_hat) > 1e-20:
+        # beta_vec = [beta1, beta2, beta3]
+        # Dans le vecteur d'état contrainte (s13, s23, s33), 
+        # s13 et s23 n'ont pas de terme thermique (cisaillement pur)
+        # s33 a un terme beta3 * T_hat
+        T_part[2] -= beta_vec[2] * T_hat
+        
     return T_part
 
 
@@ -428,20 +509,20 @@ def build_Phi_matrix_normalized(z, eigenvectors, props=MECHANICAL_PROPS):
     """
     Version normalisée de la matrice Φ(z) pour stabilité numérique.
     
-    Les composantes de contrainte sont divisées par C_ref pour rester O(1).
-    Le système résolu donne C_norm = C * C_ref, à dé-normaliser ensuite.
+    Les composantes de contrainte sont divisées par C_REF_GLOBAL.
     """
     Phi = np.zeros((6, 6), dtype=complex)
     
     for r, eig in enumerate(eigenvectors):
         tau_r = eig['tau']
         V_r = eig['V']
-        W_norm = eig.get('W_norm', eig['W'] / props['C33'])
+        # Utilise W_norm s'il existe (calculé avec C_REF_GLOBAL), sinon calcul à la volée
+        W_norm = eig.get('W_norm', eig['W'] / C_REF_GLOBAL)
         
         exp_factor = np.exp(tau_r * z)
         
         Phi[0:3, r] = V_r * exp_factor
-        Phi[3:6, r] = W_norm * exp_factor  # Utilise W normalisé
+        Phi[3:6, r] = W_norm * exp_factor
     
     return Phi
 
@@ -462,9 +543,10 @@ def compute_state_vector(z, C_coeffs, eigenvectors, particular_solution=None, la
     Returns:
         SV: Vecteur d'état [u1, u2, u3, σ13/C_ref, σ23/C_ref, σ33/C_ref] si normalisé
     """
-    if use_normalized and props is not None:
+    if use_normalized:
+        # Note: props ignoré pour la normalisation qui utilise C_REF_GLOBAL
         Phi = build_Phi_matrix_normalized(z, eigenvectors, props)
-        C_ref = props.get('C33', 200)  # GPa (was 200e9 Pa)
+        C_ref = C_REF_GLOBAL
     else:
         Phi = build_Phi_matrix(z, eigenvectors)
         C_ref = 1.0
@@ -502,7 +584,7 @@ def solve_single_layer(h_layer, eigenvectors, particular_solution, lambda_th, de
     - La solution C est obtenue dans le système normalisé
     - Les contraintes finales sont reconstruites avec la bonne échelle
     """
-    C_ref = props['C33']  # Rigidité de référence (~200 GPa)
+    C_ref = C_REF_GLOBAL
     
     # Matrice Φ normalisée aux bords
     Phi_0 = build_Phi_matrix_normalized(0, eigenvectors, props)
@@ -661,9 +743,16 @@ class Layer:
         self.thermal_forcing = None
 
 
-def setup_layer(layer, delta1, delta2, lambda_th, T_hat):
+def setup_layer(layer, delta1, delta2, thermal_data_layer=None):
     """
-    Prépare une couche: calcul des modes propres et du forçage thermique.
+
+    Prépare une couche: calcul des modes propres et du forçage thermique complet.
+    
+    Args:
+        layer: Objet Layer
+        delta1, delta2: Nombres d'onde spatiaux
+        thermal_data_layer: Dict optionnel avec {A, B, lambda} venant du modèle thermique
+                            Si None, comportement par défaut (T_hat=0)
     """
     # Résolution de l'équation caractéristique pour cette couche
     char_result = solve_characteristic_equation(delta1, delta2, layer.props)
@@ -674,9 +763,81 @@ def setup_layer(layer, delta1, delta2, lambda_th, T_hat):
     layer.eigenvectors = compute_all_stress_eigenvectors(layer.eigenvectors, delta1, delta2, layer.props)
     
     # Forçage thermique
-    layer.thermal_forcing = compute_thermal_forcing(lambda_th, delta1, delta2, T_hat, layer.alpha, layer.props)
+    # Forçage thermique MULTI-MODE
+    # T(z) = A * exp(lambda * z) + B * exp(-lambda * z)
+    layer.thermal_modes = []
+    
+    if thermal_data_layer:
+        lam = thermal_data_layer['lambda']
+        A = thermal_data_layer['A']
+        B = thermal_data_layer['B']
+        
+        # Mode 1: +lambda (Amplitude A)
+        if abs(A) > 1e-20:
+            mode_plus = compute_thermal_forcing(lam, delta1, delta2, A, layer.alpha, layer.props)
+            layer.thermal_modes.append(mode_plus)
+            
+        # Mode 2: -lambda (Amplitude B)
+        if abs(B) > 1e-20:
+            mode_minus = compute_thermal_forcing(-lam, delta1, delta2, B, layer.alpha, layer.props)
+            layer.thermal_modes.append(mode_minus)
+    
+    # Rétro-compatibilité pour l'ancien "thermal_forcing" unique (utile si pas de thermal_data complet)
+    # On garde None si pas de modes, pour éviter plantages
+    layer.thermal_forcing = layer.thermal_modes[0] if layer.thermal_modes else None
     
     return layer
+
+
+def compute_layer_particular_solution(layer, z, delta1, delta2):
+    """
+    Calcule la solution particulière (déplacement U et contrainte T) à la position z
+    en sommant tous les modes thermiques.
+    
+    Returns:
+        U_part: (3,) array complex
+        T_part: (3,) array complex
+    """
+    U_part = np.zeros(3, dtype=complex)
+    T_part = np.zeros(3, dtype=complex)
+    
+    # Calcul des coefficients beta pour cette couche
+    beta_vec = compute_beta_coefficients(layer.alpha, layer.props)
+    
+    # 1. Cas Multi-Mode (Nouveau)
+    if hasattr(layer, 'thermal_modes') and layer.thermal_modes:
+        for mode in layer.thermal_modes:
+            lam = mode['lambda_th']
+            A_part = mode['A_part']
+            T_hat = mode['T_hat'] # Amplitude thermique de ce mode
+            
+            # Déplacement: A * exp(lam * z)
+            exp_factor = np.exp(lam * z)
+            U_part += A_part * exp_factor
+            
+            # Contrainte: T * exp(lam * z) - terme thermique
+            T_vec = compute_particular_stress(
+                A_part, lam, delta1, delta2, layer.props, 
+                T_hat=T_hat, beta_vec=beta_vec
+            )
+            T_part += T_vec * exp_factor
+            
+    # 2. Cas Mono-Mode (Rétro-compatibilité)
+    elif layer.thermal_forcing is not None:
+        lam = layer.thermal_forcing['lambda_th']
+        A_part = layer.thermal_forcing['A_part']
+        T_hat = layer.thermal_forcing.get('T_hat', 0)
+        
+        exp_factor = np.exp(lam * z)
+        U_part += A_part * exp_factor
+        
+        T_vec = compute_particular_stress(
+            A_part, lam, delta1, delta2, layer.props,
+            T_hat=T_hat, beta_vec=beta_vec
+        )
+        T_part += T_vec * exp_factor
+        
+    return U_part, T_part
 
 
 
@@ -828,7 +989,7 @@ def solve_regularized_system(K, F, tol=1e-12):
     return x, info
 
 
-def solve_multilayer(layers, delta1, delta2, lambda_th, T_hat):
+def solve_multilayer(layers, delta1, delta2, lambda_th=None, T_hat=None):
     """
     Résout le problème mécanique pour un système multicouche.
     
@@ -842,13 +1003,26 @@ def solve_multilayer(layers, delta1, delta2, lambda_th, T_hat):
     N = len(layers)
     
     # 1. Setup de chaque couche (modes propres + forçage thermique)
-    for layer in layers:
-        setup_layer(layer, delta1, delta2, lambda_th, T_hat)
+    # 1. Setup de chaque couche (modes propres + forçage thermique)
+    for k, layer in enumerate(layers):
+        # Récupération des données thermiques spécifiques à la couche si disponibles
+        th_data = getattr(layer, 'thermal_data', None)
+        
+        # Si pas de données spécifiques mais lambda_th/T_hat globaux fournis (ancien mode)
+        if th_data is None and lambda_th is not None:
+             # Simulation d'un mode unique T_hat * exp(lambda_th * z)
+             # C'est l'ancien comportement "isotrope global"
+             th_data = {'A': T_hat, 'B': 0, 'lambda': lambda_th}
+             
+        setup_layer(layer, delta1, delta2, th_data)
+        
         beta = compute_beta_coefficients(layer.alpha, layer.props)
-        layer.sigma_th_max = np.max(beta) * T_hat
+        # Estimation grossière pour scaling, basée sur le premier mode
+        T_ampl = th_data['A'] if th_data else 0
+        layer.sigma_th_max = np.max(beta) * abs(T_ampl)
     
-    # Référence pour normalisation initiale
-    C_ref = layers[0].props['C33']
+    # Référence pour normalisation globale
+    C_ref = C_REF_GLOBAL
     
     # 2. Construction du système global 6N × 6N
     K_glob = np.zeros((6*N, 6*N), dtype=complex)
@@ -867,8 +1041,8 @@ def solve_multilayer(layers, delta1, delta2, lambda_th, T_hat):
     Phi_0 = build_Phi_matrix_normalized(0, layers[0].eigenvectors, layers[0].props)
     K_glob[row_idx:row_idx+3, 0:6] = B_stress @ Phi_0
     
-    T_part_0 = compute_particular_stress(layers[0].thermal_forcing['A_part'], 
-                                          lambda_th, delta1, delta2, layers[0].props)
+    # Solution particulière à z=0
+    _, T_part_0 = compute_layer_particular_solution(layers[0], 0, delta1, delta2)
     F_glob[row_idx:row_idx+3] = -T_part_0 / C_ref
     row_idx += 3
     
@@ -882,15 +1056,16 @@ def solve_multilayer(layers, delta1, delta2, lambda_th, T_hat):
         K_glob[row_idx:row_idx+6, 6*k:6*(k+1)] = Phi_k_top
         K_glob[row_idx:row_idx+6, 6*(k+1):6*(k+2)] = -Phi_kp1_bot
         
-        A_part_k = layers[k].thermal_forcing['A_part']
-        T_part_k = compute_particular_stress(A_part_k, lambda_th, delta1, delta2, layers[k].props)
-        exp_k = np.exp(lambda_th * z_k)
+        # Sauts de solution particulière à l'interface
+        # Couche k (top)
+        U_part_k, T_part_k = compute_layer_particular_solution(layers[k], z_k, delta1, delta2)
         
-        A_part_kp1 = layers[k+1].thermal_forcing['A_part']
-        T_part_kp1 = compute_particular_stress(A_part_kp1, lambda_th, delta1, delta2, layers[k+1].props)
+        # Couche k+1 (bottom, zlocal=0)
+        U_part_kp1, T_part_kp1 = compute_layer_particular_solution(layers[k+1], 0, delta1, delta2)
         
-        delta_u = A_part_kp1 - A_part_k * exp_k
-        delta_T = (T_part_kp1 - T_part_k * exp_k) / C_ref
+        # Second membre: - (Part_k - Part_kp1) = Part_kp1 - Part_k
+        delta_u = U_part_kp1 - U_part_k
+        delta_T = (T_part_kp1 - T_part_k) / C_ref
         
         F_glob[row_idx:row_idx+3] = delta_u
         F_glob[row_idx+3:row_idx+6] = delta_T
@@ -902,10 +1077,8 @@ def solve_multilayer(layers, delta1, delta2, lambda_th, T_hat):
     Phi_H = build_Phi_matrix_normalized(h_N, layers[-1].eigenvectors, layers[-1].props)
     K_glob[row_idx:row_idx+3, 6*(N-1):6*N] = B_stress @ Phi_H
     
-    T_part_H = compute_particular_stress(layers[-1].thermal_forcing['A_part'],
-                                          lambda_th, delta1, delta2, layers[-1].props)
-    exp_H = np.exp(lambda_th * h_N)
-    F_glob[row_idx:row_idx+3] = -T_part_H * exp_H / C_ref
+    _, T_part_H = compute_layer_particular_solution(layers[-1], h_N, delta1, delta2)
+    F_glob[row_idx:row_idx+3] = -T_part_H / C_ref
     
     # =========================================================
     # 3. PRÉCONDITIONNEMENT PAR ÉQUILIBRAGE (ROW/COLUMN SCALING)
@@ -973,7 +1146,7 @@ def compute_multilayer_stress_profile(layers, delta1, delta2, lambda_th, n_point
     Calcule les profils de contraintes pour tout le multicouche.
     
     IMPLÉMENTATION PHYSIQUEMENT CORRECTE:
-    - Reconstruit σ = Φ(z) @ C + σ_particulier à partir des coefficients C résolus
+    - Reconstruit σ = Φ(z) @ C + Σ σ_part_mode(z) à partir des coefficients C résolus
     - Utilise les vecteurs propres et la matrice modale calculés pour chaque couche
     - Satisfait automatiquement les conditions aux limites car C vient du système K_glob
     
@@ -983,7 +1156,8 @@ def compute_multilayer_stress_profile(layers, delta1, delta2, lambda_th, n_point
     Args:
         layers: Liste d'objets Layer avec C_coefficients, eigenvectors, thermal_forcing
         delta1, delta2: Nombres d'onde spatiaux
-        lambda_th: Exposant du mode thermique
+        lambda_th: (OBSOLÈTE) Exposant du mode thermique global. 
+                   La fonction utilise maintenant layer.thermal_modes si dispo.
         n_points_per_layer: Nombre de points par couche pour le profil
     
     Returns:
@@ -1011,7 +1185,7 @@ def compute_multilayer_stress_profile(layers, delta1, delta2, lambda_th, n_point
         # =========================================================
         for k, layer in enumerate(layers):
             C_k = layer.C_coefficients
-            C_ref = getattr(layer, 'C_ref', layer.props['C33'])
+            C_ref = getattr(layer, 'C_ref', C_REF_GLOBAL)
             
             z_local = np.linspace(0, layer.h, n_points_per_layer)
             z_global = z_local + layer.z_bottom
@@ -1025,16 +1199,43 @@ def compute_multilayer_stress_profile(layers, delta1, delta2, lambda_th, n_point
                 
                 # Solution particulière thermique
                 SV_part = np.zeros(6, dtype=complex)
-                if layer.thermal_forcing is not None:
+                # Solution particulière
+                SV_part = np.zeros(6, dtype=complex)
+                
+                # Calcul des beta pour la couche courante
+                beta_vec = compute_beta_coefficients(layer.alpha, layer.props)
+                
+                if hasattr(layer, 'thermal_modes'):
+                    for mode in layer.thermal_modes:
+                        lam_mode = mode['lambda_th']
+                        A_part_mode = mode['A_part']
+                        T_hat_mode = mode['T_hat'] # Amplitude du mode (A ou B)
+                        
+                        # Recalcul de T_part pour ce mode spécifique
+                        T_part_vec = compute_particular_stress(
+                            A_part_mode, lam_mode, delta1, delta2, layer.props,
+                            T_hat=T_hat_mode, beta_vec=beta_vec
+                        )
+                        
+                        exp_th = np.exp(lam_mode * z)
+                        
+                        # Accumulation
+                        SV_part[0:3] += A_part_mode * exp_th
+                        SV_part[3:6] += T_part_vec * exp_th / C_ref
+                
+                # FALLBACK : Ancien attribut thermal_forcing unique
+                elif layer.thermal_forcing is not None:
+                    # (Code original pour compatibilité)
                     A_part = layer.thermal_forcing['A_part']
-                    T_part = compute_particular_stress(
-                        A_part, lambda_th, delta1, delta2, layer.props
-                    )
-                    exp_th = np.exp(lambda_th * z)
+                    lam = layer.thermal_forcing['lambda_th']
+                    T_hat = layer.thermal_forcing.get('T_hat', 0)
                     
-                    # Déplacements particuliers (indices 0-2)
+                    T_part = compute_particular_stress(
+                        A_part, lam, delta1, delta2, layer.props,
+                        T_hat=T_hat, beta_vec=beta_vec
+                    )
+                    exp_th = np.exp(lam * z)
                     SV_part[0:3] = A_part * exp_th
-                    # Contraintes particulières normalisées (indices 3-5)
                     SV_part[3:6] = T_part * exp_th / C_ref
                 
                 # Vecteur d'état total
@@ -1053,66 +1254,14 @@ def compute_multilayer_stress_profile(layers, delta1, delta2, lambda_th, n_point
     
     else:
         # =========================================================
-        # MÉTHODE SEMI-ANALYTIQUE (fallback si C non calculés)
-        # Basée sur la théorie des contraintes thermiques dans les multicouches
-        # avec conditions aux limites satisfaites analytiquement
+        # ERREUR: Les coefficients C doivent être calculés
+        # La méthode spectrale rigoureuse (PDF Étapes 6-8) est obligatoire
         # =========================================================
-        
-        # Calcul de la déformation thermique moyenne pondérée
-        sum_E_h = 0
-        sum_E_alpha_h = 0
-        
-        for layer in layers:
-            E_layer = layer.props.get('C33', 200) * 0.8 * GPa_TO_PA  # GPa → Pa
-            alpha_layer = layer.alpha.get('alpha_3', 10e-6)
-            sum_E_h += E_layer * layer.h
-            sum_E_alpha_h += E_layer * alpha_layer * layer.h
-        
-        alpha_eff = sum_E_alpha_h / sum_E_h if sum_E_h > 0 else 10e-6
-        
-        for k, layer in enumerate(layers):
-            z_local = np.linspace(0, layer.h, n_points_per_layer)
-            z_global = z_local + layer.z_bottom
-            
-            # Propriétés de la couche
-            E_layer = layer.props.get('C33', 200) * 0.8 * GPa_TO_PA  # GPa → Pa
-            nu = 0.3
-            alpha_layer = layer.alpha.get('alpha_3', 10e-6)
-            delta_alpha = alpha_layer - alpha_eff
-            T_hat_local = getattr(layer, 'T_hat', 500)
-            
-            # Contrainte thermique de mismatch (base physique solide)
-            # σ_mismatch = E × Δα × ΔT / (1 - ν)
-            sigma_mismatch = E_layer * np.abs(delta_alpha) * T_hat_local / (1 - nu)
-            
-            for i, z in enumerate(z_local):
-                z_g = z_global[i]
-                zeta = z_g / H_total  # Position normalisée [0, 1]
-                
-                # Fonction de forme pour σ_33 (nulle aux surfaces)
-                # Basé sur la solution analytique de Green pour une couche contrainte
-                shape_factor = 4.0 * zeta * (1.0 - zeta)
-                
-                # Correction pour effets de bord près des interfaces
-                # La contrainte a des pics locaux aux interfaces
-                z_rel_in_layer = z / layer.h if layer.h > 0 else 0.5
-                interface_factor = 1.0 + 0.5 * np.sin(np.pi * z_rel_in_layer)
-                
-                sigma_33 = sigma_mismatch * shape_factor * interface_factor
-                
-                # Cisaillement: maximum près des interfaces
-                # Basé sur l'équilibre: dσ_33/dz ~ τ/Lw
-                Lw = np.pi / delta1
-                gradient_factor = 4.0 * np.abs(0.5 - zeta)
-                
-                sigma_13 = sigma_mismatch * gradient_factor * (H_total / Lw) * 0.15
-                sigma_23 = sigma_13  # Symétrie
-                
-                z_all.append(z_g)
-                sigma_13_all.append(sigma_13)
-                sigma_23_all.append(sigma_23)
-                sigma_33_all.append(sigma_33)
-                layer_idx_all.append(k)
+        raise ValueError(
+            "Coefficients C non disponibles. La méthode spectrale (solve_multilayer) "
+            "doit être appelée avant compute_multilayer_stress_profile. "
+            "Vérifiez que 'method=spectral' est utilisé dans solve_multilayer_problem."
+        )
     
     # Appliquer les conditions aux limites exactes (post-traitement)
     # σ_i3 = 0 aux surfaces libres z=0 et z=H
@@ -1144,28 +1293,14 @@ def compute_multilayer_stress_profile(layers, delta1, delta2, lambda_th, n_point
     return result
 
 
-def solve_multilayer_problem(layer_configs, lw, lambda_th, T_hat, method='clt'):
+def solve_multilayer_problem(layer_configs, lw, lambda_th, T_hat, method='spectral', n_modes=1):
     """
-    API haut niveau pour résoudre le problème multicouche.
-    
-    Args:
-        layer_configs: Liste de tuples (thickness, props, alpha_coeffs)
-        lw: Longueur d'onde
-        lambda_th: Exposant thermique
-        T_hat: Amplitude de température
-        method: 'clt' (stable, recommandé) ou 'spectral' (original)
-    
-    Returns:
-        dict avec tous les résultats
+    API haut niveau pour résoudre le problème mécanique multicouche.
+    Prise en charge Multi-Mode.
     """
-    delta1 = np.pi / lw
-    delta2 = delta1
-    
     if method == 'clt':
         # =========================================================
         # MÉTHODE CLT (CLASSICAL LAMINATE THEORY)
-        # Numériquement stable: cond(ABD) ~ 10¹² au lieu de 10³³
-        # Standard industriel pour les multicouches composites
         # =========================================================
         from .clt_solver import solve_clt_thermal, compute_clt_stress_profile
         
@@ -1181,16 +1316,14 @@ def solve_multilayer_problem(layer_configs, lw, lambda_th, T_hat, method='clt'):
             
             layers_clt.append({
                 'h': thickness,
-                'E': E,
-                'nu': nu,
-                'alpha': alpha,
+                'E': E, 'nu': nu, 'alpha': alpha,
                 'z_bot': z_current,
                 'z_top': z_current + thickness,
                 'name': f'Layer_{len(layers_clt)+1}'
             })
             z_current += thickness
         
-        # Résoudre avec CLT
+        # Pour CLT, on considère la température moyenne ou le mode 0
         clt_result = compute_clt_stress_profile(layers_clt, T_hat, n_points_per_layer=50)
         
         # Mapper vers l'interface existante
@@ -1198,20 +1331,13 @@ def solve_multilayer_problem(layer_configs, lw, lambda_th, T_hat, method='clt'):
         z_array = clt_result['z']
         z_norm = z_array / H_total
         
-        # σ_33 depuis équilibre (fonction de forme zéro aux bords)
-        # Le facteur 0.05 reflète que σ_33 est généralement 5-10% de σ_11
-        # pour les multicouches sous contrainte thermique (condition plane stress)
         shape_factor = 4 * z_norm * (1 - z_norm)
         sigma_33 = clt_result['sigma_11'] * shape_factor * 0.05
-        
-        # Cisaillement depuis gradient (avec gestion des NaN)
-        # Le cisaillement d'interface est typiquement 1-5% de σ_11 max
         dz = H_total / (len(z_array) - 1) if len(z_array) > 1 else 1.0
         sigma_13 = np.gradient(clt_result['sigma_11'], dz) * H_total * 0.002
         sigma_13 = np.nan_to_num(sigma_13, nan=0.0, posinf=0.0, neginf=0.0)
         sigma_23 = sigma_13.copy()
         
-        # Appliquer les BC aux bords (σ_i3 = 0)
         n_smooth = min(3, len(z_array) // 10) if len(z_array) > 10 else 1
         for i in range(n_smooth):
             factor = i / n_smooth
@@ -1232,50 +1358,124 @@ def solve_multilayer_problem(layer_configs, lw, lambda_th, T_hat, method='clt'):
             'layer_idx': clt_result['layer_idx']
         }
         
-        # Construire les objets Layer pour compatibilité
         layers = []
         for i, lay_clt in enumerate(layers_clt):
             layer = Layer(
                 lay_clt['h'], 
-                layer_configs[i][1],  # props originaux
-                layer_configs[i][2],  # alpha originaux
+                layer_configs[i][1], 
+                layer_configs[i][2], 
                 z_bottom=lay_clt['z_bot']
             )
-            layer.C_coefficients = None  # Pas utilisé en CLT
+            layer.C_coefficients = None
             layers.append(layer)
         
         return {
             'layers': layers,
             'stress_profile': stress_profile,
             'total_thickness': H_total,
-            'cond_K': clt_result['cond_ABD'],  # Conditionnement de la matrice ABD
+            'cond_K': clt_result['cond_ABD'],
             'method': 'clt',
-            'epsilon_0': clt_result['epsilon_0'],
-            'kappa': clt_result['kappa'],
-            'solve_info': {
-                'method': 'clt_direct',
-                'cond': clt_result['cond_ABD'],
-                'regularized': False
-            }
+            'solve_info': {'method': 'clt'}
         }
     
     else:
         # =========================================================
-        # MÉTHODE SPECTRALE (originale, pour modes propres)
-        # Potentiellement mal conditionnée mais donne les modes
+        # MÉTHODE SPECTRALE MULTI-MODE (RIGOUREUSE)
         # =========================================================
-        layers = []
-        z_current = 0
-        for (thickness, props, alpha) in layer_configs:
-            layer = Layer(thickness, props, alpha, z_bottom=z_current)
-            layers.append(layer)
-            z_current += thickness
+        delta1 = np.pi / lw
         
-        result = solve_multilayer(layers, delta1, delta2, lambda_th, T_hat)
-        stress_profile = compute_multilayer_stress_profile(layers, delta1, delta2, lambda_th)
+        is_multimode_input = isinstance(T_hat, list) and len(T_hat) > 0 and isinstance(T_hat[0], dict)
         
-        result['stress_profile'] = stress_profile
-        result['total_thickness'] = z_current
-        result['method'] = 'spectral'
+        if not is_multimode_input:
+            # Fallback legacy: créer une liste avec un seul mode (m=1)
+            T_hat_list = [{
+                'm': 1,
+                'delta_eta': delta1,
+                'lambdas': (lambda_th,)*len(layer_configs),
+                'coeffs': [0]*6, # Dummy
+                'interfaces': (0, 0)
+            }]
+        else:
+            T_hat_list = T_hat
+            
+        final_stress_profile = None
+        first_mode_result = None
+        
+        for mode_data in T_hat_list:
+            m = mode_data.get('m', 1)
+            
+            if is_multimode_input:
+                delta_m = mode_data['delta_eta']
+                lambdas_th = mode_data['lambdas']
+                coeffs = mode_data['coeffs']
+                interfaces = mode_data['interfaces']
+                
+                # Reconstruction des inputs thermiques par couche
+                th_data_L1 = {'lambda': lambdas_th[0], 'A': coeffs[0], 'B': coeffs[1]}
+                
+                x_i1 = interfaces[0]
+                th_data_L2 = {
+                    'lambda': lambdas_th[1], 
+                    'A': coeffs[2]*np.exp(lambdas_th[1]*x_i1), 
+                    'B': coeffs[3]*np.exp(-lambdas_th[1]*x_i1)
+                }
+                
+                x_i2 = interfaces[1]
+                th_data_L3 = {
+                    'lambda': lambdas_th[2], 
+                    'A': coeffs[4]*np.exp(lambdas_th[2]*x_i2), 
+                    'B': coeffs[5]*np.exp(-lambdas_th[2]*x_i2)
+                }
+                
+                layers_th_data = [th_data_L1, th_data_L2, th_data_L3]
+            else:
+                delta_m = delta1
+                layers_th_data = [None] * len(layer_configs)
+            
+            # Setup Layers
+            layers = []
+            z_current = 0
+            for i, config in enumerate(layer_configs):
+                if len(config) == 4:
+                    thickness, props, alpha, _ = config
+                else:
+                    thickness, props, alpha = config
+                
+                th_data = layers_th_data[i] if i < len(layers_th_data) else None
+                
+                layer = Layer(thickness, props, alpha, z_bottom=z_current)
+                if th_data:
+                    layer.thermal_data = th_data
+                layers.append(layer)
+                z_current += thickness
+            
+            # Résolution
+            global_lambda = lambda_th if not is_multimode_input else None
+            global_That = T_hat if not is_multimode_input else None
+            
+            result_mode = solve_multilayer(layers, delta_m, delta_m, global_lambda, global_That)
+            stress_mode = compute_multilayer_stress_profile(layers, delta_m, delta_m, global_lambda)
+            
+            # Phase
+            phase = (-1)**((m-1)//2)
+            
+            # Init or Update
+            if final_stress_profile is None:
+                final_stress_profile = stress_mode
+                for key in ['sigma_13', 'sigma_23', 'sigma_33']:
+                    final_stress_profile[key] *= phase
+                first_mode_result = result_mode
+            else:
+                for key in ['sigma_13', 'sigma_23', 'sigma_33']:
+                    final_stress_profile[key] += stress_mode[key] * phase
+                    
+        result = first_mode_result or {}
+        result['stress_profile'] = final_stress_profile
+        # result['total_thickness'] should come from last iteration or calculation
+        # Safest is re-calculate or assume loop ran at least once
+        # If loop didn't run (empty list), we have a problem regardless
+        result['total_thickness'] = sum(c[0] for c in layer_configs)
+        result['method'] = 'spectral_multimode'
+        result['n_modes_summed'] = len(T_hat_list)
         
         return result

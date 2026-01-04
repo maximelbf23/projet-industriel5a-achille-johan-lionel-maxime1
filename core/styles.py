@@ -1094,5 +1094,214 @@ def load_css():
     ul[role="listbox"] li:hover {
         background: rgba(59, 130, 246, 0.2) !important;
     }
+
+    /* ============================================ */
+    /* SPECTACULAR DASHBOARD STYLES                */
+    /* ============================================ */
+    
+    /* Animated KPI Cards */
+    .kpi-card {
+        background: linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.98) 100%);
+        border-radius: 20px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(96, 165, 250, 0.2);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #06b6d4, #8b5cf6);
+        background-size: 200% 100%;
+        animation: shimmer-bar 3s linear infinite;
+    }
+    
+    .kpi-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 
+            0 0 60px rgba(59, 130, 246, 0.25),
+            0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        border-color: rgba(96, 165, 250, 0.5);
+    }
+    
+    @keyframes shimmer-bar {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    /* Neon Glow Text */
+    .neon-text {
+        text-shadow: 
+            0 0 10px rgba(96, 165, 250, 0.5),
+            0 0 20px rgba(96, 165, 250, 0.3),
+            0 0 30px rgba(96, 165, 250, 0.2);
+    }
+    
+    .neon-text-danger {
+        text-shadow: 
+            0 0 10px rgba(239, 68, 68, 0.5),
+            0 0 20px rgba(239, 68, 68, 0.3),
+            0 0 30px rgba(239, 68, 68, 0.2);
+    }
+    
+    .neon-text-success {
+        text-shadow: 
+            0 0 10px rgba(16, 185, 129, 0.5),
+            0 0 20px rgba(16, 185, 129, 0.3),
+            0 0 30px rgba(16, 185, 129, 0.2);
+    }
+    
+    /* Glassmorphism Ultra */
+    .glass-ultra {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Animated Border */
+    .animated-border {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    
+    .animated-border::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(45deg, #3b82f6, #06b6d4, #8b5cf6, #f472b6, #3b82f6);
+        background-size: 400% 400%;
+        border-radius: 18px;
+        z-index: -1;
+        animation: border-rotate 4s linear infinite;
+    }
+    
+    @keyframes border-rotate {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 400% 50%; }
+    }
+    
+    /* Pulse Ring Animation */
+    .pulse-ring {
+        position: relative;
+    }
+    
+    .pulse-ring::after {
+        content: '';
+        position: absolute;
+        inset: -10px;
+        border: 2px solid rgba(59, 130, 246, 0.4);
+        border-radius: 50%;
+        animation: pulse-ring-anim 2s ease-out infinite;
+    }
+    
+    @keyframes pulse-ring-anim {
+        0% { transform: scale(0.8); opacity: 1; }
+        100% { transform: scale(1.4); opacity: 0; }
+    }
+    
+    /* Floating Animation */
+    .float-animation {
+        animation: float-updown 6s ease-in-out infinite;
+    }
+    
+    @keyframes float-updown {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    /* Gradient Text Animation */
+    .gradient-text-animated {
+        background: linear-gradient(135deg, #60a5fa, #22d3ee, #a78bfa, #f472b6, #60a5fa);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradient-shift 4s ease infinite;
+    }
+    
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .status-badge-success {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .status-badge-warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .status-badge-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    /* Sparkline Container */
+    .sparkline-container {
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 8px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Value Change Indicator */
+    .value-up {
+        color: #10b981;
+    }
+    
+    .value-up::before {
+        content: '▲ ';
+        font-size: 0.75em;
+    }
+    
+    .value-down {
+        color: #ef4444;
+    }
+    
+    .value-down::before {
+        content: '▼ ';
+        font-size: 0.75em;
+    }
+    
+    /* Chart Container Premium */
+    .chart-container-premium {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(96, 165, 250, 0.15);
+        box-shadow: 0 0 40px rgba(59, 130, 246, 0.08);
+    }
+
 </style>
 """
+

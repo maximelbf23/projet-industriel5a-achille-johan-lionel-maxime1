@@ -35,7 +35,8 @@ CRITICAL_STRESS = {
 }
 
 
-def compute_damage_indicator(sigma_13, sigma_23, sigma_33, layer_type='ceramic'):
+def compute_damage_indicator(sigma_13, sigma_23, sigma_33, layer_type='ceramic', 
+                               sigma_11=None, sigma_22=None):
     """
     Calcule l'indicateur d'endommagement D pour chaque point.
     
@@ -46,25 +47,45 @@ def compute_damage_indicator(sigma_13, sigma_23, sigma_33, layer_type='ceramic')
     D > 1: Endommagement probable
     
     Args:
-        sigma_13, sigma_23, sigma_33: Arrays de contraintes (Pa)
+        sigma_13, sigma_23, sigma_33: Arrays de contraintes transverses (Pa)
         layer_type: 'substrate', 'bondcoat', ou 'ceramic'
+        sigma_11, sigma_22: Contraintes planes (optionnel, mais CRITIQUES pour TBC)
     
     Returns:
         D: Array d'indicateurs d'endommagement
     """
     crit = CRITICAL_STRESS.get(layer_type, CRITICAL_STRESS['ceramic'])
     
-    # D = max des ratios |σ| / σ_crit
+    # D cisaillement transverse
     D_shear = np.maximum(np.abs(sigma_13), np.abs(sigma_23)) / crit['sigma_shear']
     
-    # Pour σ_33, on distingue traction (positif) et compression (négatif)
-    D_normal = np.where(
+    # D normal transverse (σ_33)
+    D_33 = np.where(
         sigma_33 >= 0,
         np.abs(sigma_33) / crit['sigma_tensile'],
         np.abs(sigma_33) / crit['sigma_compressive']
     )
     
-    D = np.maximum(D_shear, D_normal)
+    D = np.maximum(D_shear, D_33)
+    
+    # CRITIQUE: Inclure les contraintes planes σ₁₁, σ₂₂
+    # Ce sont les contraintes DOMINANTES dans les systèmes TBC
+    if sigma_11 is not None:
+        D_11 = np.where(
+            sigma_11 >= 0,
+            np.abs(sigma_11) / crit['sigma_tensile'],
+            np.abs(sigma_11) / crit['sigma_compressive']
+        )
+        D = np.maximum(D, D_11)
+    
+    if sigma_22 is not None:
+        D_22 = np.where(
+            sigma_22 >= 0,
+            np.abs(sigma_22) / crit['sigma_tensile'],
+            np.abs(sigma_22) / crit['sigma_compressive']
+        )
+        D = np.maximum(D, D_22)
+    
     return D
 
 
@@ -103,12 +124,19 @@ def analyze_damage_profile(stress_profile, layer_idx_array, layer_types=['substr
     """
     Analyse le profil d'endommagement pour tout le multicouche.
     
+    IMPORTANT: Utilise σ₁₁, σ₂₂ (contraintes planes) en plus de σ₃₃, σ₁₃, σ₂₃
+    car les contraintes planes sont DOMINANTES dans les systèmes TBC.
+    
     Returns:
         dict avec D (damage indicator), F (Tsai-Wu), et zones critiques
     """
     n_points = len(stress_profile['z'])
     D = np.zeros(n_points)
     F = np.zeros(n_points)
+    
+    # Extraire σ₁₁ et σ₂₂ si disponibles (CRITIQUES pour TBC)
+    sigma_11_all = stress_profile.get('sigma_11', None)
+    sigma_22_all = stress_profile.get('sigma_22', None)
     
     for k, layer_type in enumerate(layer_types):
         mask = layer_idx_array == k
@@ -119,7 +147,14 @@ def analyze_damage_profile(stress_profile, layer_idx_array, layer_types=['substr
         sigma_23 = stress_profile['sigma_23'][mask]
         sigma_33 = stress_profile['sigma_33'][mask]
         
-        D[mask] = compute_damage_indicator(sigma_13, sigma_23, sigma_33, layer_type)
+        # Extraire σ₁₁, σ₂₂ pour cette couche si disponibles
+        sigma_11 = sigma_11_all[mask] if sigma_11_all is not None else None
+        sigma_22 = sigma_22_all[mask] if sigma_22_all is not None else None
+        
+        D[mask] = compute_damage_indicator(
+            sigma_13, sigma_23, sigma_33, layer_type,
+            sigma_11=sigma_11, sigma_22=sigma_22
+        )
         F[mask] = compute_tsai_wu_criterion(sigma_13, sigma_23, sigma_33, layer_type)
     
     # Identification des zones critiques (D > 0.8)
@@ -128,8 +163,8 @@ def analyze_damage_profile(stress_profile, layer_idx_array, layer_types=['substr
     return {
         'D': D,  # Damage indicator
         'F': F,  # Tsai-Wu criterion
-        'max_D': np.max(D),
-        'max_F': np.max(F),
+        'max_D': np.max(D) if len(D) > 0 else 0,
+        'max_F': np.max(F) if len(F) > 0 else 0,
         'critical_zones': critical_zones,
         'z_critical': stress_profile['z'][critical_zones] if len(critical_zones) > 0 else np.array([])
     }
@@ -264,6 +299,7 @@ def optimize_tbc_thickness(solve_func, h_range, base_params, objective='min_dama
             return 1e10  # Very high value if solver fails
     
     # Optimization using scipy
+    from scipy.optimize import minimize_scalar
     result = minimize_scalar(
         objective_func,
         bounds=h_range,
@@ -314,6 +350,7 @@ def multi_objective_optimization(solve_func, bounds, base_params):
     x0 = [bounds['h_bondcoat'][0], bounds['h_ceramic'][0]]
     bound_list = [bounds['h_bondcoat'], bounds['h_ceramic']]
     
+    from scipy.optimize import minimize
     result = minimize(
         combined_objective,
         x0,

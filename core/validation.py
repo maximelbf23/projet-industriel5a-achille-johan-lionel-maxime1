@@ -290,16 +290,16 @@ def run_analytical_benchmark(solve_func=None):
         G = E / (2 * (1 + nu))
         
         props = {
-            'C11': E * (1 - nu) / ((1 + nu) * (1 - 2*nu)),
-            'C12': E * nu / ((1 + nu) * (1 - 2*nu)),
-            'C13': E * nu / ((1 + nu) * (1 - 2*nu)),
-            'C21': E * nu / ((1 + nu) * (1 - 2*nu)),
-            'C22': E * (1 - nu) / ((1 + nu) * (1 - 2*nu)),
-            'C23': E * nu / ((1 + nu) * (1 - 2*nu)),
-            'C31': E * nu / ((1 + nu) * (1 - 2*nu)),
-            'C32': E * nu / ((1 + nu) * (1 - 2*nu)),
-            'C33': E * (1 - nu) / ((1 + nu) * (1 - 2*nu)),
-            'C44': G, 'C55': G, 'C66': G
+            'C11': E * (1 - nu) / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C12': E * nu / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C13': E * nu / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C21': E * nu / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C22': E * (1 - nu) / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C23': E * nu / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C31': E * nu / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C32': E * nu / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C33': E * (1 - nu) / ((1 + nu) * (1 - 2*nu)) / 1e9,
+            'C44': G / 1e9, 'C55': G / 1e9, 'C66': G / 1e9
         }
         alpha_dict = {'alpha_1': lay['alpha'], 'alpha_2': lay['alpha'], 'alpha_3': lay['alpha']}
         layer_configs.append((lay['h'], props, alpha_dict))

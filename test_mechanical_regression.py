@@ -58,6 +58,7 @@ def test_multilayer_solution():
     # CLT donne des contraintes plus élevées (physiquement correctes)
     sigma_max = np.max(np.abs(stress['sigma_33']))
     assert 1e6 < sigma_max < 2000e6, f"σ_33 max hors plage: {sigma_max/1e6:.2f} MPa"
+
     
     print(f"  ✅ σ_33 max: {sigma_max/1e6:.2f} MPa (plage attendue: 1-2000 MPa)")
 

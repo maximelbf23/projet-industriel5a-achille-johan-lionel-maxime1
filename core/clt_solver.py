@@ -9,8 +9,11 @@ Key equations:
 - A-B-D matrix: relates forces/moments to strains/curvatures
 - Layer stresses: σ_k = [Q]_k × (ε_0 + z×κ - α_k×ΔT)
 """
+
 import numpy as np
 
+# STANDARD UNIT CONVERSION
+GPa_TO_PA = 1e9
 
 def compute_Q_matrix(E1, E2, nu12, G12):
     """
@@ -125,8 +128,8 @@ def solve_clt_thermal(layers, delta_T):
     # [M] = [B D] [κ  ] + [M_th] = 0
     #
     # Therefore:
-    # [A B] [ε_0]   [-N_th]
-    # [B D] [κ  ] = [-M_th]
+    # [A B] [ε_0]   [N_th]
+    # [B D] [κ  ] = [M_th]
     
     # Assemble full ABD matrix
     ABD = np.block([
@@ -134,8 +137,8 @@ def solve_clt_thermal(layers, delta_T):
         [B, D]
     ])
     
-    # RHS
-    rhs = np.concatenate([-N_th, -M_th])
+    # RHS (Positive sign for thermal expansion in free state)
+    rhs = np.concatenate([N_th, M_th])
     
     # Solve
     cond_ABD = np.linalg.cond(ABD)
@@ -296,18 +299,47 @@ def solve_multilayer_clt(layer_configs, delta_T, n_points_per_layer=50):
     # Use max in-plane stress as basis for interface stress
     sigma_33 = result['sigma_11'] * shape_factor * 0.3  # Scale factor for interface
     
-    # Shear stresses from gradient of displacement (simplified)
-    sigma_13 = np.gradient(result['sigma_11'], result['z']) * H_total * 0.01
+    # Shear stresses: calcul du gradient PAR COUCHE pour éviter les pics aux interfaces
+    # Le gradient global de sigma_11 crée des valeurs aberrantes aux discontinuités
+    sigma_13 = np.zeros_like(result['z'])
+    
+    layer_idx = result['layer_idx']
+    for k in range(int(np.max(layer_idx)) + 1):
+        mask = layer_idx == k
+        if np.sum(mask) > 1:
+            z_layer = result['z'][mask]
+            s11_layer = result['sigma_11'][mask]
+            
+            # Gradient uniquement à l'intérieur de la couche
+            if len(z_layer) > 1:
+                grad = np.gradient(s11_layer, z_layer)
+                # Facteur d'échelle pour conversion vers cisaillement transverse
+                # Typiquement sigma_13 << sigma_11 dans CLT
+                sigma_13[mask] = grad * H_total * 0.001  # Réduire le facteur (était 0.01)
+            else:
+                sigma_13[mask] = 0
+    
+    # Lisser aux interfaces (transition douce sur 2 points)
+    n_smooth = 2
+    for k in range(int(np.max(layer_idx))):
+        # Trouver les indices de transition
+        trans_idx = np.where((layer_idx[:-1] == k) & (layer_idx[1:] == k+1))[0]
+        for idx in trans_idx:
+            # Moyenne les valeurs autour de l'interface
+            if idx > 0 and idx < len(sigma_13) - 1:
+                sigma_13[idx] = (sigma_13[idx-1] + sigma_13[idx+1]) / 2
+                sigma_13[idx+1] = sigma_13[idx]
+    
     sigma_23 = sigma_13  # Symmetric assumption
     
     return {
         'stress_profile': {
             'z': result['z'],
-            'sigma_13': sigma_13,
-            'sigma_23': sigma_23,
-            'sigma_33': sigma_33,
-            'sigma_11': result['sigma_11'],  # In-plane stress (main component)
-            'sigma_22': result['sigma_22'],
+            'sigma_13': sigma_13 * GPa_TO_PA,
+            'sigma_23': sigma_23 * GPa_TO_PA,
+            'sigma_33': sigma_33 * GPa_TO_PA,
+            'sigma_11': result['sigma_11'] * GPa_TO_PA,  # Convert to Pa
+            'sigma_22': result['sigma_22'] * GPa_TO_PA,
             'layer_idx': result['layer_idx']
         },
         'layers': layers,
