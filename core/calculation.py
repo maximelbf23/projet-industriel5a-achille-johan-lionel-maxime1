@@ -118,3 +118,57 @@ def calculate_profiles(profile_params, H, num_points=500):
     
     return x_arr, T, Q1, Q3
 
+
+def calculate_sensitivity(alpha, beta, lw, t_bottom, t_top, delta_pct=0.1):
+    """
+    Calcule la sensibilité de T_h1 et dQ1_h1 aux variations de alpha, beta, lw.
+    Retourne un dictionnaire avec les sensibilités normalisées.
+    """
+    results = {}
+    
+    # Base case
+    base_res = solve_tbc_model(alpha, beta, lw, t_bottom, t_top)
+    if not base_res['success']:
+        return None
+        
+    base_T = base_res['T_at_h1']
+    
+    # Paramètres à varier
+    params = ['alpha', 'beta', 'lw']
+    labels = ['Épaisseur (α)', 'Anisotropie (β)', 'Longueur d\'Onde (Lw)']
+    current_vals = {'alpha': alpha, 'beta': beta, 'lw': lw}
+    
+    for param, label in zip(params, labels):
+        # Variation +delta
+        vals_plus = current_vals.copy()
+        vals_plus[param] *= (1 + delta_pct)
+        res_plus = solve_tbc_model(vals_plus['alpha'], vals_plus['beta'], vals_plus['lw'], t_bottom, t_top)
+        
+        # Variation -delta
+        vals_minus = current_vals.copy()
+        vals_minus[param] *= (1 - delta_pct)
+        res_minus = solve_tbc_model(vals_minus['alpha'], vals_minus['beta'], vals_minus['lw'], t_bottom, t_top)
+        
+        if res_plus['success'] and res_minus['success']:
+            T_plus = res_plus['T_at_h1']
+            T_minus = res_minus['T_at_h1']
+            
+            # Calcul de sensibilité : Variation de T pour +/- delta_pct variation
+            # Delta T total sur l'intervalle [x-d, x+d] -> représente la pente
+            delta_T = T_plus - T_minus
+            
+            # Impact sur Flux Transverse (dQ1)
+            dQ_plus = abs(res_plus['dQ1_h1'])
+            dQ_minus = abs(res_minus['dQ1_h1'])
+            delta_Q = dQ_plus - dQ_minus
+            
+            results[param] = {
+                'label': label,
+                'delta_T': delta_T, # Changement absolu sur plage +/- delta
+                'delta_Q': delta_Q,
+                'T_plus': T_plus,
+                'T_minus': T_minus
+            }
+            
+    return results
+

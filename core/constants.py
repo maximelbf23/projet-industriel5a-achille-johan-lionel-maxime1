@@ -13,6 +13,56 @@ CONSTANTS = {
     'Securite_pct': 0.8
 }
 
+# --- PROPRIÉTÉS MÉCANIQUES (Orthotrope Zircone approx) ---
+# Matrice de rigidité C (GPa) - Changé de Pa pour éviter les grands nombres dans les déterminants
+# Pour convertir en Pa: multiplier par GPa_TO_PA
+GPa_TO_PA = 1e9  # Facteur de conversion
+
+MECHANICAL_PROPS = {
+    'C11': 200, 'C12': 50,  'C13': 50,
+    'C21': 50,  'C22': 200, 'C23': 50,
+    'C31': 50,  'C32': 50,  'C33': 200,
+    'C44': 75,  'C55': 75,  'C66': 75
+}
+
+# --- PROPRIÉTÉS MÉCANIQUES PAR COUCHE (TBC système) ---
+# Couche 1: Substrat superalliage base Nickel (ex: CMSX-4)
+PROPS_SUBSTRATE = {
+    'C11': 250, 'C12': 160, 'C13': 160,
+    'C21': 160, 'C22': 250, 'C23': 160,
+    'C31': 160, 'C32': 160, 'C33': 250,
+    'C44': 130, 'C55': 130, 'C66': 130
+}
+
+# Couche 2: Bond Coat (MCrAlY - NiCoCrAlY)
+PROPS_BONDCOAT = {
+    'C11': 180, 'C12': 80,  'C13': 80,
+    'C21': 80,  'C22': 180, 'C23': 80,
+    'C31': 80,  'C32': 80,  'C33': 180,
+    'C44': 60,  'C55': 60,  'C66': 60
+}
+
+# Couche 3: Céramique TBC (YSZ - 7% Y2O3-ZrO2)
+PROPS_CERAMIC = {
+    'C11': 50,  'C12': 10,  'C13': 10,
+    'C21': 10,  'C22': 50,  'C23': 10,
+    'C31': 10,  'C32': 10,  'C33': 50,
+    'C44': 20,  'C55': 20,  'C66': 20
+}
+
+# Coefficients de dilatation thermique par couche (1/K)
+ALPHA_SUBSTRATE = {'alpha_1': 13e-6, 'alpha_2': 13e-6, 'alpha_3': 13e-6}
+ALPHA_BONDCOAT = {'alpha_1': 14e-6, 'alpha_2': 14e-6, 'alpha_3': 14e-6}
+ALPHA_CERAMIC = {'alpha_1': 10e-6, 'alpha_2': 10e-6, 'alpha_3': 10e-6}
+
+# --- COEFFICIENTS DE DILATATION THERMIQUE (legacy) ---
+THERMAL_EXPANSION = {
+    # Coefficients alpha (1/K) pour chaque couche
+    'alpha_1': 13e-6,   # Superalliage (Nickel base)
+    'alpha_2': 14e-6,   # Couche liaison (MCrAlY)
+    'alpha_3': 10e-6,   # Céramique TBC (YSZ)
+}
+
 # --- TÂCHE 1 : CONSTANTES POUR L'IMPACT ---
 IMPACT_PARAMS = {
     'rho_ceram': 8700,      # Masse volumique (kg/m^3)

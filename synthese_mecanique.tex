@@ -1,0 +1,102 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{hyperref}
+
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+\title{Synthèse de l'Implémentation du Modèle Mécanique (TBC)}
+\author{Projet Industriel 5A - Modélisation Thermomécanique}
+\date{14 Décembre 2025}
+
+\begin{document}
+
+\maketitle
+
+\section*{Contexte}
+Ce document résume les travaux techniques réalisés pour intégrer la résolution mécanique (calcul des modes propres) dans l'application de simulation, conformément aux spécifications des documents \texttt{resolution\_mécanique\_5A.pdf} et \texttt{ProjectEstaca.pdf}.
+
+\hrule
+\vspace{0.5cm}
+
+\section{Objectif}
+
+L'objectif était d'implémenter l'étape 7 de la résolution semi-analytique : \textbf{Trouver les racines de l'équation caractéristique mécanique}.
+Ces racines ($\tau$) correspondent aux modes propres qui régissent la décroissance des contraintes dans l'épaisseur de la gaine.
+
+\section{Implémentation réalisée}
+
+\subsection{Définition des Propriétés Matériaux (\texttt{core/constants.py})}
+Nous avons ajouté les propriétés d'un matériau orthotrope générique (type céramique poreuse/Zircone) sous la forme d'une matrice de rigidité $C_{ij}$.
+\begin{itemize}
+    \item \textbf{Fichier :} \texttt{core/constants.py}
+    \item \textbf{Données :} Dictionnaire \texttt{MECHANICAL\_PROPS} contenant les 9 constantes élastiques ($C_{11}$ à $C_{66}$).
+\end{itemize}
+
+\subsection{Cœur de Calcul (\texttt{core/mechanical.py})}
+C'est le module central qui effectue la résolution numérique.
+
+\paragraph{Algorithme implémenté :}
+\begin{enumerate}
+    \item \textbf{Construction de la Matrice Dynamique $M(\tau)$} :\\
+    Implémentation de la matrice $3 \times 3$ dérivée des équations d'équilibre (section 6 du PDF). Elle dépend de la variable spectrale $\tau$ et des nombres d'onde $\delta_1, \delta_2$.
+    
+    \item \textbf{Calcul du Déterminant (Pivot de Gauss)} :\\
+    Comme demandé, nous n'utilisons pas une boîte noire mais une méthode explicite. La fonction \texttt{compute\_determinant\_gaussian} effectue une élimination de Gauss pour calculer la valeur du déterminant pour un $\tau$ donné.
+
+    \item \textbf{Résolution de l'Équation Caractéristique} :\\
+    L'équation est de la forme $\det(M(\tau)) = 0$. Théoriquement, c'est un polynôme bicubique en $\tau$ :
+    $$ P(\tau^2) = c_6 (\tau^2)^3 + c_4 (\tau^2)^2 + c_2 (\tau^2) + c_0 = 0 $$
+    
+    Plutôt que de développer le déterminant symboliquement (très lourd), nous utilisons une \textbf{approche numérique robuste} :
+    \begin{itemize}
+        \item Nous évaluons le déterminant pour 3 valeurs tests de $X = \tau^2$ (0, 1, 2).
+        \item Nous résolvons un système linéaire simple pour identifier les coefficients $c_4, c_2, c_0$ (sachant que $c_6 = C_{33}C_{44}C_{55}$).
+    \end{itemize}
+    
+    \item \textbf{Normalisation et Racines} :\\
+    Pour garantir la précision numérique (les coefficients atteignant $10^{33}$), nous normalisons le polynôme par $c_6$ avant de chercher les racines avec \texttt{numpy.roots}.
+\end{enumerate}
+
+\subsection{Intégration Interface (\texttt{Profil de température Aube.py})}
+Un nouvel onglet \textbf{"⚙️ Calcul Mécanique"} a été ajouté à l'application.
+\begin{itemize}
+    \item Il récupère dynamiquement le paramètre $L_w$ (longueur d'onde) défini par l'utilisateur.
+    \item Il lance le calcul en temps réel.
+    \item Il affiche le polynôme caractéristique et les 6 racines $\tau$ sous forme tabulaire.
+\end{itemize}
+
+\subsection{Calcul des Vecteurs Propres (Etape 8)}
+Cette étape permet de déterminer la forme modale des déplacements dans l'épaisseur de la plaque pour chaque mode $\tau$.
+
+\paragraph{Justification de l'implémentation :}
+Le système $M(\tau)\mathbf{V} = 0$ impliquant une matrice singulière (car $\det(M(\tau)) \approx 0$), une inversion directe est impossible.
+L'algorithme implémenté (fonction \texttt{compute\_eigenvector}) utilise la \textbf{méthode des cofacteurs} :
+\begin{itemize}
+    \item Les composantes du vecteur propre $\mathbf{V}$ sont calculées comme les cofacteurs de la dernière ligne de $M(\tau)$ (ce qui revient à effectuer le produit vectoriel des deux premières lignes colonnes).
+    \item Cette approche garantit une solution non triviale robuste numériquement.
+    \item Le vecteur est ensuite normalisé par la condition $V_3 = 1$ (ou par sa norme si $V_3 \approx 0$) pour assurer l'unicité de la solution.
+\end{itemize}
+
+\section{Résultats et Vérification}
+
+Les tests effectués (\texttt{test\_mechanical.py} et via l'interface) confirment la validité physique des résultats :
+\begin{itemize}
+    \item Les 6 racines obtenues sont toujours des \textbf{paires conjuguées} ($\pm \lambda$ ou $\pm a \pm ib$).
+    \item Cela valide la symétrie du matériau et la stabilité de l'algorithme de résolution.
+\end{itemize}
+
+\hrule
+\vspace{0.5cm}
+
+\paragraph{Prochaines étapes possibles (non réalisées) :}
+\begin{itemize}
+    \item \textbf{Etape 9} : Assemblage de la matrice de transfert globale pour le multicouche.
+    \item \textbf{Calcul des Contraintes} : Reconstruction du champ de contraintes complet $\sigma_{ij}(z)$.
+\end{itemize}
+
+\end{document}
