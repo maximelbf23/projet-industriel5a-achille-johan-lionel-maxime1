@@ -1,0 +1,32 @@
+\babel@toc {french}{}\relax 
+\contentsline {section}{Conventions et Correspondance des Notations}{3}{section*.2}%
+\contentsline {section}{\numberline {1}Introduction et Objectif}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Structure des Inconnues}{4}{subsection.1.1}%
+\contentsline {section}{\numberline {2}Méthodologie d'Écriture des Équations}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Étape 1 : Substitution de l'Ansatz}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Étape 2 : Dérivation et Équation d'Équilibre}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Étape 3 : Isolation des Termes}{5}{subsection.2.3}%
+\contentsline {section}{\numberline {3}Calculs Détaillés des Amplitudes}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Étape 1 : Substitution - Écriture de l'Ansatz}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Étape 2 : Dérivation - Calcul des Déformations}{6}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Calcul Explicite des Déformations}{6}{subsubsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.3}Étape 3 : Calcul des Contraintes via Loi de Hooke}{7}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Contrainte Normale $\sigma _{33}$ (Arrachement)}{8}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.2}Contraintes de Cisaillement $\sigma _{13}$ et $\sigma _{23}$}{8}{subsubsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.4}Étape 4 : Équation d'Équilibre et Identification}{9}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Résumé : Matrice R Complète}{9}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Écriture Finale : Amplitudes dans le Système Global}{10}{subsection.3.6}%
+\contentsline {section}{\numberline {4}Construction du Système Global}{10}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Vecteur d'État}{10}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Matrice Modale $\Phi (z)$}{11}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Écriture Explicite des Amplitudes}{11}{subsection.4.3}%
+\contentsline {section}{\numberline {5}Assemblage de la Matrice Globale}{11}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Structure par Blocs}{11}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Détail des Équations}{12}{subsection.5.2}%
+\contentsline {section}{\numberline {6}Second Membre Thermique}{12}{section.6}%
+\contentsline {section}{\numberline {7}Résolution du Système}{12}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Préconditionnement}{12}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Extraction des Amplitudes}{13}{subsection.7.2}%
+\contentsline {section}{\numberline {8}Reconstruction de la Solution}{13}{section.8}%
+\contentsline {section}{\numberline {9}Correspondance Code/Théorie}{13}{section.9}%
+\contentsline {section}{\numberline {10}Validation de la Structure Matricielle}{13}{section.10}%

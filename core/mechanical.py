@@ -43,8 +43,8 @@ def get_M_matrix(tau, delta1, delta2, props=MECHANICAL_PROPS):
     M[1, 2] = K23_coeff * tau
 
     # Ligne 3
-    M[2, 0] = K13_coeff * tau
-    M[2, 1] = K23_coeff * tau
+    M[2, 0] = -K13_coeff * tau  # Correction: Signe NEGATIF selon Eq. 166 du PDF (-(C13+C55))
+    M[2, 1] = -K23_coeff * tau  # Correction: Signe NEGATIF selon Eq. 166 du PDF (-(C23+C44))
     M[2, 2] = C33 * tau**2 - K33
 
     return M

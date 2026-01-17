@@ -1,0 +1,686 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{hyperref}
+
+\geometry{margin=2.5cm}
+
+% Couleurs personnalisées
+\definecolor{theoremcolor}{RGB}{59, 130, 246}
+\definecolor{definitioncolor}{RGB}{16, 185, 129}
+\definecolor{warningcolor}{RGB}{239, 68, 68}
+\definecolor{codecolor}{RGB}{30, 41, 59}
+
+% Boîtes colorées
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{theorembox}[1][]{
+    colback=theoremcolor!5,
+    colframe=theoremcolor,
+    fonttitle=\bfseries,
+    title={#1},
+    breakable
+}
+\newtcolorbox{definitionbox}[1][]{
+    colback=definitioncolor!5,
+    colframe=definitioncolor,
+    fonttitle=\bfseries,
+    title={#1},
+    breakable
+}
+\newtcolorbox{warningbox}[1][]{
+    colback=warningcolor!5,
+    colframe=warningcolor,
+    fonttitle=\bfseries,
+    title={#1},
+    breakable
+}
+
+\title{\textbf{Résolution Matricielle du Système Multicouche}\\
+\Large Détermination des Amplitudes par Méthode Spectrale}
+\author{Documentation Technique - Projet Industriel 5A}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section*{Conventions et Correspondance des Notations}
+\addcontentsline{toc}{section}{Conventions et Correspondance des Notations}
+%==============================================================================
+
+Ce document suit les notations du document de référence \textbf{ProjectEstaca.pdf}. Le tableau ci-dessous établit la correspondance entre les notations utilisées.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Notation Référence} & \textbf{Notation Voigt (Code)} & \textbf{Signification} \\
+\midrule
+$C_{1111}$ & $C_{11}$ & Rigidité direction 1 \\
+$C_{2222}$ & $C_{22}$ & Rigidité direction 2 \\
+$C_{3333}$ & $C_{33}$ & Rigidité direction 3 (normale) \\
+$C_{1122}$ & $C_{12}$ & Couplage 1-2 \\
+$C_{1133}$ & $C_{13}$ & Couplage 1-3 \\
+$C_{2233}$ & $C_{23}$ & Couplage 2-3 \\
+$C_{1313}$ & $C_{55}$ & Cisaillement plan 1-3 \\
+$C_{2323}$ & $C_{44}$ & Cisaillement plan 2-3 \\
+$C_{1212}$ & $C_{66}$ & Cisaillement plan 1-2 \\
+\midrule
+$U_\alpha(x_3)$ & $V_\alpha(x_3)$ & Amplitude déplacement plan ($\alpha = 1,2$) \\
+$U_3(x_3)$ & $V_3(x_3)$ & Amplitude déplacement normal \\
+$A^{i,r}_k$ & $C^{(i)}_r \cdot V^{(r)}_k$ & Amplitude couche $i$, mode $r$, composante $k$ \\
+$\delta_\alpha$ & $\delta_1, \delta_2$ & Nombres d'onde : $\delta_\alpha = m_\alpha\pi/L_\alpha$ \\
+$\tau$ & $\tau$ & Valeur propre (modes propres) \\
+\bottomrule
+\end{tabular}
+\caption{Correspondance entre notations du PDF de référence et notation Voigt du code}
+\end{table}
+
+\begin{warningbox}[Structure des Amplitudes (Référence vs Code)]
+\textbf{Dans le PDF de référence (Étape 8) :}
+\[
+A_{\text{global}} \in \mathbb{R}^{3 \times 3 \times N} = \{A^{i,r}_\alpha, A^{i,r}_3\}
+\]
+Soit $9 \times N$ amplitudes (27 pour 3 couches).
+
+\textbf{Dans le code :}
+Les 3 composantes de déplacement sont \textbf{liées} par les vecteurs propres $\mathbf{V}^{(r)}$. On a donc seulement $6 \times N$ coefficients d'intégration $C^{(i)}_r$ (18 pour 3 couches), où chaque $C_r$ multiplie le vecteur propre complet :
+\[
+\mathbf{U}(x_3) = \sum_{r=1}^{6} C_r \cdot \mathbf{V}^{(r)} \cdot e^{\tau_r x_3}
+\]
+\end{warningbox}
+
+%==============================================================================
+\section{Introduction et Objectif}
+%==============================================================================
+
+\begin{theorembox}[Objectif Principal]
+Déterminer le vecteur des amplitudes inconnues $\mathbf{A}$ pour reconstruire la solution complète du champ de déplacement :
+\[
+\boxed{\mathbf{U}(x_3) = \mathbf{A} \cdot e^{\tau x_3}}
+\]
+\end{theorembox}
+
+Le problème se ramène à la résolution d'un système linéaire de la forme :
+\[
+\boxed{[\mathbf{M}_{\text{global}}] \cdot [\mathbf{A}] = [\mathbf{F}_{\text{thermique}}]}
+\]
+
+\subsection{Structure des Inconnues}
+
+\begin{definitionbox}[Vecteur d'Amplitudes Global]
+Pour un système à $N$ couches, avec 6 modes propres par couche :
+\[
+\mathbf{A} = \begin{pmatrix}
+\mathbf{C}^{(1)} \\
+\mathbf{C}^{(2)} \\
+\vdots \\
+\mathbf{C}^{(N)}
+\end{pmatrix}
+\quad \text{où} \quad
+\mathbf{C}^{(k)} = \begin{pmatrix}
+C_1^{(k)} \\ C_2^{(k)} \\ C_3^{(k)} \\ C_4^{(k)} \\ C_5^{(k)} \\ C_6^{(k)}
+\end{pmatrix}
+\]
+
+\textbf{Nombre total d'inconnues :} $6 \times N$ amplitudes.
+
+Pour $N = 3$ couches : \textbf{18 inconnues}.
+\end{definitionbox}
+
+\begin{warningbox}[Note sur les 27 vs 18 inconnues]
+\textbf{Clarification importante :}
+
+\begin{itemize}
+    \item \textbf{27 inconnues = Amplitudes $A$} : Dans la formulation théorique générale, on a 9 amplitudes par couche ($A_1, \ldots, A_9$) pour les 3 composantes de déplacement $(u_1, u_2, u_3)$ avec 3 modes chacune. Pour 3 couches : $9 \times 3 = 27$ amplitudes.
+    
+    \item \textbf{18 inconnues = Coefficients $C$} : Le code implémente 6 coefficients d'intégration par couche car l'équation caractéristique $\det(\mathbf{M}(\tau)) = 0$ donne seulement 6 racines $\tau_r$ (polynôme de degré 6). Pour 3 couches : $6 \times 3 = 18$ coefficients.
+\end{itemize}
+
+\textbf{Pourquoi cette différence ?}
+\begin{itemize}
+    \item Les 6 racines $\tau_r$ forment 3 paires conjuguées : $\pm\tau_1, \pm\tau_2, \pm\tau_3$
+    \item Chaque mode $\tau_r$ définit un vecteur propre $\mathbf{V}^{(r)} = (V_1^{(r)}, V_2^{(r)}, V_3^{(r)})^T$
+    \item Les 3 composantes de déplacement sont donc \textbf{liées} par les vecteurs propres
+    \item Le coefficient $C_r$ multiplie tout le vecteur $\mathbf{V}^{(r)}$, pas chaque composante séparément
+\end{itemize}
+\end{warningbox}
+
+%==============================================================================
+\section{Méthodologie d'Écriture des Équations}
+%==============================================================================
+
+\subsection{Étape 1 : Substitution de l'Ansatz}
+
+\begin{theorembox}[Ansatz de Déplacement (Étape 5 du PDF)]
+Le champ de déplacement est supposé de la forme :
+\begin{align}
+u_1(x_1, x_2, x_3) &= V_1(x_3) \cos(\delta_1 x_1) \sin(\delta_2 x_2) \\
+u_2(x_1, x_2, x_3) &= V_2(x_3) \sin(\delta_1 x_1) \cos(\delta_2 x_2) \\
+u_3(x_1, x_2, x_3) &= V_3(x_3) \sin(\delta_1 x_1) \sin(\delta_2 x_2)
+\end{align}
+
+Avec la dépendance en $x_3$ :
+\[
+V_i(x_3) = \sum_{r=1}^{6} C_r \cdot V_i^{(r)} \cdot e^{\tau_r x_3}
+\]
+\end{theorembox}
+
+\subsection{Étape 2 : Dérivation et Équation d'Équilibre}
+
+L'équation d'équilibre mécanique $\text{div}(\boldsymbol{\sigma}) = 0$ conduit à :
+
+\begin{definitionbox}[Matrice M($\tau$)]
+\[
+\mathbf{M}(\tau) = \begin{pmatrix}
+C_{55}\tau^2 - K_{11} & -K_{12} & K_{13}^*\tau \\
+-K_{12} & C_{44}\tau^2 - K_{22} & K_{23}^*\tau \\
+K_{13}^*\tau & K_{23}^*\tau & C_{33}\tau^2 - K_{33}
+\end{pmatrix}
+\]
+
+Avec les coefficients :
+\begin{align}
+K_{11} &= C_{11}\delta_1^2 + C_{66}\delta_2^2 \\
+K_{22} &= C_{66}\delta_1^2 + C_{22}\delta_2^2 \\
+K_{33} &= C_{55}\delta_1^2 + C_{44}\delta_2^2 \\
+K_{12} &= (C_{12} + C_{66})\delta_1\delta_2 \\
+K_{13}^* &= (C_{13} + C_{55})\delta_1 \\
+K_{23}^* &= (C_{23} + C_{44})\delta_2
+\end{align}
+\end{definitionbox}
+
+\subsection{Étape 3 : Isolation des Termes}
+
+\begin{theorembox}[Séparation Mécanique / Thermique]
+L'équation complète est :
+\[
+\underbrace{\mathbf{M}(\tau) \cdot \mathbf{V}}_{\text{Termes mécaniques (matrice)}} = \underbrace{\mathbf{F}_{\text{th}}}_{\text{Termes thermiques (vecteur)}}
+\]
+
+Le vecteur de forçage thermique :
+\[
+\mathbf{F}_{\text{th}} = \hat{T} \begin{pmatrix}
+\beta_1 \delta_1 \\
+\beta_2 \delta_2 \\
+\beta_3 \lambda_{\text{th}}
+\end{pmatrix}
+\]
+
+Où $\beta_i = \sum_j C_{ij} \alpha_j$ sont les coefficients de contrainte thermique.
+\end{theorembox}
+
+%==============================================================================
+\section{Calculs Détaillés des Amplitudes}
+%==============================================================================
+
+Cette section présente les calculs \textbf{explicites} permettant d'identifier les amplitudes $A_r$ devant chaque mode propre.
+
+\subsection{Étape 1 : Substitution - Écriture de l'Ansatz}
+
+\begin{theorembox}[Ansatz Complet avec Amplitudes Explicites]
+On pose le champ de déplacement comme superposition de 6 modes propres :
+\begin{align}
+u_1(x_1, x_2, x_3) &= \left[\sum_{r=1}^{6} A_r \cdot V_1^{(r)} \cdot e^{\tau_r x_3}\right] \cos(\delta_1 x_1) \sin(\delta_2 x_2) \\[0.5em]
+u_2(x_1, x_2, x_3) &= \left[\sum_{r=1}^{6} A_r \cdot V_2^{(r)} \cdot e^{\tau_r x_3}\right] \sin(\delta_1 x_1) \cos(\delta_2 x_2) \\[0.5em]
+u_3(x_1, x_2, x_3) &= \left[\sum_{r=1}^{6} A_r \cdot V_3^{(r)} \cdot e^{\tau_r x_3}\right] \sin(\delta_1 x_1) \sin(\delta_2 x_2)
+\end{align}
+
+\textbf{Notation condensée :}
+\[
+\boxed{u_i(x_1, x_2, x_3) = \sum_{r=1}^{6} A_r \cdot V_i^{(r)} \cdot e^{\tau_r x_3} \cdot \phi_i(x_1, x_2)}
+\]
+où $\phi_i$ sont les fonctions harmoniques latérales.
+\end{theorembox}
+
+\subsection{Étape 2 : Dérivation - Calcul des Déformations}
+
+\begin{definitionbox}[Règle de Dérivation Fondamentale]
+La dérivation par rapport à $x_3$ fait apparaître $\tau$ :
+\[
+\frac{\partial}{\partial x_3}\left(A_r \cdot e^{\tau_r x_3}\right) = \tau_r \cdot A_r \cdot e^{\tau_r x_3}
+\]
+
+\textbf{Donc :} $\boxed{\partial_{x_3} \to \tau_r}$ dans l'espace modal.
+\end{definitionbox}
+
+\subsubsection{Calcul Explicite des Déformations}
+
+Les composantes du tenseur de déformation $\varepsilon_{ij} = \frac{1}{2}\left(\frac{\partial u_i}{\partial x_j} + \frac{\partial u_j}{\partial x_i}\right)$ :
+
+\begin{theorembox}[Déformations en Fonction des Amplitudes]
+
+\textbf{Déformations normales :}
+\begin{align}
+\varepsilon_{11} &= \frac{\partial u_1}{\partial x_1} = \sum_{r=1}^{6} A_r \cdot V_1^{(r)} \cdot e^{\tau_r x_3} \cdot \underbrace{(-\delta_1)}_{{\partial_{x_1}\cos}} \sin(\delta_1 x_1) \sin(\delta_2 x_2) \\[0.3em]
+&= \boxed{-\delta_1 \sum_{r=1}^{6} A_r V_1^{(r)} e^{\tau_r x_3}} \cdot \sin(\delta_1 x_1)\sin(\delta_2 x_2) \\[0.5em]
+\varepsilon_{22} &= \frac{\partial u_2}{\partial x_2} = \boxed{-\delta_2 \sum_{r=1}^{6} A_r V_2^{(r)} e^{\tau_r x_3}} \cdot \sin(\delta_1 x_1)\sin(\delta_2 x_2) \\[0.5em]
+\varepsilon_{33} &= \frac{\partial u_3}{\partial x_3} = \boxed{\tau_r \sum_{r=1}^{6} A_r V_3^{(r)} e^{\tau_r x_3}} \cdot \sin(\delta_1 x_1)\sin(\delta_2 x_2)
+\end{align}
+
+\textbf{Déformations de cisaillement :}
+\begin{align}
+2\varepsilon_{13} &= \frac{\partial u_1}{\partial x_3} + \frac{\partial u_3}{\partial x_1} \\
+&= \sum_r A_r \left(\tau_r V_1^{(r)} + \delta_1 V_3^{(r)}\right) e^{\tau_r x_3} \cdot \cos(\delta_1 x_1)\sin(\delta_2 x_2) \\[0.5em]
+2\varepsilon_{23} &= \sum_r A_r \left(\tau_r V_2^{(r)} + \delta_2 V_3^{(r)}\right) e^{\tau_r x_3} \cdot \sin(\delta_1 x_1)\cos(\delta_2 x_2) \\[0.5em]
+2\varepsilon_{12} &= \sum_r A_r \left(-\delta_2 V_1^{(r)} - \delta_1 V_2^{(r)}\right) e^{\tau_r x_3} \cdot \cos(\delta_1 x_1)\cos(\delta_2 x_2)
+\end{align}
+\end{theorembox}
+
+\subsection{Étape 3 : Calcul des Contraintes via Loi de Hooke}
+
+\begin{definitionbox}[Loi de Comportement Orthotrope]
+Pour un matériau orthotrope :
+\[
+\sigma_{ij} = C_{ijkl} \varepsilon_{kl} - \beta_{ij} \Theta
+\]
+
+\textbf{Définition du champ de température $\Theta$ :}
+\begin{itemize}
+    \item $\Theta(x_1, x_2, x_3)$ : Écart de température par rapport à la référence ($\Theta = T - T_{\text{ref}}$)
+    \item $\beta_{ij} = C_{ijkl}\alpha_{kl}$ : Coefficients de contrainte thermique (Pa/K)
+    \item $\alpha_{kl}$ : Coefficients de dilatation thermique (K$^{-1}$)
+\end{itemize}
+
+Pour notre problème multicouche, le champ thermique a la forme :
+\[
+\Theta(x_1, x_2, x_3) = \hat{T}(x_3) \cdot \sin(\delta_1 x_1) \sin(\delta_2 x_2)
+\]
+où $\hat{T}(x_3) = A e^{\lambda x_3} + B e^{-\lambda x_3}$ est le profil thermique dans l'épaisseur.
+\end{definitionbox}
+
+\subsubsection{Contrainte Normale $\sigma_{33}$ (Arrachement)}
+
+\begin{theorembox}[Calcul Détaillé de $\sigma_{33}$]
+\begin{align}
+\sigma_{33} &= C_{13}\varepsilon_{11} + C_{23}\varepsilon_{22} + C_{33}\varepsilon_{33} - \beta_3 \Theta \\[0.5em]
+&= C_{13}\left(-\delta_1 \sum_r A_r V_1^{(r)} e^{\tau_r z}\right) + C_{23}\left(-\delta_2 \sum_r A_r V_2^{(r)} e^{\tau_r z}\right) \\
+&\quad + C_{33}\left(\sum_r \tau_r A_r V_3^{(r)} e^{\tau_r z}\right) - \beta_3 \Theta
+\end{align}
+
+\textbf{Factorisation par amplitude :}
+\[
+\boxed{\sigma_{33} = \sum_{r=1}^{6} A_r \cdot \underbrace{\left(-C_{13}\delta_1 V_1^{(r)} - C_{23}\delta_2 V_2^{(r)} + C_{33}\tau_r V_3^{(r)}\right)}_{W_3^{(r)}} \cdot e^{\tau_r z} - \beta_3\Theta}
+\]
+
+On identifie les coefficients de la matrice $\mathbf{R}(\tau)$ ligne 3 :
+\[
+R_{31} = -C_{13}\delta_1, \quad R_{32} = -C_{23}\delta_2, \quad R_{33} = C_{33}\tau
+\]
+\end{theorembox}
+
+\subsubsection{Contraintes de Cisaillement $\sigma_{13}$ et $\sigma_{23}$}
+
+\begin{theorembox}[Calcul Détaillé de $\sigma_{13}$]
+\begin{align}
+\sigma_{13} &= C_{55} \cdot 2\varepsilon_{13} = C_{55}\left(\frac{\partial u_1}{\partial x_3} + \frac{\partial u_3}{\partial x_1}\right) \\[0.5em]
+&= C_{55} \sum_r A_r \left(\tau_r V_1^{(r)} + \delta_1 V_3^{(r)}\right) e^{\tau_r z} \cdot \cos(\delta_1 x_1)\sin(\delta_2 x_2)
+\end{align}
+
+\textbf{Factorisation :}
+\[
+\boxed{\sigma_{13} = \sum_{r=1}^{6} A_r \cdot \underbrace{\left(C_{55}\tau_r V_1^{(r)} + C_{55}\delta_1 V_3^{(r)}\right)}_{W_1^{(r)}} \cdot e^{\tau_r z}}
+\]
+
+Coefficients de $\mathbf{R}(\tau)$ ligne 1 :
+\[
+R_{11} = C_{55}\tau, \quad R_{12} = 0, \quad R_{13} = C_{55}\delta_1
+\]
+\end{theorembox}
+
+\begin{theorembox}[Calcul Détaillé de $\sigma_{23}$]
+\begin{align}
+\sigma_{23} &= C_{44} \cdot 2\varepsilon_{23} = C_{44}\left(\frac{\partial u_2}{\partial x_3} + \frac{\partial u_3}{\partial x_2}\right) \\[0.5em]
+&= C_{44} \sum_r A_r \left(\tau_r V_2^{(r)} + \delta_2 V_3^{(r)}\right) e^{\tau_r z}
+\end{align}
+
+\textbf{Factorisation :}
+\[
+\boxed{\sigma_{23} = \sum_{r=1}^{6} A_r \cdot \underbrace{\left(C_{44}\tau_r V_2^{(r)} + C_{44}\delta_2 V_3^{(r)}\right)}_{W_2^{(r)}} \cdot e^{\tau_r z}}
+\]
+
+Coefficients de $\mathbf{R}(\tau)$ ligne 2 :
+\[
+R_{21} = 0, \quad R_{22} = C_{44}\tau, \quad R_{23} = C_{44}\delta_2
+\]
+\end{theorembox}
+
+\subsection{Étape 4 : Équation d'Équilibre et Identification}
+
+\begin{definitionbox}[Équation d'Équilibre $\text{div}(\boldsymbol{\sigma}) = 0$]
+Les trois composantes :
+\begin{align}
+\frac{\partial \sigma_{11}}{\partial x_1} + \frac{\partial \sigma_{12}}{\partial x_2} + \frac{\partial \sigma_{13}}{\partial x_3} &= 0 \\
+\frac{\partial \sigma_{12}}{\partial x_1} + \frac{\partial \sigma_{22}}{\partial x_2} + \frac{\partial \sigma_{23}}{\partial x_3} &= 0 \\
+\frac{\partial \sigma_{13}}{\partial x_1} + \frac{\partial \sigma_{23}}{\partial x_2} + \frac{\partial \sigma_{33}}{\partial x_3} &= 0
+\end{align}
+\end{definitionbox}
+
+\begin{theorembox}[Identification des Facteurs devant $A_r$]
+Après substitution et simplification par les harmoniques, chaque équation donne :
+\[
+\sum_{r=1}^{6} A_r \cdot \underbrace{M_{ij}(\tau_r) \cdot V_j^{(r)}}_{= 0 \text{ si } \tau_r \text{ est racine}} \cdot e^{\tau_r z} = F_{\text{th},i}
+\]
+
+\textbf{Condition pour que la solution existe :}
+\[
+\boxed{\det(\mathbf{M}(\tau_r)) = 0} \quad \Rightarrow \quad \tau_r \text{ est mode propre}
+\]
+
+Le vecteur propre $\mathbf{V}^{(r)}$ appartient au noyau de $\mathbf{M}(\tau_r)$.
+\end{theorembox}
+
+\subsection{Résumé : Matrice R Complète}
+
+\begin{warningbox}[Qu'est-ce que la matrice $\mathbf{R}(\tau)$ ?]
+\textbf{Rôle physique :} La matrice $\mathbf{R}(\tau)$ est l'\textbf{opérateur constitutif} qui relie le vecteur propre de déplacement $\mathbf{V}^{(r)}$ au vecteur propre de contrainte $\mathbf{W}^{(r)}$.
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item Elle encode la loi de Hooke ($\sigma = C : \varepsilon$) dans l'espace des modes propres
+    \item Elle dépend de $\tau$ car la dérivation $\partial/\partial x_3 \to \tau$ apparaît dans le calcul des déformations
+    \item Elle dépend de $\delta_1, \delta_2$ qui sont les nombres d'onde latéraux
+\end{itemize}
+
+\textbf{Construction :} La matrice $\mathbf{R}(\tau)$ est construite en calculant les contraintes de cisaillement ($\sigma_{13}, \sigma_{23}$) et d'arrachement ($\sigma_{33}$) à partir des déplacements via la loi de comportement.
+\end{warningbox}
+
+\begin{definitionbox}[Matrice R($\tau$) - Passage Déplacement $\to$ Contrainte]
+\[
+\mathbf{R}(\tau) = \begin{pmatrix}
+C_{55}\tau & 0 & C_{55}\delta_1 \\
+0 & C_{44}\tau & C_{44}\delta_2 \\
+-C_{13}\delta_1 & -C_{23}\delta_2 & C_{33}\tau
+\end{pmatrix}
+\]
+
+\textbf{Signification des termes :}
+\begin{itemize}
+    \item \textbf{Diagonale :} Termes proportionnels à $\tau$ (dérivée en $x_3$)
+    \item \textbf{Dernière colonne :} Termes proportionnels à $\delta_i$ (dérivées latérales)
+    \item \textbf{Dernière ligne :} Contribution des déformations planes à $\sigma_{33}$
+\end{itemize}
+
+Le vecteur propre de contrainte est :
+\[
+\mathbf{W}^{(r)} = \mathbf{R}(\tau_r) \cdot \mathbf{V}^{(r)} = \begin{pmatrix}
+\sigma_{13}^{(r)} / A_r \\
+\sigma_{23}^{(r)} / A_r \\
+\sigma_{33}^{(r)} / A_r
+\end{pmatrix}
+\]
+\end{definitionbox}
+
+\subsection{Écriture Finale : Amplitudes dans le Système Global}
+
+\begin{theorembox}[Système Final à Résoudre]
+Pour une couche $k$, le vecteur d'état à la position $z$ :
+\[
+\begin{pmatrix}
+u_1(z) \\ u_2(z) \\ u_3(z) \\ \sigma_{13}(z) \\ \sigma_{23}(z) \\ \sigma_{33}(z)
+\end{pmatrix}
+= \underbrace{\begin{pmatrix}
+V_1^{(1)}e^{\tau_1 z} & \cdots & V_1^{(6)}e^{\tau_6 z} \\
+V_2^{(1)}e^{\tau_1 z} & \cdots & V_2^{(6)}e^{\tau_6 z} \\
+V_3^{(1)}e^{\tau_1 z} & \cdots & V_3^{(6)}e^{\tau_6 z} \\
+W_1^{(1)}e^{\tau_1 z} & \cdots & W_1^{(6)}e^{\tau_6 z} \\
+W_2^{(1)}e^{\tau_1 z} & \cdots & W_2^{(6)}e^{\tau_6 z} \\
+W_3^{(1)}e^{\tau_1 z} & \cdots & W_3^{(6)}e^{\tau_6 z}
+\end{pmatrix}}_{\boldsymbol{\Phi}(z)}
+\cdot
+\underbrace{\begin{pmatrix}
+A_1 \\ A_2 \\ A_3 \\ A_4 \\ A_5 \\ A_6
+\end{pmatrix}}_{\text{Amplitudes}}
++ \mathbf{SV}_{\text{part}}
+\]
+
+\textbf{Les 6 amplitudes $A_r$ sont les inconnues à déterminer par les conditions aux limites.}
+\end{theorembox}
+
+%==============================================================================
+\section{Construction du Système Global}
+%==============================================================================
+
+\subsection{Vecteur d'État}
+
+\begin{definitionbox}[Vecteur d'État à la Position z]
+Pour chaque couche $k$, le vecteur d'état contient déplacements et contraintes :
+\[
+\mathbf{SV}^{(k)}(z) = \begin{pmatrix}
+u_1(z) \\ u_2(z) \\ u_3(z) \\ \sigma_{13}(z) \\ \sigma_{23}(z) \\ \sigma_{33}(z)
+\end{pmatrix}
+= \boldsymbol{\Phi}^{(k)}(z) \cdot \mathbf{C}^{(k)} + \mathbf{SV}_{\text{part}}^{(k)}(z)
+\]
+\end{definitionbox}
+
+\subsection{Matrice Modale $\Phi(z)$}
+
+\begin{theorembox}[Construction de $\boldsymbol{\Phi}(z)$]
+La matrice $\boldsymbol{\Phi}(z)$ est de dimension $6 \times 6$ :
+\[
+\boldsymbol{\Phi}(z) = \begin{pmatrix}
+V_1^{(1)}e^{\tau_1 z} & V_1^{(2)}e^{\tau_2 z} & \cdots & V_1^{(6)}e^{\tau_6 z} \\
+V_2^{(1)}e^{\tau_1 z} & V_2^{(2)}e^{\tau_2 z} & \cdots & V_2^{(6)}e^{\tau_6 z} \\
+V_3^{(1)}e^{\tau_1 z} & V_3^{(2)}e^{\tau_2 z} & \cdots & V_3^{(6)}e^{\tau_6 z} \\
+W_1^{(1)}e^{\tau_1 z} & W_1^{(2)}e^{\tau_2 z} & \cdots & W_1^{(6)}e^{\tau_6 z} \\
+W_2^{(1)}e^{\tau_1 z} & W_2^{(2)}e^{\tau_2 z} & \cdots & W_2^{(6)}e^{\tau_6 z} \\
+W_3^{(1)}e^{\tau_1 z} & W_3^{(2)}e^{\tau_2 z} & \cdots & W_3^{(6)}e^{\tau_6 z}
+\end{pmatrix}
+\]
+
+Où $\mathbf{W}^{(r)} = \mathbf{R}(\tau_r) \cdot \mathbf{V}^{(r)}$ est le vecteur propre de contrainte.
+\end{theorembox}
+
+\subsection{Écriture Explicite des Amplitudes}
+
+\begin{definitionbox}[Vecteur d'Amplitudes pour 3 Couches]
+Le vecteur global d'amplitudes est :
+\[
+\mathbf{A}_{\text{global}} = \begin{pmatrix}
+C_1^{(1)} & C_2^{(1)} & C_3^{(1)} & C_4^{(1)} & C_5^{(1)} & C_6^{(1)} & 
+C_1^{(2)} & C_2^{(2)} & \cdots & C_6^{(3)}
+\end{pmatrix}^T
+\]
+
+\textbf{Signification physique des amplitudes :}
+\begin{itemize}
+    \item $C_r^{(k)}$ : Amplitude du mode $r$ dans la couche $k$
+    \item Mode $r=1,2$ : associé à $\pm\tau_1$ (décroissance/croissance rapide)
+    \item Mode $r=3,4$ : associé à $\pm\tau_2$ (décroissance/croissance intermédiaire)
+    \item Mode $r=5,6$ : associé à $\pm\tau_3$ (décroissance/croissance lente)
+\end{itemize}
+\end{definitionbox}
+
+%==============================================================================
+\section{Assemblage de la Matrice Globale}
+%==============================================================================
+
+\subsection{Structure par Blocs}
+
+Pour un système à 3 couches, la matrice globale $\mathbf{K}_{\text{glob}}$ est de dimension $18 \times 18$ :
+
+\begin{theorembox}[Structure de $\mathbf{K}_{\text{glob}}$]
+\[
+\mathbf{K}_{\text{glob}} = \begin{pmatrix}
+\mathbf{B}_\sigma \boldsymbol{\Phi}^{(1)}(0) & \mathbf{0} & \mathbf{0} \\[0.5em]
+\boldsymbol{\Phi}^{(1)}(h_1) & -\boldsymbol{\Phi}^{(2)}(0) & \mathbf{0} \\[0.5em]
+\mathbf{0} & \boldsymbol{\Phi}^{(2)}(h_2) & -\boldsymbol{\Phi}^{(3)}(0) \\[0.5em]
+\mathbf{0} & \mathbf{0} & \mathbf{B}_\sigma \boldsymbol{\Phi}^{(3)}(h_3)
+\end{pmatrix}
+\]
+
+Avec la matrice de sélection des contraintes :
+\[
+\mathbf{B}_\sigma = \begin{pmatrix}
+0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1
+\end{pmatrix}
+\]
+\end{theorembox}
+
+\subsection{Détail des Équations}
+
+\begin{definitionbox}[18 Équations du Système]
+\textbf{Bloc 1 : Conditions aux limites en $z=0$ (3 équations)}
+\[
+\sigma_{13}^{(1)}(0) = 0, \quad \sigma_{23}^{(1)}(0) = 0, \quad \sigma_{33}^{(1)}(0) = 0
+\]
+$\Rightarrow$ Surface inférieure libre de contraintes.
+
+\textbf{Bloc 2 : Continuité à l'interface 1-2 (6 équations)}
+\[
+\mathbf{SV}^{(1)}(h_1) = \mathbf{SV}^{(2)}(0)
+\]
+$\Rightarrow$ Continuité des déplacements ET des contraintes.
+
+\textbf{Bloc 3 : Continuité à l'interface 2-3 (6 équations)}
+\[
+\mathbf{SV}^{(2)}(h_2) = \mathbf{SV}^{(3)}(0)
+\]
+
+\textbf{Bloc 4 : Conditions aux limites en $z=H$ (3 équations)}
+\[
+\sigma_{13}^{(3)}(h_3) = 0, \quad \sigma_{23}^{(3)}(h_3) = 0, \quad \sigma_{33}^{(3)}(h_3) = 0
+\]
+$\Rightarrow$ Surface supérieure libre de contraintes.
+\end{definitionbox}
+
+%==============================================================================
+\section{Second Membre Thermique}
+%==============================================================================
+
+\begin{theorembox}[Vecteur $\mathbf{F}_{\text{glob}}$]
+Le second membre contient les contributions thermiques :
+\[
+\mathbf{F}_{\text{glob}} = \begin{pmatrix}
+-\mathbf{T}_{\text{part}}^{(1)}(0) / C_{\text{ref}} \\[0.5em]
+\mathbf{U}_{\text{part}}^{(2)}(0) - \mathbf{U}_{\text{part}}^{(1)}(h_1) \\
+(\mathbf{T}_{\text{part}}^{(2)}(0) - \mathbf{T}_{\text{part}}^{(1)}(h_1)) / C_{\text{ref}} \\[0.5em]
+\mathbf{U}_{\text{part}}^{(3)}(0) - \mathbf{U}_{\text{part}}^{(2)}(h_2) \\
+(\mathbf{T}_{\text{part}}^{(3)}(0) - \mathbf{T}_{\text{part}}^{(2)}(h_2)) / C_{\text{ref}} \\[0.5em]
+-\mathbf{T}_{\text{part}}^{(3)}(h_3) / C_{\text{ref}}
+\end{pmatrix}
+\]
+
+Où :
+\begin{itemize}
+    \item $\mathbf{U}_{\text{part}}^{(k)}$ : Solution particulière de déplacement (thermique)
+    \item $\mathbf{T}_{\text{part}}^{(k)}$ : Solution particulière de contrainte (thermique)
+    \item $C_{\text{ref}}$ : Rigidité de référence pour normalisation (200 GPa)
+\end{itemize}
+\end{theorembox}
+
+%==============================================================================
+\section{Résolution du Système}
+%==============================================================================
+
+\subsection{Préconditionnement}
+
+Le système peut être mal conditionné ($\text{cond}(\mathbf{K}) > 10^{10}$). Le code utilise :
+
+\begin{enumerate}
+    \item \textbf{Équilibrage par scaling :}
+    \[
+    \mathbf{D}_r \cdot \mathbf{K}_{\text{glob}} \cdot \mathbf{D}_c \cdot \mathbf{y} = \mathbf{D}_r \cdot \mathbf{F}_{\text{glob}}
+    \]
+    
+    \item \textbf{Régularisation de Tikhonov :}
+    \[
+    \mathbf{A} = \sum_{i=1}^{n} \frac{\sigma_i^2}{\sigma_i^2 + \lambda^2} \cdot \frac{\mathbf{u}_i^H \mathbf{F}}{\sigma_i} \cdot \mathbf{v}_i
+    \]
+\end{enumerate}
+
+\subsection{Extraction des Amplitudes}
+
+Après résolution :
+\[
+\mathbf{A}_{\text{global}} = \mathbf{D}_c \cdot \mathbf{y}
+\]
+
+Et pour chaque couche :
+\[
+\mathbf{C}^{(k)} = \mathbf{A}_{\text{global}}[6(k-1):6k]
+\]
+
+%==============================================================================
+\section{Reconstruction de la Solution}
+%==============================================================================
+
+\begin{theorembox}[Solution Complète]
+Le champ de contraintes reconstruit :
+\[
+\boldsymbol{\sigma}(z) = \underbrace{\boldsymbol{\Phi}_\sigma(z) \cdot \mathbf{C}^{(k)}}_{\text{Solution homogène}} + \underbrace{\sum_m \mathbf{T}_{\text{part},m}(z)}_{\text{Solutions particulières}}
+\]
+
+Avec dé-normalisation :
+\[
+\sigma_{ij}^{\text{réel}} = \sigma_{ij}^{\text{normalisé}} \times C_{\text{ref}} \times 10^9 \quad [\text{Pa}]
+\]
+\end{theorembox}
+
+%==============================================================================
+\section{Correspondance Code/Théorie}
+%==============================================================================
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Concept Théorique} & \textbf{Fonction Python} & \textbf{Lignes} \\
+\midrule
+$\det(\mathbf{M}(\tau)) = 0$ & \texttt{solve\_characteristic\_equation()} & 78-186 \\
+Vecteurs propres $\mathbf{V}_r$ & \texttt{compute\_all\_eigenvectors()} & 243-257 \\
+Matrice $\mathbf{R}(\tau)$ & \texttt{get\_R\_matrix()} & 264-334 \\
+Vecteurs $\mathbf{W}_r$ & \texttt{compute\_all\_stress\_eigenvectors()} & 348-369 \\
+Matrice $\boldsymbol{\Phi}(z)$ & \texttt{build\_Phi\_matrix\_normalized()} & 508-527 \\
+Forçage thermique & \texttt{compute\_thermal\_forcing()} & 406-448 \\
+Système $\mathbf{K} \cdot \mathbf{C} = \mathbf{F}$ & \texttt{solve\_multilayer()} & 992-1141 \\
+Régularisation Tikhonov & \texttt{solve\_regularized\_system()} & 846-989 \\
+Profils de contraintes & \texttt{compute\_multilayer\_stress\_profile()} & 1144-1293 \\
+\bottomrule
+\end{tabular}
+\caption{Correspondance entre théorie et implémentation dans \texttt{core/mechanical.py}}
+\end{table}
+
+%==============================================================================
+\section{Validation de la Structure Matricielle}
+%==============================================================================
+
+\begin{definitionbox}[Critères de Validation]
+\begin{enumerate}
+    \item \textbf{Dimension :} $\mathbf{K}_{\text{glob}} \in \mathbb{C}^{6N \times 6N}$
+    \item \textbf{Symétrie :} Structure bande tridiagonale par blocs
+    \item \textbf{Conditions aux limites :} 
+    \begin{itemize}
+        \item 3 équations de surface libre en $z=0$
+        \item 3 équations de surface libre en $z=H$
+    \end{itemize}
+    \item \textbf{Continuité :} 6 équations par interface interne
+    \item \textbf{Total :} $3 + 6(N-1) + 3 = 6N$ équations $\checkmark$
+\end{enumerate}
+\end{definitionbox}
+
+\begin{warningbox}[Vérification Numérique]
+Le code vérifie automatiquement :
+\begin{itemize}
+    \item Conditionnement avant/après équilibrage
+    \item Résidu relatif $\|\mathbf{K}\mathbf{C} - \mathbf{F}\| / \|\mathbf{F}\|$
+    \item Paires conjuguées des racines $\tau$
+\end{itemize}
+\end{warningbox}
+
+\end{document}

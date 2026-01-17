@@ -1,0 +1,291 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+
+\geometry{margin=2.5cm}
+
+% Couleurs
+\definecolor{codeblue}{RGB}{59,130,246}
+\definecolor{codegray}{RGB}{100,116,139}
+\definecolor{codegreen}{RGB}{16,185,129}
+\definecolor{codebg}{RGB}{248,250,252}
+
+% Style listings Python
+\lstdefinestyle{python}{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegray}\itshape,
+    stringstyle=\color{codegreen},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{codegray!30},
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    language=Python
+}
+
+% En-tête
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{Projet Multicouche}}
+\fancyhead[R]{\textit{Documentation Technique}}
+\fancyfoot[C]{\thepage}
+
+\title{
+    \vspace{-1cm}
+    \textbf{Implémentation du Solveur Mécanique Spectral}\\[0.5em]
+    \large Correspondance entre les Équations Théoriques et le Code Python
+}
+\author{Documentation Technique - Projet TBC Multicouche}
+\date{Janvier 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Ce document présente l'implémentation informatique du modèle mécanique spectral pour l'analyse thermoélastique de plaques multicouches. Il établit la correspondance rigoureuse entre les équations théoriques du document \textit{Résolution\_équations.pdf} et leur traduction dans le code Python \texttt{core/mechanical.py}.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section{Introduction}
+%==============================================================================
+
+Le solveur mécanique implémenté résout le problème d'équilibre thermoélastique d'une plaque multicouche soumise à un chargement thermique. La méthode utilisée est basée sur une décomposition spectrale (séries de Fourier) couplée à une résolution modale dans l'épaisseur.
+
+\subsection{Système de Coordonnées}
+
+\begin{itemize}
+    \item $x_1, x_2$ : directions dans le plan de la plaque
+    \item $x_3$ : direction normale (à travers l'épaisseur)
+    \item $\delta_1 = \pi/L_w$, $\delta_2 = \pi/L_w$ : nombres d'onde spectraux
+\end{itemize}
+
+\subsection{Ansatz de Déplacement}
+
+Les champs de déplacement sont développés sous forme modale :
+\begin{equation}
+    U_j^{(k)}(x_3) = \sum_{r=1}^{6} A_r^{(k)} V_j^{(k,r)} e^{\tau_r^{(k)} x_3}
+    \label{eq:ansatz}
+\end{equation}
+
+où $\tau_r$ sont les valeurs propres (modes) et $V_j^{(r)}$ les vecteurs propres de déplacement.
+
+%==============================================================================
+\section{Équations d'Équilibre Volumique}
+%==============================================================================
+
+Pour chaque couche $k$, l'équilibre statique impose $\mathrm{div}(\boldsymbol{\sigma}) = 0$, projeté selon les trois directions.
+
+\subsection{Équation 1 : Projection sur $x_1$}
+
+\begin{tcolorbox}[title=Forme Théorique (PDF Eq. 1), colback=blue!5, colframe=codeblue]
+\begin{equation}
+    \left(C_{55}\tau_r^2 - [C_{11}\delta_1^2 + C_{66}\delta_2^2]\right) V_1^{(r)} 
+    - (C_{12} + C_{66})\delta_1\delta_2 \, V_2^{(r)} 
+    + (C_{13} + C_{55})\delta_1\tau_r \, V_3^{(r)} = F_{\text{th},1}
+\end{equation}
+\end{tcolorbox}
+
+\textbf{Implémentation Python} (lignes 35-38 de \texttt{get\_M\_matrix}) :
+
+\begin{lstlisting}[style=python]
+# Ligne 1 de la matrice M(tau)
+M[0, 0] = C55 * tau**2 - K11          # K11 = C11*delta1^2 + C66*delta2^2
+M[0, 1] = -K12                         # K12 = (C12+C66)*delta1*delta2
+M[0, 2] = K13_coeff * tau              # K13_coeff = (C13+C55)*delta1
+\end{lstlisting}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Terme} & \textbf{Formule Théorique} & \textbf{Code Python} \\
+\midrule
+$M_{11}$ & $C_{55}\tau^2 - (C_{11}\delta_1^2 + C_{66}\delta_2^2)$ & \texttt{C55*tau**2 - K11} \\
+$M_{12}$ & $-(C_{12} + C_{66})\delta_1\delta_2$ & \texttt{-K12} \\
+$M_{13}$ & $+(C_{13} + C_{55})\delta_1\tau$ & \texttt{+K13\_coeff*tau} \\
+\bottomrule
+\end{tabular}
+\caption{Correspondance Théorie/Code pour l'Équation 1}
+\end{table}
+
+%------------------------------------------------------------------------------
+\subsection{Équation 2 : Projection sur $x_2$}
+
+\begin{tcolorbox}[title=Forme Théorique (PDF Eq. 2), colback=blue!5, colframe=codeblue]
+\begin{equation}
+    -(C_{12} + C_{66})\delta_1\delta_2 \, V_1^{(r)} 
+    + \left(C_{44}\tau_r^2 - [C_{66}\delta_1^2 + C_{22}\delta_2^2]\right) V_2^{(r)} 
+    + (C_{23} + C_{44})\delta_2\tau_r \, V_3^{(r)} = F_{\text{th},2}
+\end{equation}
+\end{tcolorbox}
+
+\textbf{Implémentation Python} (lignes 40-43) :
+
+\begin{lstlisting}[style=python]
+# Ligne 2 de la matrice M(tau)
+M[1, 0] = -K12                         # Symetrie: M21 = M12
+M[1, 1] = C44 * tau**2 - K22           # K22 = C66*delta1^2 + C22*delta2^2
+M[1, 2] = K23_coeff * tau              # K23_coeff = (C23+C44)*delta2
+\end{lstlisting}
+
+%------------------------------------------------------------------------------
+\subsection{Équation 3 : Projection sur $x_3$ (Arrachement)}
+
+\begin{tcolorbox}[title=Forme Théorique (PDF Eq. 3), colback=red!5, colframe=red!70!black]
+\begin{equation}
+    \boxed{-(C_{13} + C_{55})\delta_1\tau_r} \, V_1^{(r)} 
+    \boxed{-(C_{23} + C_{44})\delta_2\tau_r} \, V_2^{(r)} 
+    + \left(C_{33}\tau_r^2 - [C_{55}\delta_1^2 + C_{44}\delta_2^2]\right) V_3^{(r)} = F_{\text{th},3}
+\end{equation}
+\end{tcolorbox}
+
+\textbf{Note importante} : Les termes encadrés ont des \textbf{signes négatifs}. Cette correction a été appliquée dans le code.
+
+\textbf{Implémentation Python} (lignes 45-48) :
+
+\begin{lstlisting}[style=python]
+# Ligne 3 de la matrice M(tau)
+# CORRECTION: Signes NEGATIFS selon Eq. 3 du PDF
+M[2, 0] = -K13_coeff * tau   # -(C13+C55)*delta1*tau
+M[2, 1] = -K23_coeff * tau   # -(C23+C44)*delta2*tau
+M[2, 2] = C33 * tau**2 - K33 # K33 = C55*delta1^2 + C44*delta2^2
+\end{lstlisting}
+
+%==============================================================================
+\section{Matrice Dynamique $M(\tau)$ Complète}
+%==============================================================================
+
+La matrice $M(\tau)$ 3×3 s'écrit sous forme matricielle :
+
+\begin{equation}
+M(\tau) = \begin{pmatrix}
+C_{55}\tau^2 - K_{11} & -K_{12} & +K_{13}\tau \\[0.5em]
+-K_{12} & C_{44}\tau^2 - K_{22} & +K_{23}\tau \\[0.5em]
+\textcolor{red}{-K_{13}\tau} & \textcolor{red}{-K_{23}\tau} & C_{33}\tau^2 - K_{33}
+\end{pmatrix}
+\label{eq:M_matrix}
+\end{equation}
+
+avec les coefficients :
+\begin{align}
+    K_{11} &= C_{11}\delta_1^2 + C_{66}\delta_2^2 \\
+    K_{12} &= (C_{12} + C_{66})\delta_1\delta_2 \\
+    K_{13} &= (C_{13} + C_{55})\delta_1 \\
+    K_{22} &= C_{66}\delta_1^2 + C_{22}\delta_2^2 \\
+    K_{23} &= (C_{23} + C_{44})\delta_2 \\
+    K_{33} &= C_{55}\delta_1^2 + C_{44}\delta_2^2
+\end{align}
+
+%==============================================================================
+\section{Résolution de l'Équation Caractéristique}
+%==============================================================================
+
+Les valeurs propres $\tau_r$ sont obtenues en résolvant :
+\begin{equation}
+    \det(M(\tau)) = 0
+\end{equation}
+
+Le déterminant est un polynôme de degré 6 en $\tau$ (pair, donc cubique en $\tau^2$) :
+\begin{equation}
+    P(\tau^2) = c_6 \tau^6 + c_4 \tau^4 + c_2 \tau^2 + c_0 = 0
+\end{equation}
+
+\textbf{Implémentation} (\texttt{solve\_characteristic\_equation}, lignes 78-186) :
+
+\begin{lstlisting}[style=python]
+# Coefficient c6 (analytique exact)
+c6 = props['C55'] * props['C44'] * props['C33']
+
+# Coefficients c4, c2, c0 par evaluation numerique
+P_0 = get_det_at_X(0)   # P(0) = c0
+P_1 = get_det_at_X(1)   # P(1) = c6 + c4 + c2 + c0
+P_2 = get_det_at_X(2)   # P(2) = 8c6 + 4c4 + 2c2 + c0
+
+# Resolution du systeme lineaire pour c4, c2
+b1 = P_1 - c6 - c0
+b2 = P_2 - 8*c6 - c0
+c4 = (b2 - 2*b1) / 2
+c2 = b1 - c4
+
+# Racines en X = tau^2
+X_roots = np.roots([1, c4/c6, c2/c6, c0/c6])
+
+# 6 racines tau = +/- sqrt(X)
+tau_roots = [+sqrt(X), -sqrt(X) for X in X_roots]
+\end{lstlisting}
+
+%==============================================================================
+\section{Vecteurs Propres de Déplacement et Contrainte}
+%==============================================================================
+
+\subsection{Vecteur Propre de Déplacement $V_r$}
+
+Pour chaque valeur propre $\tau_r$, le vecteur propre $V_r \in \ker(M(\tau_r))$ est calculé par la méthode des cofacteurs.
+
+\textbf{Normalisation} : $V_3 = 1$ (convention du PDF)
+
+\subsection{Matrice $R(\tau)$ et Vecteur Contrainte $W_r$}
+
+La matrice $R(\tau)$ relie les déplacements aux contraintes transverses :
+\begin{equation}
+    W_r = R(\tau_r) \cdot V_r = \begin{pmatrix} \sigma_{13} \\ \sigma_{23} \\ \sigma_{33} \end{pmatrix}
+\end{equation}
+
+avec :
+\begin{equation}
+R(\tau) = \begin{pmatrix}
+C_{55}\tau & 0 & C_{55}\delta_1 \\
+0 & C_{44}\tau & C_{44}\delta_2 \\
+-C_{13}\delta_1 & -C_{23}\delta_2 & C_{33}\tau
+\end{pmatrix}
+\end{equation}
+
+%==============================================================================
+\section{Système Global et Conditions aux Limites}
+%==============================================================================
+
+Le système de 27 équations (pour 3 couches) se décompose en :
+
+\begin{table}[h]
+\centering
+\begin{tabular}{clcc}
+\toprule
+\textbf{Bloc} & \textbf{Description} & \textbf{Nb Eq.} & \textbf{Lignes} \\
+\midrule
+1-3 & Équilibre volumique (3 couches × 3 dir.) & 9 & Satisfait par $\det(M)=0$ \\
+4 & Interface 1-2 : Continuité $U$ et $\sigma$ & 6 & 1-6 de $K_{\text{glob}}$ \\
+5 & Interface 2-3 : Continuité $U$ et $\sigma$ & 6 & 7-12 de $K_{\text{glob}}$ \\
+6 & Bord bas ($z=0$) : Surface libre & 3 & 13-15 de $K_{\text{glob}}$ \\
+7 & Bord haut ($z=H$) : Surface libre & 3 & 16-18 de $K_{\text{glob}}$ \\
+\bottomrule
+\end{tabular}
+\caption{Structure du système d'équations}
+\end{table}
+
+\textbf{Note} : L'implémentation utilise une formulation 6N (18 équations pour 3 couches) car les 9 équations d'équilibre sont automatiquement satisfaites par la construction modale.
+
+%==============================================================================
+\section{Conclusion}
+%==============================================================================
+
+L'implémentation dans \texttt{core/mechanical.py} respecte rigoureusement les équations du document \textit{Résolution\_équations.pdf}. La correction des signes de $M_{31}$ et $M_{32}$ (termes de couplage $U_3$-$U_1$ et $U_3$-$U_2$) assure la conformité avec l'équation 3 du PDF.
+
+La méthode modale utilisée est mathématiquement équivalente au système explicite 27×27 mais plus efficace numériquement car elle exploite la structure propre du problème.
+
+\end{document}
