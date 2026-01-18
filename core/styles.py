@@ -18,6 +18,19 @@ def load_css():
         color: #f1f5f9;
     }
     
+    /* Masquer la barre d'en-tête Streamlit (header blanc avec bouton Deploy) */
+    header[data-testid="stHeader"] {
+        display: none !important;
+    }
+    
+    /* Alternative: rendre le header transparent au lieu de le masquer */
+    /* 
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        border-bottom: none !important;
+    }
+    */
+    
     .stApp {
         background: 
             radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),

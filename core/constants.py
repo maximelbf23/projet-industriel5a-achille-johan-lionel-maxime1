@@ -26,15 +26,20 @@ MECHANICAL_PROPS = {
 }
 
 # --- PROPRIÉTÉS MÉCANIQUES PAR COUCHE (TBC système) ---
-# Couche 1: Substrat superalliage base Nickel (ex: CMSX-4)
+# Référence: Bovet, Chiaruttini, Vattré - ONERA/Safran (2025)
+# "Full-scale crystal plasticity modeling..." - Table 3
+
+# Couche 1: Substrat superalliage base Nickel (Inconel 718)
+# Valeurs à température ambiante (T0) - Source: ONERA/Safran Tab. 3
 PROPS_SUBSTRATE = {
-    'C11': 250, 'C12': 160, 'C13': 160,
-    'C21': 160, 'C22': 250, 'C23': 160,
-    'C31': 160, 'C32': 160, 'C33': 250,
-    'C44': 130, 'C55': 130, 'C66': 130
+    'C11': 260, 'C12': 179, 'C13': 179,  # c11=259.6, c12=179.0 GPa
+    'C21': 179, 'C22': 260, 'C23': 179,
+    'C31': 179, 'C32': 179, 'C33': 260,
+    'C44': 110, 'C55': 110, 'C66': 110   # c44=109.6 GPa
 }
 
 # Couche 2: Bond Coat (MCrAlY - NiCoCrAlY)
+# Valeurs estimées (littérature TBC)
 PROPS_BONDCOAT = {
     'C11': 180, 'C12': 80,  'C13': 80,
     'C21': 80,  'C22': 180, 'C23': 80,
@@ -43,6 +48,7 @@ PROPS_BONDCOAT = {
 }
 
 # Couche 3: Céramique TBC (YSZ - 7% Y2O3-ZrO2)
+# Valeurs typiques YSZ poreux (littérature TBC)
 PROPS_CERAMIC = {
     'C11': 50,  'C12': 10,  'C13': 10,
     'C21': 10,  'C22': 50,  'C23': 10,
@@ -51,9 +57,11 @@ PROPS_CERAMIC = {
 }
 
 # Coefficients de dilatation thermique par couche (1/K)
-ALPHA_SUBSTRATE = {'alpha_1': 13e-6, 'alpha_2': 13e-6, 'alpha_3': 13e-6}
-ALPHA_BONDCOAT = {'alpha_1': 14e-6, 'alpha_2': 14e-6, 'alpha_3': 14e-6}
-ALPHA_CERAMIC = {'alpha_1': 10e-6, 'alpha_2': 10e-6, 'alpha_3': 10e-6}
+# Référence: ONERA Tab. 3 - αT varie de 4.95e-6 (RT) à 14.68e-6 (1198K)
+# Valeurs moyennes utilisées pour conditions de service (~800-1000K)
+ALPHA_SUBSTRATE = {'alpha_1': 12e-6, 'alpha_2': 12e-6, 'alpha_3': 12e-6}  # Inconel 718 ~800K
+ALPHA_BONDCOAT = {'alpha_1': 14e-6, 'alpha_2': 14e-6, 'alpha_3': 14e-6}   # MCrAlY
+ALPHA_CERAMIC = {'alpha_1': 10e-6, 'alpha_2': 10e-6, 'alpha_3': 10e-6}    # YSZ
 
 # --- COEFFICIENTS DE DILATATION THERMIQUE (legacy) ---
 THERMAL_EXPANSION = {

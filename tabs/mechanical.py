@@ -34,6 +34,39 @@ PALETTE = {
     'warning': '#f59e0b',
 }
 
+# Données de référence ONERA/Safran (Bovet, Chiaruttini, Vattré 2025)
+ONERA_REFERENCE = {
+    'sigma_vM_range': (400, 800),  # MPa - Plage FEM typique
+    'sigma_vM_max_root': 1000,     # MPa - Concentration à la racine
+    'C11_RT': 259.6,               # GPa - Inconel 718 à T ambiante
+    'C12_RT': 179.0,               # GPa
+    'C44_RT': 109.6,               # GPa
+    'alpha_RT': 4.95e-6,           # K⁻¹
+    'alpha_HT': 14.68e-6,          # K⁻¹ @ 1198K
+    'source': 'Bovet et al., ONERA/Safran (2025)',
+}
+
+# Cache pour les calculs spectraux lourds
+@st.cache_data(ttl=300, show_spinner=False)
+def cached_spectral_solve(h_sub, h_bc, h_tbc, lw, T_hat, method='spectral'):
+    """
+    Cache le calcul spectral multicouche.
+    TTL = 300 secondes (5 minutes) pour éviter des résultats obsolètes.
+    """
+    from core.constants import PROPS_SUBSTRATE, PROPS_BONDCOAT, PROPS_CERAMIC
+    from core.constants import ALPHA_SUBSTRATE, ALPHA_BONDCOAT, ALPHA_CERAMIC
+    
+    lambda_th = np.pi / lw
+    layer_configs = [
+        (h_sub, PROPS_SUBSTRATE, ALPHA_SUBSTRATE),
+        (h_bc, PROPS_BONDCOAT, ALPHA_BONDCOAT),
+        (h_tbc, PROPS_CERAMIC, ALPHA_CERAMIC)
+    ]
+    
+    result = solve_multilayer_problem(layer_configs, lw, lambda_th, T_hat, method=method)
+    return result
+
+
 def render():
     # === EN-TÊTE HERO SPECTACULAIRE ===
     st.markdown("""
@@ -74,52 +107,50 @@ def render():
     h_tbc_from_alpha = alpha_sidebar * h1_mm  # en mm
     h_tbc_um_default = min(max(50, int(h_tbc_from_alpha * 1000)), 5000)  # conversion en µm, clampé
     
-    # --- CONFIGURATION MÉCANIQUE ---
-    with st.expander("🛠️ Paramètres de Simulation (liés au volet gauche)", expanded=True):
+    # --- CONFIGURATION COMPACTE ---
+    st.markdown("""
+    <div style="background: rgba(30, 41, 59, 0.4); padding: 0.75rem 1rem; border-radius: 10px; 
+                margin-bottom: 1rem; border: 1px solid rgba(59, 130, 246, 0.15);">
+        <span style="color: #94a3b8; font-size: 0.85rem;">📐 Configuration depuis sidebar : </span>
+        <span style="color: #60a5fa; font-weight: 500;">α = {alpha:.2f}</span> • 
+        <span style="color: #f59e0b; font-weight: 500;">β = {beta:.1f}</span> • 
+        <span style="color: #10b981; font-weight: 500;">Lw = {lw:.3f} m</span> • 
+        <span style="color: #f472b6; font-weight: 500;">ΔT = {dt}°C</span>
+    </div>
+    """.format(alpha=alpha_sidebar, beta=beta_sidebar, lw=lw_sidebar, dt=int(t_top_sidebar - t_bottom_sidebar)), unsafe_allow_html=True)
+    
+    # Calcul de h_tbc à partir de alpha
+    h1_mm = 0.5
+    h_tbc_from_alpha = alpha_sidebar * h1_mm
+    h_tbc_um = min(max(50, int(h_tbc_from_alpha * 1000)), 5000)
+    h_bc_um = 10
+    T_hat = int(t_top_sidebar - t_bottom_sidebar)
+    Lw = lw_sidebar
+    
+    # --- PARAMÈTRES AVANCÉS (collapsés par défaut) ---
+    with st.expander("⚙️ Options avancées", expanded=False):
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.markdown("**Géométrie du Multicouche**")
-            # Affichage des épaisseurs (toutes calculées/fixes)
-            st.markdown(f"""
-            <div style="background: rgba(30,41,59,0.6); padding: 1rem; border-radius: 8px; font-size: 0.9rem;">
-                <div style="color: #94a3b8; margin-bottom: 0.5rem;">Épaisseurs :</div>
-                <div style="color: #64748b;">• Alliage (h₁) : <strong style="color: #f1f5f9;">500 µm</strong> (fixe)</div>
-                <div style="color: #64748b;">• Liaison (h₂) : <strong style="color: #f1f5f9;">10 µm</strong> (fixe)</div>
-                <div style="color: #3b82f6;">• TBC (h₃ = α × h₁) : <strong style="color: #60a5fa;">{h_tbc_um_default} µm</strong></div>
-                <div style="color: #94a3b8; margin-top: 0.5rem; font-size: 0.8rem;">α = {alpha_sidebar:.2f} → h₃ = {alpha_sidebar:.2f} × 500 = {h_tbc_um_default} µm</div>
-            </div>
-            """, unsafe_allow_html=True)
-            h_tbc_um = h_tbc_um_default  # Utilise directement la valeur calculée
-            h_bc_um = 10  # Valeur fixe
-        
-        with col2:
-            st.markdown("**Chargement Thermique (depuis sidebar)**")
-            T_hat = int(t_top_sidebar - t_bottom_sidebar)  # Amplitude = T_top - T_bottom
-            st.info(f"**T_bottom** = {t_bottom_sidebar}°C | **T_top** = {t_top_sidebar}°C")
-            
-            # Nouveau contrôle pour la perturbation latérale
-            perturb_pct = st.slider("Amplitude Variation Latérale (%)", 0, 50, 5, step=1,
-                                  help="Simule un point chaud sinusoïdal. 0% = Champ uniforme (pas de cisaillement).")
-            
+            perturb_pct = st.slider("Variation latérale (%)", 0, 50, 5, step=1,
+                                  help="Simule un point chaud sinusoïdal")
             T_perturb_top = t_top_sidebar * (perturb_pct / 100.0)
             T_perturb_bottom = t_bottom_sidebar * (perturb_pct / 100.0)
-            
-            st.metric("Amplitude Latérale (Fluctuation)", f"{T_perturb_top:.0f} °C", delta=f"{perturb_pct}%")
-            Lw = lw_sidebar  # Utilise la valeur du sidebar
+        
+        with col2:
+            method = st.radio("Solveur", ["spectral", "clt"], index=0, horizontal=True,
+                             help="Spectral (recommandé) | CLT (classique)")
         
         with col3:
-            st.markdown("**Méthode**")
-            method = st.radio("Solveur", ["spectral", "clt"], index=0,
-                             help="Spectral: Modes propres rigoureux (recommandé) | CLT: Laminés classiques")
             if method == "spectral":
-                n_modes = st.slider("Modes de Fourier (Précision bords)", 1, 21, 5, step=2, help="Nombre de modes spectrales (m=1, 3, 5...). Plus élevé = meilleur rendu des effets de bords.")
+                n_modes = st.slider("Modes Fourier", 1, 21, 5, step=2)
             else:
                 n_modes = 1
-            show_math = st.checkbox("Afficher les détails mathématiques", value=True)
+            show_math = st.checkbox("Détails math.", value=False)
     
+    # Bouton de calcul
+    st.divider()
     if st.button("🚀 Lancer le Calcul Complet", type="primary", use_container_width=True):
-        # On passe les amplitudes de PERTURBATION au solver spectral
         run_full_analysis(h_tbc_um, h_bc_um, T_hat, Lw, method, show_math, 
                           alpha_sidebar, beta_sidebar, T_perturb_bottom, T_perturb_top, n_modes)
     
@@ -409,15 +440,16 @@ def display_spectral_results(results, show_math):
                     yaxis_title='z (mm)',
                     zaxis_title='σ₃₃ (GPa)',
                     bgcolor='rgba(15, 23, 42, 0.9)',
-                    camera=dict(eye=dict(x=1.5, y=1.5, z=0.8))
+                    camera=dict(eye=dict(x=1.8, y=1.8, z=1.0)),
+                    aspectmode='manual',
+                    aspectratio=dict(x=1.5, y=1, z=0.8)
                 ),
-                height=400,
+                height=500,
                 paper_bgcolor='rgba(0,0,0,0)',
                 font=dict(color='#f1f5f9'),
-                margin=dict(l=0, r=0, t=30, b=0)
+                margin=dict(l=0, r=30, t=40, b=0)
             )
             st.plotly_chart(fig_3d, use_container_width=True)
-            st.caption(f"Visualisation sur une période Lw = {Lw*1000:.1f} mm. Les zones rouges/bleues indiquent les pics de traction/compression.")
 
     # === CERCLE DE MOHR INTERACTIF ===
     st.markdown("### ⭕ Cercle de Mohr des Contraintes")
@@ -542,109 +574,19 @@ def display_spectral_results(results, show_math):
             </div>
             """, unsafe_allow_html=True)
     
-    # === ONGLETS DE VISUALISATION DÉTAILLÉE ===
+    # === ONGLETS DE VISUALISATION DÉTAILLÉE (4 onglets consolidés) ===
+    st.divider()
     st.markdown("### 📈 Analyse Détaillée")
     tabs = st.tabs([
-        "🔢 Modes Propres (τ)", 
-        "📐 Vecteurs Propres (V, W)", 
-        "📈 Profils de Contraintes",
-        "🔴 Analyse d'Endommagement",
-        "🔗 Interfaces & Énergie",
-        "📋 Matrice Φ"
+        "📈 Contraintes", 
+        "🔴 Endommagement", 
+        "🔗 Interfaces",
+        "🔬 Avancé"
     ])
     
-    # --- TAB 1: RACINES τ ---
+    # --- TAB 1: PROFILS DE CONTRAINTES ---
     with tabs[0]:
-        st.markdown("### 1️⃣ Racines de l'Équation Caractéristique")
-        
-        if show_math:
-            st.latex(r"\det(M(\tau)) = 0 \quad \Rightarrow \quad P(\tau^2) = c_6 \tau^6 + c_4 \tau^4 + c_2 \tau^2 + c_0 = 0")
-            st.caption("Les 6 racines τ correspondent aux modes de décroissance exponentielle dans l'épaisseur.")
-        
-        # Tableau des racines
-        df_roots = pd.DataFrame({
-            "Mode": [f"τ_{i+1}" for i in range(len(tau_roots))],
-            "Partie Réelle": [f"{r.real:.6f}" for r in tau_roots],
-            "Partie Imaginaire": [f"{r.imag:.6f}" for r in tau_roots],
-            "|τ|": [f"{abs(r):.4f}" for r in tau_roots]
-        })
-        st.dataframe(df_roots, use_container_width=True, hide_index=True)
-        
-        # Vérification conjugués
-        st.markdown("#### ✅ Vérification des Paires Conjuguées")
-        pairs_ok = True
-        for i, r in enumerate(tau_roots):
-            has_conjugate = any(abs(r + other) < 1e-6 or abs(r - np.conj(other)) < 1e-6 
-                               for j, other in enumerate(tau_roots) if j != i)
-            if not has_conjugate:
-                pairs_ok = False
-        
-        if pairs_ok:
-            st.success("Les racines forment bien des paires conjuguées (±τ), validant la symétrie matériau.")
-        else:
-            st.warning("Vérification des paires en cours...")
-        
-        # Visualisation dans le plan complexe
-        fig_roots = go.Figure()
-        fig_roots.add_trace(go.Scatter(
-            x=[r.real for r in tau_roots],
-            y=[r.imag for r in tau_roots],
-            mode='markers+text',
-            marker=dict(size=15, color=PALETTE['primary'], line=dict(width=2, color='white')),
-            text=[f"τ{i+1}" for i in range(len(tau_roots))],
-            textposition="top center",
-            name="Racines τ"
-        ))
-        fig_roots.add_hline(y=0, line_dash="dash", line_color="#64748b")
-        fig_roots.add_vline(x=0, line_dash="dash", line_color="#64748b")
-        fig_roots.update_layout(
-            title="Racines τ dans le Plan Complexe",
-            xaxis_title="Re(τ)", yaxis_title="Im(τ)",
-            height=400,
-            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#f1f5f9')
-        )
-        st.plotly_chart(fig_roots, use_container_width=True)
-    
-    # --- TAB 2: VECTEURS PROPRES ---
-    with tabs[1]:
-        st.markdown("### 2️⃣ Vecteurs Propres de Déplacement et Contrainte")
-        
-        if show_math:
-            st.latex(r"M(\tau_r) \cdot \mathbf{V}_r = 0")
-            st.latex(r"\mathbf{W}_r = R(\tau_r) \cdot \mathbf{V}_r = [\sigma_{13}, \sigma_{23}, \sigma_{33}]^T")
-        
-        # Tableau des vecteurs V
-        st.markdown("#### Vecteurs Déplacement V (normalisés V₃=1)")
-        V_data = []
-        for i, ev in enumerate(eigenvectors):
-            V = ev['V']
-            V_data.append({
-                "Mode": f"V_{i+1}",
-                "V₁ (u)": f"{V[0]:.4f}" if np.isreal(V[0]) else f"{V[0]:.4f}",
-                "V₂ (v)": f"{V[1]:.4f}" if np.isreal(V[1]) else f"{V[1]:.4f}",
-                "V₃ (w)": f"{V[2]:.4f}" if np.isreal(V[2]) else f"{V[2]:.4f}",
-            })
-        st.dataframe(pd.DataFrame(V_data), use_container_width=True, hide_index=True)
-        
-        # Tableau des vecteurs W (contraintes)
-        st.markdown("#### Vecteurs Contrainte W")
-        W_data = []
-        for i, ev in enumerate(eigenvectors):
-            if 'W' in ev:
-                W = ev['W']
-                W_data.append({
-                    "Mode": f"W_{i+1}",
-                    "σ₁₃": f"{W[0]/1e9:.2f} GPa",
-                    "σ₂₃": f"{W[1]/1e9:.2f} GPa",
-                    "σ₃₃": f"{W[2]/1e9:.2f} GPa",
-                })
-        if W_data:
-            st.dataframe(pd.DataFrame(W_data), use_container_width=True, hide_index=True)
-    
-    # --- TAB 3: PROFILS DE CONTRAINTES ---
-    with tabs[2]:
-        st.markdown("### 3️⃣ Profils de Contraintes dans l'Épaisseur")
+        st.markdown("### 📈 Profils de Contraintes dans l'Épaisseur")
         
         if stress and 'z' in stress:
             z_mm = stress['z'] * 1e3
@@ -693,19 +635,14 @@ def display_spectral_results(results, show_math):
         else:
             st.warning("Pas de données de contrainte disponibles.")
     
-    # --- TAB 4: ANALYSE D'ENDOMMAGEMENT ---
-    with tabs[3]:
-        st.markdown("### 4️⃣ Analyse d'Endommagement et Critères de Rupture")
+    # --- TAB 2: ANALYSE D'ENDOMMAGEMENT ---
+    with tabs[1]:
+        st.markdown("### 🔴 Analyse d'Endommagement et Critères de Rupture")
         
         if stress and 'z' in stress:
             z_mm = stress['z'] * 1e3
             n_points = len(stress['z'])
             
-            # Calcul des indicateurs D et F avec les bons seuils par matériau
-            # Utilise layer_idx pour appliquer les seuils critiques corrects:
-            # - Substrat (Ni): σ_tensile = 1000 MPa
-            # - Bond Coat: σ_tensile = 500 MPa  
-            # - Céramique: σ_tensile = 150 MPa
             layer_idx = stress.get('layer_idx', np.zeros(n_points, dtype=int))
             layer_types = ['substrate', 'bondcoat', 'ceramic']
             
@@ -767,34 +704,22 @@ def display_spectral_results(results, show_math):
             
             st.plotly_chart(fig_damage, use_container_width=True)
             
-            # Interprétation physique
-            if show_math:
-                st.markdown("#### 📐 Formulation Mathématique")
-                col_math1, col_math2 = st.columns(2)
-                with col_math1:
-                    st.latex(r"D = \max\left(\frac{|\sigma_{ij}|}{\sigma_{crit,ij}}\right)")
-                with col_math2:
-                    st.latex(r"F = F_3\sigma_{33} + F_{33}\sigma_{33}^2 + F_{ss}(\sigma_{13}^2 + \sigma_{23}^2)")
-            
+            # Interprétation
             st.markdown("""
             <div style="background: rgba(30, 41, 59, 0.6); padding: 1rem; border-radius: 12px; margin-top: 1rem;">
-                <h5 style="color: #60a5fa; margin: 0 0 0.5rem 0;">📚 Interprétation Physique des Critères</h5>
+                <h5 style="color: #60a5fa; margin: 0 0 0.5rem 0;">📚 Interprétation des Critères</h5>
                 <ul style="color: #cbd5e1; font-size: 0.9rem;">
-                    <li><strong>Indicateur D</strong> : Ratio max entre contrainte réelle et contrainte admissible. 
-                        Simple et conservatif.</li>
-                    <li><strong>Critère Tsai-Wu</strong> : Critère polynomial pour matériaux anisotropes. 
-                        Prend en compte l'asymétrie traction/compression.</li>
-                    <li><strong>Zones critiques</strong> : Généralement aux interfaces où les propriétés 
-                        changent brutalement (discontinuité de Cᵢⱼ et αᵢⱼ).</li>
+                    <li><strong>Indicateur D</strong> : Ratio max contrainte/admissible. Simple et conservatif.</li>
+                    <li><strong>Critère Tsai-Wu</strong> : Critère polynomial pour matériaux anisotropes.</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.warning("Calcul des indicateurs nécessite d'abord un calcul de contraintes.")
+            st.warning("Lancez un calcul pour voir l'analyse d'endommagement.")
     
-    # --- TAB 5: ANALYSE AVANCÉE DES INTERFACES ---
-    with tabs[4]:
-        st.markdown("### 5️⃣ Analyse Avancée des Interfaces & Recommandations")
+    # --- TAB 3: ANALYSE AVANCÉE DES INTERFACES ---
+    with tabs[2]:
+        st.markdown("### 🔗 Analyse des Interfaces & Recommandations")
         
         if stress and 'z' in stress:
             from core.constants import CONSTANTS, GPa_TO_PA
@@ -1073,48 +998,118 @@ def display_spectral_results(results, show_math):
         else:
             st.warning("Lancez d'abord un calcul pour voir l'analyse des interfaces.")
     
-    # --- TAB 6: MATRICE PHI ---
-    with tabs[5]:
-        st.markdown("### 6️⃣ Matrice Fondamentale Φ(z)")
+    # --- TAB 4: DONNÉES AVANCÉES (Modes τ, Vecteurs, Matrice Φ, ONERA) ---
+    with tabs[3]:
+        st.markdown("### 🔬 Données Avancées")
         
-        if show_math:
-            st.latex(r"\Phi(z) = \begin{bmatrix} V_1 e^{\tau_1 z} & \cdots & V_6 e^{\tau_6 z} \\ W_1 e^{\tau_1 z} & \cdots & W_6 e^{\tau_6 z} \end{bmatrix}_{6 \times 6}")
-            st.caption("Chaque colonne représente un mode propre, avec déplacement V et contrainte W.")
+        # Sous-onglets pour les données techniques
+        subtabs = st.tabs(["🔢 Modes τ", "📐 Vecteurs V/W", "📋 Matrice Φ", "🏛️ ONERA"])
         
-        Phi_0 = results['Phi_0']
+        # === Sous-tab Modes τ ===
+        with subtabs[0]:
+            st.markdown("#### Racines de l'Équation Caractéristique")
+            df_roots = pd.DataFrame({
+                "Mode": [f"τ_{i+1}" for i in range(len(tau_roots))],
+                "Partie Réelle": [f"{r.real:.6f}" for r in tau_roots],
+                "Partie Imaginaire": [f"{r.imag:.6f}" for r in tau_roots],
+                "|τ|": [f"{abs(r):.4f}" for r in tau_roots]
+            })
+            st.dataframe(df_roots, use_container_width=True, hide_index=True)
+            
+            # Visualisation dans le plan complexe
+            fig_roots = go.Figure()
+            fig_roots.add_trace(go.Scatter(
+                x=[r.real for r in tau_roots],
+                y=[r.imag for r in tau_roots],
+                mode='markers+text',
+                marker=dict(size=12, color=PALETTE['primary']),
+                text=[f"τ{i+1}" for i in range(len(tau_roots))],
+                textposition="top center",
+                name="Racines τ"
+            ))
+            fig_roots.update_layout(
+                title="Racines τ dans le Plan Complexe",
+                xaxis_title="Re(τ)", yaxis_title="Im(τ)",
+                height=300,
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#f1f5f9')
+            )
+            st.plotly_chart(fig_roots, use_container_width=True)
         
-        # Affichage de la matrice (module uniquement pour lisibilité)
-        st.markdown("#### Φ(z=0) - Valeurs Absolues Normalisées")
-        Phi_display = np.abs(Phi_0) / np.max(np.abs(Phi_0))  # Normalisation pour affichage
+        # === Sous-tab Vecteurs V/W ===
+        with subtabs[1]:
+            st.markdown("#### Vecteurs Propres")
+            col_v, col_w = st.columns(2)
+            with col_v:
+                st.markdown("**Vecteurs Déplacement V**")
+                V_data = [{"Mode": f"V_{i+1}", "V₁": f"{ev['V'][0]:.3f}", "V₂": f"{ev['V'][1]:.3f}", "V₃": f"{ev['V'][2]:.3f}"} for i, ev in enumerate(eigenvectors)]
+                st.dataframe(pd.DataFrame(V_data), use_container_width=True, hide_index=True)
+            with col_w:
+                st.markdown("**Vecteurs Contrainte W**")
+                W_data = [{"Mode": f"W_{i+1}", "σ₁₃": f"{ev['W'][0]/1e9:.2f}", "σ₂₃": f"{ev['W'][1]/1e9:.2f}", "σ₃₃": f"{ev['W'][2]/1e9:.2f}"} for i, ev in enumerate(eigenvectors) if 'W' in ev]
+                if W_data:
+                    st.dataframe(pd.DataFrame(W_data), use_container_width=True, hide_index=True)
         
-        fig_phi = px.imshow(Phi_display, 
-                           labels=dict(x="Mode r", y="Composante", color="|Φᵢⱼ|"),
-                           x=[f"τ{i+1}" for i in range(6)],
-                           y=["V₁", "V₂", "V₃", "W₁", "W₂", "W₃"],
-                           color_continuous_scale="Viridis",
-                           title="Heatmap de |Φ(0)| normalisée")
-        fig_phi.update_layout(
-            height=350,
-            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#f1f5f9')
-        )
-        st.plotly_chart(fig_phi, use_container_width=True)
-        
-        # Explication physique
-        st.markdown("""
-        <div style="background: rgba(30, 41, 59, 0.6); padding: 1rem; border-radius: 12px; margin-top: 1rem;">
-            <h5 style="color: #60a5fa; margin: 0 0 0.5rem 0;">📚 Rôle de la Matrice Φ</h5>
-            <p style="color: #cbd5e1; font-size: 0.9rem;">
-                La matrice <strong>Φ(z)</strong> est la matrice de transfert qui propage l'état 
-                [déplacements, tractions] d'une interface à une autre. Elle encode la réponse 
-                modale du multicouche et permet de résoudre les conditions aux limites de manière élégante.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Paramètres
-        st.markdown("#### Paramètres de Simulation")
-        st.json(params)
+        # === Sous-tab Matrice Φ ===
+        with subtabs[2]:
+            st.markdown("#### Matrice Fondamentale Φ(z)")
+            
+            if show_math:
+                st.latex(r"\Phi(z) = \begin{bmatrix} V_1 e^{\tau_1 z} & \cdots & V_6 e^{\tau_6 z} \\ W_1 e^{\tau_1 z} & \cdots & W_6 e^{\tau_6 z} \end{bmatrix}_{6 \times 6}")
+            
+            Phi_0 = results['Phi_0']
+            Phi_display = np.abs(Phi_0) / np.max(np.abs(Phi_0))
+            
+            fig_phi = px.imshow(Phi_display, 
+                               labels=dict(x="Mode r", y="Composante", color="|Φᵢⱼ|"),
+                               x=[f"τ{i+1}" for i in range(6)],
+                               y=["V₁", "V₂", "V₃", "W₁", "W₂", "W₃"],
+                               color_continuous_scale="Viridis",
+                               title="Heatmap de |Φ(0)| normalisée")
+            fig_phi.update_layout(
+                height=300,
+                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#f1f5f9')
+            )
+            st.plotly_chart(fig_phi, use_container_width=True)
+    
+        # === Sous-tab ONERA ===
+        with subtabs[3]:
+            st.markdown("#### Validation vs Référence ONERA/Safran")
+            
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(6,182,212,0.05) 100%);
+                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(16,185,129,0.2); margin-bottom: 1rem;">
+                <div style="color: #10b981; font-weight: 600;">📚 Bovet et al. (2025) - ONERA/Safran</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            from core.constants import PROPS_SUBSTRATE, ALPHA_SUBSTRATE
+            
+            props_comparison = pd.DataFrame({
+                "Propriété": ["C₁₁ (GPa)", "C₁₂ (GPa)", "C₄₄ (GPa)"],
+                "Code": [PROPS_SUBSTRATE['C11'], PROPS_SUBSTRATE['C12'], PROPS_SUBSTRATE['C44']],
+                "ONERA": [ONERA_REFERENCE['C11_RT'], ONERA_REFERENCE['C12_RT'], ONERA_REFERENCE['C44_RT']],
+            })
+            props_comparison["Écart (%)"] = ((props_comparison["Code"] - props_comparison["ONERA"]) / props_comparison["ONERA"] * 100).round(2)
+            props_comparison["Statut"] = props_comparison["Écart (%)"].apply(lambda x: "✅" if abs(x) < 5 else "⚠️")
+            st.dataframe(props_comparison, use_container_width=True, hide_index=True)
+            
+            if stress and 'sigma_33' in stress:
+                sigma_max_MPa = np.max(np.abs(stress['sigma_33'])) / 1e6
+                sigma_min, sigma_max = ONERA_REFERENCE['sigma_vM_range']
+                is_in_range = sigma_min * 0.5 <= sigma_max_MPa <= sigma_max * 1.5
+                
+                col1, col2 = st.columns(2)
+                col1.metric("σ₃₃ max calculé", f"{sigma_max_MPa:.1f} MPa")
+                col2.metric("Plage ONERA", f"{sigma_min}-{sigma_max} MPa")
+                
+                if is_in_range:
+                    st.success("✅ CONFORME aux références ONERA")
+                else:
+                    st.warning("⚠️ Hors plage - Vérifier les paramètres")
+            else:
+                st.info("Lancez un calcul pour la comparaison ONERA.")
 
 if __name__ == "__main__":
     render()
