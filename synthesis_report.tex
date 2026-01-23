@@ -6,14 +6,13 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{geometry}
-\usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, calc}
 \usepackage{float}
 \usepackage{booktabs}
 \usepackage{tcolorbox}
-\tcbuselibrary{skins,breakable,listings}
+\tcbuselibrary{skins,breakable}
 \usepackage{fancyhdr}
 \usepackage{array}
 \usepackage{longtable}
@@ -21,41 +20,11 @@
 \geometry{hmargin=2cm,vmargin=2cm}
 \setlength{\headheight}{14pt}
 
-% Configuration listings pour Python
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.97,0.97,0.95}
-\definecolor{keywordblue}{rgb}{0.13,0.13,1}
+% Couleurs
 \definecolor{theoremcolor}{RGB}{59, 130, 246}
 \definecolor{definitioncolor}{RGB}{16, 185, 129}
 \definecolor{warningcolor}{RGB}{239, 68, 68}
 \definecolor{codecolor}{RGB}{30, 41, 59}
-
-\lstdefinestyle{pythonstyle}{
-    backgroundcolor=\color{backcolour},   
-    commentstyle=\color{codegreen}\itshape,
-    keywordstyle=\color{keywordblue}\bfseries,
-    numberstyle=\tiny\color{codegray},
-    stringstyle=\color{codepurple},
-    basicstyle=\ttfamily\scriptsize,
-    breakatwhitespace=false,         
-    breaklines=true,                 
-    captionpos=b,                    
-    keepspaces=true,                 
-    numbers=left,                    
-    numbersep=5pt,                  
-    showspaces=false,                
-    showstringspaces=false,
-    showtabs=false,                  
-    tabsize=2,
-    language=Python,
-    frame=single,
-    rulecolor=\color{codegray!30},
-    xleftmargin=1em,
-    framexleftmargin=0.5em
-}
-\lstset{style=pythonstyle}
 
 % Boîtes colorées
 \newtcolorbox{theorembox}[1][]{
@@ -91,32 +60,32 @@
 \pagestyle{fancy}
 \fancyhf{}
 \rhead{Projet IDSA 5A - TBC}
-\lhead{Rapport de Synthèse Exhaustif}
+\lhead{Rapport de Synthèse}
 \rfoot{Page \thepage}
 
-\title{\textbf{Rapport de Synthèse Exhaustif}\\[0.5cm] 
+\title{\textbf{Rapport de Synthèse}\\[0.5cm] 
 \Large Modélisation Thermo-Mécanique des Systèmes TBC\\[0.3cm]
-\normalsize De la Théorie (ProjectEstaca.pdf) à l'Implémentation Python/Streamlit\\[1cm]
+\normalsize Méthode Spectrale et Implémentation Python/Streamlit\\[1cm]
 \small Projet Industriel 5A-IDSA - Encadrement ONERA (A. Vattré)}
-\author{Documentation Technique Automatisée}
+\author{Documentation Technique}
 \date{\today}
 
 \begin{document}
 
-% Page de titre améliorée
+% Page de titre
 \begin{titlepage}
 \begin{center}
 \vspace*{1cm}
 
 \begin{tcolorbox}[colback=theoremcolor!10, colframe=theoremcolor, width=\textwidth]
 \centering
-\Huge\textbf{Rapport de Synthèse Exhaustif}\\[0.5cm]
+\Huge\textbf{Rapport de Synthèse}\\[0.5cm]
 \Large Modélisation Thermo-Mécanique\\des Systèmes Barrière Thermique (TBC)
 \end{tcolorbox}
 
 \vspace{1cm}
-\large De la Théorie à l'Implémentation Python/Streamlit\\[0.3cm]
-\normalsize Conforme au document \textit{ProjectEstaca.pdf}
+\large Méthode Spectrale et Implémentation Python/Streamlit\\[0.3cm]
+\normalsize Projet Industriel 5A-IDSA
 
 \vspace{2cm}
 
@@ -163,16 +132,22 @@ Analyse modale, Critères d'endommagement, Streamlit
 \addcontentsline{toc}{section}{Résumé Exécutif}
 %==============================================================================
 
-\begin{tcolorbox}[colback=theoremcolor!5, colframe=theoremcolor, title=Objectif du Projet]
-Développer un outil de simulation numérique pour l'évaluation thermomécanique des zones critiques d'endommagement dans les aubes de turbines multicouches nouvelle génération.
+\begin{tcolorbox}[colback=theoremcolor!5, colframe=theoremcolor, title=Projet 5A-IDSA : Évaluation Thermomécanique des Aubes de Turbines]
+\textbf{Encadrement :} ONERA (Aurélien Vattré) / ESTACA (Daniel Gaffié)
+
+\textbf{Objectif :} Développer un outil de simulation numérique pour l'évaluation thermomécanique des zones critiques d'endommagement dans les aubes de turbines multicouches nouvelle génération.
 \end{tcolorbox}
 
-\textbf{Méthodologie :}
+\textbf{Contexte Industriel :}
+Les aubes de turbines sont soumises à des conditions extrêmes : températures dépassant 1000°C, gradients thermiques sévères (jusqu'à 200°C sur quelques millimètres), et chargements mécaniques cycliques. Des architectures multicouches combinant substrat métallique, couche d'accroche et revêtement céramique sont utilisées pour améliorer leur durabilité.
+
+\textbf{Méthodologie Développée :}
 \begin{itemize}
-    \item Approche \textbf{semi-analytique} basée sur la décomposition spectrale (séries de Fourier)
-    \item Résolution du problème aux valeurs propres $\det(M(\tau)) = 0$ pour chaque couche
-    \item Assemblage multicouche via matrice de transfert $\Phi(z)$
-    \item Critères d'endommagement D et Tsai-Wu
+    \item Approche \textbf{semi-analytique} basée sur la décomposition spectrale (séries de Fourier doubles)
+    \item Construction de la matrice dynamique $\Gamma(\tau)$ avec opérateurs $L_{jk}$
+    \item Résolution du problème aux valeurs propres $\det(\Gamma(\tau)) = 0$
+    \item Assemblage matriciel bloc-diagonal $9 \times 9$ avec sollicitation thermique
+    \item Critères d'endommagement D et Tsai-Wu pour identification des zones critiques
 \end{itemize}
 
 \textbf{Résultats Clés :}
@@ -181,18 +156,19 @@ Développer un outil de simulation numérique pour l'évaluation thermomécaniqu
 \toprule
 \textbf{Métrique} & \textbf{Plage Typique} & \textbf{Seuil Critique} \\
 \midrule
-Température interface & 800--1050°C & $T_{crit} = 1100$°C \\
-Indicateur D & 0.2--0.8 & $D \geq 1$ (rupture) \\
-$\sigma_{33}$ max & 50--200 MPa & $\sigma_t^{ceramic} = 150$ MPa \\
+Température interface substrat/bondcoat & 800--1050°C & $T_{crit} = 1100$°C \\
+Indicateur d'endommagement D & 0.2--0.8 & $D \geq 1$ (rupture) \\
+Contrainte normale $\sigma_{33}$ max & 50--200 MPa & $\sigma_t^{ceramic} = 150$ MPa \\
+Contrainte cisaillement $\sigma_{13}$ max & 20--80 MPa & $\tau_{crit} = 120$ MPa \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\textbf{Livrables :}
+\textbf{Livrables du Projet :}
 \begin{enumerate}
-    \item Code Python (\texttt{core/mechanical.py} : 1482 lignes)
-    \item Interface Streamlit interactive
-    \item Documentation technique complète (ce rapport)
+    \item \textbf{Module de calcul} : \texttt{core/mechanical\_pdf.py}
+    \item \textbf{Interface Streamlit} : Application interactive avec dashboard et visualisations 3D
+    \item \textbf{Documentation technique} : Ce rapport de synthèse
 \end{enumerate}
 
 \newpage
@@ -201,17 +177,32 @@ $\sigma_{33}$ max & 50--200 MPa & $\sigma_t^{ceramic} = 150$ MPa \\
 \section{Introduction}
 %==============================================================================
 
-Ce document établit la correspondance \textbf{rigoureuse} entre :
+\subsection{Contexte Industriel : Aubes de Turbines Nouvelle Génération}
+
+Les aubes de turbines constituent l'un des composants les plus critiques des moteurs aéronautiques. Situées en aval de la chambre de combustion, elles sont exposées à des gaz à très haute température (supérieure à 1500°C) tout en devant supporter des contraintes mécaniques élevées dues à la rotation.
+
+\begin{warningbox}[Enjeux de Durabilité]
+Les phénomènes d'endommagement aux interfaces entre couches représentent la principale cause de défaillance des systèmes TBC :
 \begin{itemize}
-    \item Le document théorique de référence \texttt{ProjectEstaca.pdf} (8 étapes)
-    \item L'implémentation Python dans le module \texttt{core/}
-    \item L'interface utilisateur Streamlit dans le module \texttt{tabs/}
+    \item \textbf{Délamination} : Décohésion entre la couche céramique et le substrat
+    \item \textbf{Écaillage} : Perte de morceaux de revêtement céramique
+    \item \textbf{Fissuration} : Propagation de fissures dans les zones de concentration de contraintes
 \end{itemize}
+\end{warningbox}
 
-\subsection{Objectif Industriel}
-Évaluation thermomécanique des zones critiques d'endommagement dans les aubes de turbines multicouches nouvelle génération (Projet 5A-IDSA, encadrement ONERA).
+\subsection{Objectifs du Projet}
 
-\subsection{Structure du Système Multicouche Étudié}
+Ce projet vise à :
+\begin{enumerate}
+    \item \textbf{Modéliser} la réponse thermomécanique d'architectures multicouches à partir d'un modèle tridimensionnel simplifié (méthode spectrale)
+    \item \textbf{Prédire} les zones critiques d'endommagement situées aux interfaces
+    \item \textbf{Quantifier} les effets de l'anisotropie élastique, des contrastes thermiques, et de l'épaisseur des couches
+    \item \textbf{Fournir} une carte de sensibilité pour guider la conception de futures aubes plus robustes
+\end{enumerate}
+
+%==============================================================================
+\section{Système Multicouche Étudié}
+%==============================================================================
 
 Le système TBC (Thermal Barrier Coating) comprend $N$ couches empilées selon la direction normale $x_3$ :
 
@@ -262,263 +253,28 @@ Les paramètres d'entrée de l'application sont :
     \delta_1 = \delta_2 &= \frac{\pi}{L_w} \quad \text{(nombres d'onde spectraux)}
 \end{align}
 
-\subsection{Organigramme de l'Algorithme Spectral}
+\subsection{Propriétés Matériaux}
+
+Les propriétés élastiques et thermiques de chaque couche sont définies dans le module \texttt{core/constants.py}. Les valeurs sont issues des publications ONERA/Safran (voir Section~\ref{sec:validation}).
 
 \begin{center}
-\begin{tikzpicture}[
-    node distance=0.8cm,
-    startstop/.style={rectangle, rounded corners, minimum width=3.5cm, minimum height=0.7cm, text centered, draw=theoremcolor, fill=theoremcolor!20, font=\small},
-    process/.style={rectangle, minimum width=4cm, minimum height=0.7cm, text centered, draw=definitioncolor, fill=definitioncolor!10, font=\small},
-    decision/.style={diamond, aspect=2, minimum width=2cm, text centered, draw=warningcolor, fill=warningcolor!10, font=\scriptsize},
-    arrow/.style={thick,->,>=stealth}
-]
-
-% Nodes
-\node (start) [startstop] {Entrée: $\alpha, \beta, L_w, T_{bot}, T_{top}$};
-\node (thermal) [process, below=of start] {Résolution Thermique $T(z)$};
-\node (delta) [process, below=of thermal] {Calcul $\delta_1 = \delta_2 = \pi/L_w$};
-\node (Gamma) [process, below=of delta] {Construction $\Gamma(\tau)$ (Opérateurs $L_{jk}$)};
-\node (det) [process, below=of Gamma] {Résolution $\det(\Gamma(\tau)) = 0$};
-\node (tau) [process, below=of det] {Sélection 3 valeurs propres $\tau_r$ (Re$<$0)};
-\node (Kdyn) [process, below=of tau] {Assemblage $\mathbb{K}_{Dyn}$ (9$\times$9 bloc-diagonal)};
-\node (Qth) [process, below=of Kdyn] {Calcul termes thermiques $\mathcal{Q}_\alpha$};
-\node (solve) [decision, below=of Qth] {cond(K) $> 10^{10}$?};
-\node (direct) [process, below left=0.6cm and -0.5cm of solve] {Résolution directe};
-\node (tikhonov) [process, below right=0.6cm and -0.5cm of solve] {Tikhonov SVD};
-\node (stress) [process, below=1.3cm of solve] {Reconstruction $\sigma_{ij}(z)$};
-\node (damage) [process, below=of stress] {Calcul $D(z)$, Tsai-Wu $F(z)$};
-\node (end) [startstop, below=of damage] {Sortie: Profils, Zones Critiques};
-
-% Arrows
-\draw [arrow] (start) -- (thermal);
-\draw [arrow] (thermal) -- (delta);
-\draw [arrow] (delta) -- (Gamma);
-\draw [arrow] (Gamma) -- (det);
-\draw [arrow] (det) -- (tau);
-\draw [arrow] (tau) -- (Kdyn);
-\draw [arrow] (Kdyn) -- (Qth);
-\draw [arrow] (Qth) -- (solve);
-\draw [arrow] (solve) -- node[left, font=\scriptsize] {Non} (direct);
-\draw [arrow] (solve) -- node[right, font=\scriptsize] {Oui} (tikhonov);
-\draw [arrow] (direct) |- (stress);
-\draw [arrow] (tikhonov) |- (stress);
-\draw [arrow] (stress) -- (damage);
-\draw [arrow] (damage) -- (end);
-
-% Annotations
-\node[right=0.3cm of det, font=\scriptsize, text=codegray] {Polynôme cubique en $X=\tau^2$};
-\node[right=0.3cm of Kdyn, font=\scriptsize, text=codegray] {diag($\Gamma(\tau_1), \Gamma(\tau_2), \Gamma(\tau_3)$)};
-
-\end{tikzpicture}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Propriété} & \textbf{Substrat (Ni)} & \textbf{BondCoat} & \textbf{Céramique (YSZ)} \\
+\midrule
+$C_{11}$ (GPa) & 259.6 & 180 & 50 \\
+$C_{12}$ (GPa) & 179.0 & 120 & 10 \\
+$C_{44}$ (GPa) & 109.6 & 80 & 20 \\
+$\alpha$ (K$^{-1}$) & $13 \times 10^{-6}$ & $14 \times 10^{-6}$ & $10 \times 10^{-6}$ \\
+\bottomrule
+\end{tabular}
 \end{center}
 
 %==============================================================================
-\section{Architecture Globale du Code}
+\section{Modélisation Mathématique}
 %==============================================================================
 
-\subsection{Structure des Répertoires}
-
-\begin{codebox}[Arborescence du Projet]
-\begin{verbatim}
-projet-industriel5a/
-+-- core/                          # Moteur de calcul
-|   +-- mechanical.py              # Solveur spectral (1482 lignes)
-|   +-- damage_analysis.py         # Criteres d'endommagement
-|   +-- clt_solver.py              # Theorie classique des stratifies
-|   +-- constants.py               # Proprietes materiaux (Cij, alpha)
-|   +-- calculation.py             # Solveur thermique
-|   +-- validation.py              # Tests de validation
-+-- tabs/                          # Interface Streamlit
-|   +-- dashboard_home.py          # Tableau de bord principal
-|   +-- mechanical.py              # Onglet analyse mecanique
-|   +-- optimization.py            # Onglet optimisation
-|   +-- study_parametric.py        # Etude parametrique
-|   +-- theory_interactive.py      # Documentation interactive
-|   +-- mapping_3d.py              # Visualisation 3D
-+-- Profil de temperature Aube.py  # Point d'entree Streamlit
-+-- requirements.txt               # Dependances Python
-\end{verbatim}
-\end{codebox}
-
-\subsection{Diagramme de Flux des Données}
-
-\begin{center}
-\begin{tikzpicture}[
-    node distance=1.5cm,
-    box/.style={rectangle, draw=theoremcolor, fill=theoremcolor!10, rounded corners, minimum height=1cm, minimum width=3cm, align=center, font=\small},
-    arrow/.style={-{Stealth[length=2mm]}, thick}
-]
-
-% Entrées
-\node[box, fill=definitioncolor!20, draw=definitioncolor] (input) {Paramètres Utilisateur\\$\alpha, \beta, L_w, T_{top}, T_{bot}$};
-
-% Core modules
-\node[box, below=of input] (thermal) {core/calculation.py\\Solveur Thermique};
-\node[box, below=of thermal] (mechanical) {core/mechanical.py\\Solveur Spectral};
-\node[box, right=2.5cm of mechanical] (damage) {core/damage\_analysis.py\\Critères $D$, Tsai-Wu};
-
-% Outputs
-\node[box, below=of mechanical, fill=warningcolor!20, draw=warningcolor] (stress) {Profils $\sigma_{ij}(z)$\\Contraintes};
-\node[box, right=2.5cm of stress] (risk) {Indicateur $D$\\Zones Critiques};
-
-% Interface
-\node[box, below=2cm of stress, fill=codecolor!20, draw=codecolor, minimum width=7cm] (streamlit) {Interface Streamlit\\Dashboard + Visualisations Plotly};
-
-% Arrows
-\draw[arrow] (input) -- (thermal);
-\draw[arrow] (thermal) -- node[right, font=\scriptsize] {$T(z), \lambda, A, B$} (mechanical);
-\draw[arrow] (mechanical) -- (stress);
-\draw[arrow] (stress) -- (damage);
-\draw[arrow] (damage) -- (risk);
-\draw[arrow] (stress) -- (streamlit);
-\draw[arrow] (risk) -- (streamlit);
-
-\end{tikzpicture}
-\end{center}
-
-%==============================================================================
-\section{Interface Streamlit - Architecture des Onglets}
-%==============================================================================
-
-L'application Streamlit est organisée en onglets spécialisés, chacun correspondant à un fichier dans \texttt{tabs/}.
-
-\subsection{Point d'Entrée : Profil de température Aube.py}
-
-\begin{lstlisting}[caption=Configuration Streamlit (Profil de température Aube.py)]
-import streamlit as st
-
-st.set_page_config(
-    page_title="TBC Analysis Dashboard",
-    page_icon="shield",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Import des onglets
-from tabs import dashboard_home, mechanical, optimization, study_parametric
-
-# Navigation par onglets
-tab_home, tab_mech, tab_optim, tab_study = st.tabs([
-    "Dashboard", "Mecanique", "Optimisation", "Etude Parametrique"
-])
-
-with tab_home:
-    dashboard_home.render()
-with tab_mech:
-    mechanical.render()
-# ...
-\end{lstlisting}
-
-\subsection{Onglet Dashboard (tabs/dashboard\_home.py)}
-
-Cet onglet affiche une vue panoramique avec :
-
-\begin{itemize}
-    \item \textbf{6 KPIs} : Température interface, Épaisseur TBC, Indicateur D, Performance thermique, Gradient $\Delta T$, Marge de sécurité
-    \item \textbf{Jauge de Risque} : Visualisation semi-circulaire de l'indicateur D
-    \item \textbf{Radar Multi-Critères} : Performance sur 5 axes
-    \item \textbf{Visualisation 3D} : Champ thermique avec Plotly
-    \item \textbf{Recommandations Intelligentes} : Générées automatiquement
-\end{itemize}
-
-\begin{lstlisting}[caption=Calcul de l'Indicateur D Réel (tabs/dashboard\_home.py lignes 23-123)]
-@st.cache_data
-def compute_real_damage_indicator(alpha, lw, t_top, t_bottom):
-    """
-    Calcule l'indicateur d'endommagement D base sur la physique reelle.
-    
-    Logique:
-    1. Si T_interface > T_critique -> D > 1 (dommage thermique garanti)
-    2. Sinon: D = D_mecanique + bonus si proche de T_critique
-    """
-    from core.damage_analysis import CRITICAL_STRESS
-    from core.constants import GPa_TO_PA
-    
-    # Modele de resistances thermiques en serie
-    R1 = h1 / CONSTANTS['k33_1']
-    R2 = h2 / CONSTANTS['k33_2']
-    R3 = h3 / CONSTANTS['k33_3']
-    R_total = R1 + R2 + R3
-    
-    # Temperature a l'interface substrat/bondcoat
-    T_h1 = t_bottom + delta_T_total * R1 / R_total
-    
-    # CAS 1: TEMPERATURE AU-DESSUS DE LA LIMITE CRITIQUE
-    if T_h1 > T_crit:
-        D_thermal = 1.0 + (T_h1 - T_crit) / 200.0
-        return max(0.05, min(1.5, D_thermal))
-    
-    # CAS 2: D base sur les contraintes mecaniques
-    sigma_thermal = E_ceramic * delta_alpha * delta_T_interface
-    D_mechanical = max(D_ceramic_tension, D_ceramic_shear, D_bondcoat)
-    
-    return max(0.05, min(1.5, D_mechanical))
-\end{lstlisting}
-
-\subsection{Onglet Mécanique (tabs/mechanical.py)}
-
-Cet onglet implémente l'analyse spectrale complète :
-
-\begin{lstlisting}[caption=Fonction Principale d'Analyse (tabs/mechanical.py lignes 161-320)]
-def run_full_analysis(h_tbc, h_bc_unused, T_hat, Lw, method, show_math, 
-                      alpha, beta, t_bottom, t_top, n_modes=1):
-    """Lance l'analyse complete et stocke les resultats."""
-    
-    from core.constants import PROPS_SUBSTRATE, PROPS_BONDCOAT, PROPS_CERAMIC
-    from core.constants import ALPHA_SUBSTRATE, ALPHA_BONDCOAT, ALPHA_CERAMIC
-    
-    # Configuration des couches avec proprietes DISTINCTES
-    layer_configs = [
-        (h_sub_m, PROPS_SUBSTRATE, ALPHA_SUBSTRATE),    # Substrat Nickel
-        (h_bc_m, PROPS_BONDCOAT, ALPHA_BONDCOAT),       # Bond Coat MCrAlY
-        (h_tbc_m, PROPS_CERAMIC, ALPHA_CERAMIC)         # Ceramique YSZ
-    ]
-    
-    # === ETAPE 7: Resolution equation caracteristique ===
-    char_eq_result = solve_characteristic_equation(delta1, delta2, props)
-    tau_roots = char_eq_result['tau_roots']
-    
-    # === ETAPE 8.1: Vecteurs propres de deplacement ===
-    eigenvectors = compute_all_eigenvectors(tau_roots, delta1, delta2, props)
-    
-    # === ETAPE 8.3: Vecteurs propres de contrainte ===
-    eigenvectors_with_stress = compute_all_stress_eigenvectors(
-        eigenvectors, delta1, delta2, props
-    )
-    
-    # === Resolution multicouche complete ===
-    spectral_res = solve_multilayer_problem(
-        layer_configs, Lw, lambda_th, T_hat_list, method='spectral'
-    )
-    
-    # === SUPERPOSITION CLT + Spectral ===
-    clt_res = solve_multilayer_clt(layer_configs, T_mean_struct)
-    
-    # Stockage dans session_state pour affichage
-    st.session_state["mech_spectral_results"] = {
-        'tau_roots': tau_roots,
-        'eigenvectors': eigenvectors_with_stress,
-        'full_results': {'stress_profile': stress_total},
-        # ...
-    }
-\end{lstlisting}
-
-\subsection{Visualisations Avancées}
-
-L'onglet mécanique affiche 4 sous-onglets :
-
-\begin{enumerate}
-    \item \textbf{Contraintes} : Profils $\sigma_{33}(z)$ et $\sigma_{13}(z)$
-    \item \textbf{Endommagement} : Indicateur D(z) et critère Tsai-Wu F(z)
-    \item \textbf{Interfaces} : Comparaison des contraintes aux interfaces
-    \item \textbf{Avancé} : Cercle de Mohr, surface 3D des contraintes
-\end{enumerate}
-
-%==============================================================================
-\section{Modélisation Mathématique Détaillée (Étapes 1-8 du PDF)}
-%==============================================================================
-
-Cette section présente les formules \textbf{complètes} utilisées dans le code, conformes au document \textit{ProjectEstaca.pdf}.
+Cette section présente la méthodologie complète de résolution, étape par étape.
 
 \subsection{Étape 1-2 : Représentation Spectrale de la Température}
 
@@ -542,6 +298,8 @@ avec l'exposant thermique :
 \begin{equation}
     \lambda^{(i)} = \delta_\eta \sqrt{\frac{k_{\eta\eta}^{(i)}}{k_{33}^{(i)}}}
 \end{equation}
+
+L'implémentation de cette étape se trouve dans le module \texttt{core/calculation.py}, fonction \texttt{solve\_tbc\_model\_v2()}.
 
 \subsection{Étape 4 : Loi de Comportement Thermo-Élastique}
 
@@ -571,6 +329,11 @@ $C_{1111} \to C_{11}$ & $C_{1122} \to C_{12}$ & $C_{1133} \to C_{13}$ & $C_{1313
 \end{align}
 avec $V_i(x_3) = A_i \cdot e^{\tau x_3}$ où $\tau$ est la \textbf{valeur propre} à déterminer.
 \end{theorembox}
+
+La forme de la solution générale pour chaque couche $(i)$ est :
+\begin{align}
+    U_{\alpha}^{(i)}(x_3) &= \sum_{r=1}^{3} A_{\alpha}^{r(i)} \cdot e^{\tau_r^{(i)} x_3}, \quad \alpha \in \{1, 2, 3\}
+\end{align}
 
 \subsection{Étape 6 : Matrice Dynamique $\Gamma(\tau)$ et Valeurs Propres}
 
@@ -611,6 +374,8 @@ L'équation d'équilibre $\text{div}(\boldsymbol{\sigma}) = 0$ conduit au systè
 
 \begin{warningbox}[Propriété d'Antisymétrie Critique]
 $L_{13} = -L_{31}$ et $L_{23} = -L_{32}$ : cette antisymétrie provient de l'équation d'équilibre en direction $x_3$ et est \textbf{essentielle} pour la physique correcte.
+
+L'implémentation de ces opérateurs se trouve dans \texttt{core/mechanical\_pdf.py}, fonctions \texttt{compute\_L\_operators()} et \texttt{get\_Gamma\_matrix()}.
 \end{warningbox}
 
 \textbf{Équation Caractéristique :}
@@ -618,8 +383,7 @@ $L_{13} = -L_{31}$ et $L_{23} = -L_{32}$ : cette antisymétrie provient de l'éq
     \det(\Gamma(\tau)) = 0 \quad \Rightarrow \quad \text{Polynôme d'ordre 6 : } P(\tau) = c_6\tau^6 + c_4\tau^4 + c_2\tau^2 + c_0 = 0
 \end{equation}
 
-En posant $X = \tau^2$, on obtient un polynôme cubique avec 3 racines $X_i$. 
-On sélectionne les 3 valeurs propres $\tau_r$ avec $\text{Re}(\tau_r) < 0$ (condition de radiation).
+En posant $X = \tau^2$, on obtient un polynôme cubique avec 3 racines $X_i$. On sélectionne les 3 valeurs propres $\tau_r$ avec $\text{Re}(\tau_r) < 0$ (condition de radiation).
 
 \subsection{Étape 7 : Assemblage $9 \times 9$ et Termes Thermiques}
 
@@ -639,6 +403,8 @@ Le système global pour une couche $(i)$ s'écrit :
 }
 \end{equation}
 Chaque bloc $\Gamma(\tau_r)$ est la matrice $3 \times 3$ des opérateurs $L_{jk}$ évaluée à $\tau = \tau_r$.
+
+L'assemblage est implémenté dans \texttt{core/mechanical\_pdf.py}, fonction \texttt{assemble\_K\_dyn\_9x9()}.
 \end{theorembox}
 
 \textbf{Vecteur d'amplitudes et vecteur thermique :}
@@ -653,6 +419,8 @@ Chaque bloc $\Gamma(\tau_r)$ est la matrice $3 \times 3$ des opérateurs $L_{jk}
     \mathcal{Q}_2^{(i)} &= \left(C_{22}\alpha_{22} + C_{12}\alpha_{11}\right)\delta_2 \, T(x_3 = \bar{h}^{(i)}) \\
     \mathcal{Q}_3^{(i)} &= \left(C_{13}\alpha_{11} + C_{23}\alpha_{22} + C_{33}\alpha_{33}\right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
 \end{align}
+
+L'implémentation se trouve dans \texttt{core/mechanical\_pdf.py}, fonction \texttt{compute\_Q\_thermal\_vector()}.
 \end{definitionbox}
 
 \subsection{Étape 8 : Assemblage Multicouche}
@@ -687,83 +455,16 @@ Conditions aux limites ($\sigma=0$) & 6 & 2 surfaces $\times$ 3 composantes \\
 \end{tabular}
 \end{center}
 
-\vspace{0.5em}
-\textbf{Réduction par l'approche modale (méthode spectrale)} :
+Les \textbf{9 équations d'équilibre volumique sont IMPLICITEMENT satisfaites} par l'approche modale ! En écrivant la solution avec les valeurs propres $\tau_r$ de $\Gamma(\tau)$, l'équation $\Gamma(\tau_r) \cdot \mathbf{A}^r = 0$ est automatiquement vérifiée.
 
-Les \textbf{9 équations d'équilibre volumique sont IMPLICITEMENT satisfaites} !
+\textbf{Système final résolu : 18 équations} (conditions d'interface et limites uniquement).
 
-En écrivant la solution sous la forme $U_\alpha(x_3) = \sum_r A_\alpha^r \cdot e^{\tau_r x_3}$ avec les $\tau_r$ \textbf{valeurs propres} de $\Gamma(\tau)$ (définies par $\det(\Gamma(\tau_r)) = 0$), l'équation d'équilibre $\Gamma(\tau_r) \cdot \mathbf{A}^r = 0$ est automatiquement vérifiée.
-
-\vspace{0.5em}
-\textbf{Système final résolu} :
-\begin{center}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Type d'équation} & \textbf{Nombre} & \textbf{Implémentation} \\
-\midrule
-Équilibre volumique & 0 & $\checkmark$ Implicite (via $\tau_r$) \\
-Continuité aux interfaces & 12 & $\Phi^{(k)}(h_k) = \Phi^{(k+1)}(0)$ \\
-Conditions aux limites & 6 & $\sigma(0)=0$, $\sigma(H)=0$ \\
-\midrule
-\textbf{Total résolu} & \textbf{18} & = $6N$ pour $N$ couches \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\textbf{Conclusion :} La puissance de la méthode spectrale réside dans la réduction de 27 $\to$ 18 équations grâce à la structure modale.
+L'assemblage multicouche est implémenté dans \texttt{core/mechanical.py}, fonction \texttt{solve\_multilayer()}.
 \end{warningbox}
 
-\begin{center}
-\textbf{Structure de la Matrice Globale $K_{glob}$ (pour 3 couches)}
-\vspace{0.3cm}
-
-\begin{tikzpicture}[scale=0.6, every node/.style={font=\scriptsize}]
-    % Grille principale 18x18
-    \draw[thick] (0,0) rectangle (9,9);
-    
-    % Blocs diagonaux
-    \fill[blue!20] (0,6) rectangle (3,9);
-    \node at (1.5,7.5) {$B_\sigma \Phi^{(1)}(0)$};
-    
-    \fill[green!20] (0,3) rectangle (3,6);
-    \node at (1.5,4.5) {$\Phi^{(1)}(h_1)$};
-    \fill[red!20] (3,3) rectangle (6,6);
-    \node at (4.5,4.5) {$-\Phi^{(2)}(0)$};
-    
-    \fill[green!20] (3,0) rectangle (6,3);
-    \node at (4.5,1.5) {$\Phi^{(2)}(h_2)$};
-    \fill[red!20] (6,0) rectangle (9,3);
-    \node at (7.5,1.5) {$-\Phi^{(3)}(0)$};
-    
-    % Bloc final
-    \fill[orange!20] (6,-3) rectangle (9,0);
-    \node at (7.5,-1.5) {$B_\sigma \Phi^{(3)}(h_3)$};
-    
-    % Lignes de séparation
-    \draw[dashed] (3,0) -- (3,9);
-    \draw[dashed] (6,0) -- (6,9);
-    \draw[dashed] (0,3) -- (9,3);
-    \draw[dashed] (0,6) -- (9,6);
-    
-    % Labels
-    \node[left] at (-0.3,7.5) {BC $z=0$};
-    \node[left] at (-0.3,4.5) {Interface 1-2};
-    \node[left] at (-0.3,1.5) {Interface 2-3};
-    \node[left] at (-0.3,-1.5) {BC $z=H$};
-    
-    \node[below] at (1.5,-0.3) {$C^{(1)}$};
-    \node[below] at (4.5,-0.3) {$C^{(2)}$};
-    \node[below] at (7.5,-0.3) {$C^{(3)}$};
-    
-    % Légende
-    \node[right] at (10,7) {\textcolor{blue!60}{Surface libre}};
-    \node[right] at (10,5) {\textcolor{green!60}{Continuité ($+$)}};
-    \node[right] at (10,3) {\textcolor{red!60}{Continuité ($-$)}};
-    \node[right] at (10,1) {\textcolor{orange!60}{Surface libre}};
-\end{tikzpicture}
-\end{center}
-
-\subsection{Critères d'Endommagement}
+%==============================================================================
+\section{Critères d'Endommagement}
+%==============================================================================
 
 \begin{definitionbox}[Indicateur de Dommage D]
 \begin{equation}
@@ -799,661 +500,7 @@ Céramique (YSZ) & 150 & 500 & 120 \\
     F = F_3 \sigma_{33} + F_{33} \sigma_{33}^2 + F_{44} \sigma_{23}^2 + F_{55} \sigma_{13}^2 \quad (\text{Rupture si } F \geq 1)
 \end{equation}
 
-%==============================================================================
-\section{Correspondance Théorie $\leftrightarrow$ Code : Implémentation Python}
-
-\subsection{Étape 1-3 : Thermique (core/calculation.py)}
-
-\begin{theorembox}[Référence PDF : Étapes 1-3]
-Résolution de la conduction thermique par couche :
-\[
-T^{(i)}(x_3) = A^{(i)} e^{\lambda^{(i)} x_3} + B^{(i)} e^{-\lambda^{(i)} x_3}
-\]
-\end{theorembox}
-
-\begin{lstlisting}[caption=Solveur Thermique (core/calculation.py)]
-def solve_tbc_model_v2(alpha, beta, lw, t_bottom, t_top, n_modes=1):
-    """
-    Resout le modele thermique multicouche.
-    
-    Returns:
-        dict avec T_at_h1, h3, profile_params (coeffs A, B, lambdas)
-    """
-    # Calcul des exposants thermiques par couche
-    delta_eta = np.pi / lw
-    lambda_1 = delta_eta * np.sqrt(k11_1 / k33_1)
-    lambda_2 = delta_eta * np.sqrt(k11_2 / k33_2)
-    lambda_3 = delta_eta * np.sqrt(k11_3 / k33_3)
-    
-    # Resolution du systeme lineaire pour A_i, B_i
-    # Conditions: continuite T, continuite flux k33*dT/dx3
-    # ...
-    
-    return {
-        'success': True,
-        'T_at_h1': T_interface,
-        'h3': h3,
-        'profile_params': {
-            'coeffs': [A1, B1, A2, B2, A3, B3],
-            'lambdas': [lambda_1, lambda_2, lambda_3],
-            'interfaces': [x_i1, x_i2]
-        }
-    }
-\end{lstlisting}
-
-\subsection{Étape 4 : Loi de Comportement (core/constants.py)}
-
-\begin{lstlisting}[caption=Propriétés Matériaux (core/constants.py)]
-# Substrat : Superalliage Nickel (Inconel 718)
-PROPS_SUBSTRATE = {
-    'C11': 259.6,  # GPa - Ref ONERA Table 3
-    'C12': 179.0,
-    'C13': 179.0,
-    'C22': 259.6,
-    'C23': 179.0,
-    'C33': 259.6,
-    'C44': 109.6,  # Cisaillement
-    'C55': 109.6,
-    'C66': 40.3,
-}
-ALPHA_SUBSTRATE = {'alpha_1': 13e-6, 'alpha_2': 13e-6, 'alpha_3': 13e-6}  # K^-1
-
-# Ceramique : Zircone Stabilisee Yttrium (YSZ)
-PROPS_CERAMIC = {
-    'C11': 50.0,  'C12': 10.0, 'C13': 10.0,
-    'C22': 50.0,  'C23': 10.0, 'C33': 50.0,
-    'C44': 20.0,  'C55': 20.0, 'C66': 20.0,
-}
-ALPHA_CERAMIC = {'alpha_1': 10e-6, 'alpha_2': 10e-6, 'alpha_3': 10e-6}
-\end{lstlisting}
-
-\subsection{Étape 5-6 : Ansatz et Système aux Valeurs Propres (core/mechanical.py)}
-
-\begin{theorembox}[Référence PDF : Étape 6]
-Système matriciel homogène : $M(\tau) \cdot \mathbf{A} = \mathbf{0}$
-\end{theorembox}
-
-\begin{lstlisting}[caption=Construction de M(tau) (core/mechanical.py lignes 8-50)]
-def get_M_matrix(tau, delta1, delta2, props=MECHANICAL_PROPS):
-    """
-    Construit la matrice dynamique M(tau) 3x3.
-    
-    THEORIE (PDF Etape 6):
-    M(tau) encapsule l'equation d'equilibre div(sigma) = 0
-    avec l'ansatz u_i = V_i * exp(tau * x3) * sin(delta * x)
-    """
-    # Termes K (independants de tau)
-    K11 = props['C11'] * delta1**2 + props['C66'] * delta2**2
-    K12 = (props['C12'] + props['C66']) * delta1 * delta2
-    K13_coeff = (props['C13'] + props['C55']) * delta1
-    K22 = props['C66'] * delta1**2 + props['C22'] * delta2**2
-    K23_coeff = (props['C23'] + props['C44']) * delta2
-    K33 = props['C55'] * delta1**2 + props['C44'] * delta2**2
-
-    M = np.zeros((3, 3), dtype=complex)
-    
-    # Ligne 1: Equilibre selon x1
-    M[0, 0] = props['C55'] * tau**2 - K11
-    M[0, 1] = -K12
-    M[0, 2] = K13_coeff * tau
-
-    # Ligne 2: Equilibre selon x2
-    M[1, 0] = -K12
-    M[1, 1] = props['C44'] * tau**2 - K22
-    M[1, 2] = K23_coeff * tau
-
-    # Ligne 3: Equilibre selon x3 (SIGNES NEGATIFS - Eq. 166 PDF)
-    M[2, 0] = -K13_coeff * tau   # -(C13+C55)*delta1*tau
-    M[2, 1] = -K23_coeff * tau   # -(C23+C44)*delta2*tau
-    M[2, 2] = props['C33'] * tau**2 - K33
-
-    return M
-\end{lstlisting}
-
-\begin{lstlisting}[caption=Résolution Équation Caractéristique (lignes 78-186)]
-def solve_characteristic_equation(delta1, delta2, props=MECHANICAL_PROPS):
-    """
-    Trouve les racines tau du determinant det(M(tau)) = 0.
-    
-    METHODE NUMERIQUE ROBUSTE:
-    Au lieu des formules analytiques complexes, on evalue le determinant
-    en 3 points pour identifier les coefficients du polynome.
-    """
-    # Coefficient c6 (analytique exact - Eq. 18 PDF)
-    c6 = props['C55'] * props['C44'] * props['C33']
-    
-    def get_det_at_X(X_val):
-        """Evalue det(M(sqrt(X))) pour construire le polynome."""
-        tau_val = np.sqrt(complex(X_val)) 
-        M = get_M_matrix(tau_val, delta1, delta2, props)
-        return compute_determinant_gaussian(M)
-    
-    # Evaluations en X = tau^2
-    P_0 = get_det_at_X(0)   # P(0) = c0
-    P_1 = get_det_at_X(1)   # P(1) = c6 + c4 + c2 + c0
-    P_2 = get_det_at_X(2)   # P(2) = 8c6 + 4c4 + 2c2 + c0
-    
-    # Systeme lineaire pour c4, c2
-    c0 = P_0
-    b1 = P_1 - c6 - c0
-    b2 = P_2 - 8*c6 - c0
-    c4 = (b2 - 2*b1) / 2
-    c2 = b1 - c4
-    
-    # Racines du polynome cubique en X
-    coeffs_norm = [1, c4/c6, c2/c6, c0/c6]
-    X_roots = np.roots(coeffs_norm)
-    
-    # 6 racines tau = +/- sqrt(X)
-    tau_roots = []
-    for X in X_roots:
-        tau_roots.extend([np.sqrt(X), -np.sqrt(X)])
-    
-    return {'tau_roots': np.array(tau_roots), 'coeffs_poly': [c6, c4, c2, c0]}
-\end{lstlisting}
-
-\subsection{Étape 7 : Matrice R et Conditions aux Limites}
-
-\begin{lstlisting}[caption=Matrice R(tau) (core/mechanical.py lignes 264-334)]
-def get_R_matrix(tau, delta1, delta2, props=MECHANICAL_PROPS):
-    """
-    Construit la matrice R(tau) 3x3 pour le calcul du vecteur contrainte.
-    
-    DERIVATION (conforme PDF Etape 7):
-    sigma_13 = C55 * (tau*V1 + delta1*V3)
-    sigma_23 = C44 * (tau*V2 + delta2*V3)
-    sigma_33 = -C13*delta1*V1 - C23*delta2*V2 + C33*tau*V3
-    
-    Les signes NEGATIFS proviennent de d/dx1(cos) = -delta1*sin
-    """
-    R = np.zeros((3, 3), dtype=complex)
-    
-    # sigma_13 = C55(tau V1 + delta1 V3)
-    R[0, 0] = props['C55'] * tau
-    R[0, 1] = 0
-    R[0, 2] = props['C55'] * delta1
-    
-    # sigma_23 = C44(tau V2 + delta2 V3)
-    R[1, 0] = 0
-    R[1, 1] = props['C44'] * tau
-    R[1, 2] = props['C44'] * delta2
-    
-    # sigma_33 = -C13*delta1*V1 - C23*delta2*V2 + C33*tau*V3
-    R[2, 0] = -props['C13'] * delta1  # Signe NEGATIF CONFIRME
-    R[2, 1] = -props['C23'] * delta2  # Signe NEGATIF CONFIRME
-    R[2, 2] = props['C33'] * tau
-    
-    return R
-\end{lstlisting}
-
-\subsection{Étape 8 : Assemblage Global (core/mechanical.py)}
-
-\begin{lstlisting}[caption=Assemblage Système Global (lignes 992-1141)]
-def solve_multilayer(layers, delta1, delta2, lambda_th=None, T_hat=None):
-    """
-    Resout le probleme mecanique pour un systeme multicouche.
-    
-    IMPLEMENTATION AVEC PRECONDITIONNEMENT:
-    1. Construction du systeme K_glob @ C = F
-    2. Equilibrage par scaling: D_r @ K_glob @ D_c @ y = D_r @ F
-    3. Resolution du systeme equilibre
-    4. De-scaling: C = D_c @ y
-    """
-    N = len(layers)
-    
-    # Setup de chaque couche (modes propres + forcage thermique)
-    for k, layer in enumerate(layers):
-        setup_layer(layer, delta1, delta2, th_data)
-    
-    # Matrice globale 6N x 6N
-    K_glob = np.zeros((6*N, 6*N), dtype=complex)
-    F_glob = np.zeros(6*N, dtype=complex)
-    
-    # Matrice de selection des contraintes
-    B_stress = np.array([
-        [0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 1]
-    ], dtype=complex)
-    
-    # BLOC 1: BC en z=0 (surface libre)
-    Phi_0 = build_Phi_matrix_normalized(0, layers[0].eigenvectors)
-    K_glob[0:3, 0:6] = B_stress @ Phi_0
-    
-    # BLOCS de continuite aux interfaces
-    for k in range(N - 1):
-        Phi_k_top = build_Phi_matrix_normalized(layers[k].h, layers[k].eigenvectors)
-        Phi_kp1_bot = build_Phi_matrix_normalized(0, layers[k+1].eigenvectors)
-        K_glob[row_idx:row_idx+6, 6*k:6*(k+1)] = Phi_k_top
-        K_glob[row_idx:row_idx+6, 6*(k+1):6*(k+2)] = -Phi_kp1_bot
-    
-    # BLOC N: BC en z=H (surface libre)
-    Phi_H = build_Phi_matrix_normalized(layers[-1].h, layers[-1].eigenvectors)
-    K_glob[-3:, -6:] = B_stress @ Phi_H
-    
-    # PRECONDITIONNEMENT PAR EQUILIBRAGE
-    row_scales = [1.0 / np.max(np.abs(K_glob[i, :])) for i in range(6*N)]
-    D_r = np.diag(row_scales)
-    K_scaled = D_r @ K_glob
-    F_scaled = D_r @ F_glob
-    
-    # Resolution
-    y, solve_info = solve_regularized_system(K_scaled @ D_c, F_scaled)
-    C_total = D_c @ y  # De-scaling
-    
-    return {'layers': layers, 'C_total': C_total, 'cond_K': solve_info['cond']}
-\end{lstlisting}
-
-%==============================================================================
-\subsection{Nouvelle Implémentation : Module mechanical\_pdf.py}
-%==============================================================================
-
-Un nouveau module \texttt{core/mechanical\_pdf.py} a été développé pour suivre \textbf{exactement} la méthodologie du document \texttt{equilibre\_local\_corrige.pdf}, section par section.
-
-\begin{warningbox}[Structure du Module mechanical\_pdf.py]
-Le module est organisé selon les sections du PDF :
-\begin{itemize}
-    \item \textbf{Section 2} : Forme de la solution générale $U_\alpha(x_3)$
-    \item \textbf{Section 5} : Opérateurs $L_{jk}$ et termes thermiques $Q_\alpha$
-    \item \textbf{Section 6} : Matrice dynamique $\Gamma(\tau)$ 
-    \item \textbf{Section 7} : Assemblage matriciel $9 \times 9$ bloc-diagonal
-\end{itemize}
-\end{warningbox}
-
-\subsubsection{Section 2 : Forme de la Solution Générale}
-
-\begin{theorembox}[Champ de Déplacement]
-\begin{equation}
-    U_\alpha(x_3) = \sum_{r=1}^{3} A_\alpha^r \cdot e^{\tau_r \cdot x_3}, \quad \alpha \in \{1, 2, 3\}
-\end{equation}
-où les $\tau_r$ sont les 3 valeurs propres sélectionnées (Re$(\tau) < 0$).
-\end{theorembox}
-
-\begin{lstlisting}[caption=Solution Générale (core/mechanical\_pdf.py)]
-def build_displacement_field(A_amplitudes, tau_roots, x3):
-    """
-    Construit le champ de deplacement U(x3).
-    
-    REFERENCE: equilibre_local_corrige.pdf, Section 2
-    """
-    U = np.zeros(3, dtype=complex)
-    for alpha in range(3):
-        for r in range(3):
-            U[alpha] += A_amplitudes[alpha, r] * np.exp(tau_roots[r] * x3)
-    return U
-\end{lstlisting}
-
-\subsubsection{Section 5 : Opérateurs $L_{jk}$ et Termes Thermiques}
-
-\begin{definitionbox}[Opérateurs $L_{jk}$ de la Matrice Dynamique]
-\textbf{Termes diagonaux :}
-\begin{align}
-    L_{11} &= C_{55}\tau^2 - (C_{11}\delta_1^2 + C_{66}\delta_2^2) \\
-    L_{22} &= C_{44}\tau^2 - (C_{22}\delta_2^2 + C_{66}\delta_1^2) \\
-    L_{33} &= C_{33}\tau^2 - (C_{55}\delta_1^2 + C_{44}\delta_2^2)
-\end{align}
-
-\textbf{Termes croisés (symétriques) :}
-\begin{equation}
-    L_{12} = L_{21} = -(C_{12} + C_{66})\delta_1\delta_2
-\end{equation}
-
-\textbf{Termes hors-plan (antisymétriques) :}
-\begin{align}
-    L_{13} &= +(C_{13} + C_{55})\delta_1\tau, \quad L_{31} = -L_{13} \\
-    L_{23} &= +(C_{23} + C_{44})\delta_2\tau, \quad L_{32} = -L_{23}
-\end{align}
-\end{definitionbox}
-
-\begin{lstlisting}[caption=Opérateurs L\_jk (core/mechanical\_pdf.py)]
-def compute_L_operators(tau, delta1, delta2, props):
-    """
-    Calcule les operateurs L_jk de la matrice dynamique.
-    
-    REFERENCE: equilibre_local_corrige.pdf, Section 5
-    """
-    # Termes diagonaux
-    L_11 = props['C55'] * tau**2 - (props['C11']*delta1**2 + props['C66']*delta2**2)
-    L_22 = props['C44'] * tau**2 - (props['C22']*delta2**2 + props['C66']*delta1**2)
-    L_33 = props['C33'] * tau**2 - (props['C55']*delta1**2 + props['C44']*delta2**2)
-    
-    # Termes croises (symetriques)
-    L_12 = L_21 = -(props['C12'] + props['C66']) * delta1 * delta2
-    
-    # Termes hors-plan (ANTISYMETRIQUES!)
-    L_13 = +(props['C13'] + props['C55']) * delta1 * tau
-    L_31 = -L_13  # Signe negatif!
-    L_23 = +(props['C23'] + props['C44']) * delta2 * tau
-    L_32 = -L_23  # Signe negatif!
-    
-    return {'L_11': L_11, 'L_12': L_12, ..., 'L_33': L_33}
-\end{lstlisting}
-
-\begin{definitionbox}[Termes Thermiques $Q_\alpha$]
-\begin{align}
-    Q_1 &= (C_{11}\alpha_{11} + C_{12}\alpha_{22})\delta_1 \cdot T(x_3 = \bar{h}) \\
-    Q_2 &= (C_{22}\alpha_{22} + C_{12}\alpha_{11})\delta_2 \cdot T(x_3 = \bar{h}) \\
-    Q_3 &= (C_{13}\alpha_{11} + C_{23}\alpha_{22} + C_{33}\alpha_{33}) \cdot \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}}
-\end{align}
-\end{definitionbox}
-
-\begin{lstlisting}[caption=Termes Thermiques Q (core/mechanical\_pdf.py)]
-def compute_Q_thermal_vector(delta1, delta2, T, dT_dx3, alpha_coeffs, props):
-    """
-    Calcule le vecteur de sollicitation thermique Q = [Q1, Q2, Q3].
-    
-    REFERENCE: equilibre_local_corrige.pdf, Section 7 (Eq. 266-269)
-    """
-    Q1 = (props['C11']*alpha['alpha_1'] + props['C12']*alpha['alpha_2']) * delta1 * T
-    Q2 = (props['C22']*alpha['alpha_2'] + props['C12']*alpha['alpha_1']) * delta2 * T
-    Q3 = (props['C13']*alpha['alpha_1'] + props['C23']*alpha['alpha_2'] 
-          + props['C33']*alpha['alpha_3']) * dT_dx3
-    return np.array([Q1, Q2, Q3])
-\end{lstlisting}
-
-\subsubsection{Section 6 : Matrice $\Gamma(\tau)$}
-
-\begin{theorembox}[Matrice Dynamique $\Gamma(\tau)$]
-Le système homogène s'écrit $\Gamma(\tau) \cdot \mathbf{A} = \mathbf{0}$ avec :
-\begin{equation}
-\boxed{
-    \Gamma(\tau) = \begin{pmatrix}
-    L_{11} & L_{12} & L_{13} \\
-    L_{21} & L_{22} & L_{23} \\
-    L_{31} & L_{32} & L_{33}
-    \end{pmatrix}
-}
-\end{equation}
-
-\textbf{Propriétés :}
-\begin{itemize}
-    \item $\Gamma_{12} = \Gamma_{21}$ (symétrique)
-    \item $\Gamma_{13} = -\Gamma_{31}$ et $\Gamma_{23} = -\Gamma_{32}$ (\textcolor{red}{antisymétrique})
-\end{itemize}
-\end{theorembox}
-
-\begin{lstlisting}[caption=Matrice Gamma (core/mechanical\_pdf.py)]
-def get_Gamma_matrix(tau, delta1, delta2, props):
-    """
-    Construit la matrice dynamique Gamma(tau) 3x3.
-    
-    REFERENCE: equilibre_local_corrige.pdf, Section 6 (Eq. 199-208)
-    """
-    L = compute_L_operators(tau, delta1, delta2, props)
-    return np.array([
-        [L['L_11'], L['L_12'], L['L_13']],
-        [L['L_21'], L['L_22'], L['L_23']],
-        [L['L_31'], L['L_32'], L['L_33']]
-    ], dtype=complex)
-\end{lstlisting}
-
-\subsubsection{Section 7 : Assemblage Matriciel $9 \times 9$}
-
-\begin{theorembox}[Matrice Bloc-Diagonale $K_{Dyn}$]
-La matrice globale $9 \times 9$ est bloc-diagonale :
-\begin{equation}
-\boxed{
-    \mathbb{K}_{Dyn} = \begin{pmatrix}
-    \Gamma(\tau_1) & 0 & 0 \\
-    0 & \Gamma(\tau_2) & 0 \\
-    0 & 0 & \Gamma(\tau_3)
-    \end{pmatrix}_{9 \times 9}
-}
-\end{equation}
-
-Avec le vecteur d'amplitudes $\mathcal{A} = (A_1^1, A_2^1, A_3^1, A_1^2, A_2^2, A_3^2, A_1^3, A_2^3, A_3^3)^T$.
-\end{theorembox}
-
-\begin{lstlisting}[caption=Assemblage 9x9 (core/mechanical\_pdf.py)]
-def assemble_K_dyn_9x9(tau_roots, delta1, delta2, props):
-    """
-    Assemble la matrice dynamique bloc-diagonale 9x9.
-    
-    REFERENCE: equilibre_local_corrige.pdf, Section 7 (Eq. 220-235)
-    """
-    K_dyn = np.zeros((9, 9), dtype=complex)
-    
-    for r in range(3):
-        Gamma_r = get_Gamma_matrix(tau_roots[r], delta1, delta2, props)
-        start, end = 3*r, 3*(r+1)
-        K_dyn[start:end, start:end] = Gamma_r
-    
-    return K_dyn
-\end{lstlisting}
-
-\textbf{Système Final :}
-\begin{equation}
-    \mathbb{K}_{Dyn} \cdot \mathcal{A} = \mathcal{F}_{Th}
-\end{equation}
-où $\mathcal{F}_{Th} = (Q_1, Q_2, Q_3, Q_1, Q_2, Q_3, Q_1, Q_2, Q_3)^T$.
-
-%==============================================================================
-\section{Critères d'Endommagement (core/damage\_analysis.py)}
-%==============================================================================
-
-\begin{lstlisting}[caption=Indicateur de Dommage D (lignes 38-89)]
-def compute_damage_indicator(sigma_13, sigma_23, sigma_33, layer_type='ceramic', 
-                               sigma_11=None, sigma_22=None):
-    """
-    Calcule l'indicateur d'endommagement D pour chaque point.
-    
-    D = max(|sigma_ij| / sigma_crit_ij)
-    
-    D < 1: Sur
-    D = 1: Limite
-    D > 1: Endommagement probable
-    """
-    crit = CRITICAL_STRESS.get(layer_type, CRITICAL_STRESS['ceramic'])
-    
-    # D cisaillement transverse
-    D_shear = np.maximum(np.abs(sigma_13), np.abs(sigma_23)) / crit['sigma_shear']
-    
-    # D normal transverse (sigma_33)
-    D_33 = np.where(
-        sigma_33 >= 0,
-        np.abs(sigma_33) / crit['sigma_tensile'],
-        np.abs(sigma_33) / crit['sigma_compressive']
-    )
-    
-    D = np.maximum(D_shear, D_33)
-    
-    # CRITIQUE: Inclure les contraintes planes sigma_11, sigma_22
-    if sigma_11 is not None:
-        D_11 = np.abs(sigma_11) / crit['sigma_tensile']
-        D = np.maximum(D, D_11)
-    
-    return D
-\end{lstlisting}
-
-\begin{lstlisting}[caption=Critère de Tsai-Wu (lignes 92-120)]
-def compute_tsai_wu_criterion(sigma_13, sigma_23, sigma_33, layer_type='ceramic'):
-    """
-    Critere de Tsai-Wu pour materiaux composites/anisotropes.
-    
-    F = F_i * sigma_i + F_ij * sigma_i * sigma_j
-    
-    F >= 1: Rupture
-    """
-    crit = CRITICAL_STRESS.get(layer_type)
-    
-    # Coefficients F_i (asymetrie traction/compression)
-    F_3 = 1/crit['sigma_tensile'] - 1/crit['sigma_compressive']
-    
-    # Coefficients F_ij
-    F_33 = 1 / (crit['sigma_tensile'] * crit['sigma_compressive'])
-    F_44 = 1 / (crit['sigma_shear']**2)
-    F_55 = 1 / (crit['sigma_shear']**2)
-    
-    F = F_3 * sigma_33 + F_33 * sigma_33**2 + F_44 * sigma_23**2 + F_55 * sigma_13**2
-    
-    return F
-\end{lstlisting}
-
-%==============================================================================
-\section{Tableau de Correspondance Complet}
-%==============================================================================
-
-\begin{longtable}{|p{3.5cm}|p{4cm}|p{2.5cm}|p{4.5cm}|}
-\hline
-\textbf{Étape PDF} & \textbf{Fonction Python} & \textbf{Fichier} & \textbf{Description} \\
-\hline
-\endfirsthead
-\hline
-\textbf{Étape PDF} & \textbf{Fonction Python} & \textbf{Fichier} & \textbf{Description} \\
-\hline
-\endhead
-
-Étape 1-3: Thermique & \texttt{solve\_tbc\_model\_v2()} & calculation.py & Résolution $T(z)$ par couche \\
-\hline
-Étape 4: Loi Hooke & \texttt{PROPS\_*}, \texttt{ALPHA\_*} & constants.py & Tenseur $C_{ij}$, $\alpha_{ij}$ \\
-\hline
-Étape 5: Ansatz & \texttt{get\_Gamma\_matrix()} & mechanical\_pdf.py & Construction $\Gamma(\tau)$ avec $L_{jk}$ \\
-\hline
-Étape 6: Valeurs propres & \texttt{solve\_characteristic\_polynomial()} & mechanical\_pdf.py & Résolution $\det(\Gamma)=0$ \\
-\hline
-Étape 6: Sélection $\tau_r$ & -- & mechanical\_pdf.py & 3 racines avec Re$(\tau)<0$ \\
-\hline
-Étape 7: Termes $\mathcal{Q}_\alpha$ & \texttt{compute\_Q\_thermal\_vector()} & mechanical\_pdf.py & Sollicitation thermique \\
-\hline
-Étape 7: Assemblage $9\times 9$ & \texttt{assemble\_K\_dyn\_9x9()} & mechanical\_pdf.py & $\mathbb{K}_{Dyn}$ bloc-diagonal \\
-\hline
-Étape 8: Résolution & \texttt{solve\_amplitude\_system()} & mechanical\_pdf.py & $\mathbb{K}_{Dyn} \cdot \mathcal{A} = \mathcal{F}_{Th}$ \\
-\hline
-Étape 8: Système global & \texttt{solve\_multilayer()} & mechanical.py & $K_{glob} \cdot C = F$ \\
-\hline
-Étape 8: Préconditionnement & \texttt{solve\_regularized\_system()} & mechanical.py:846 & Tikhonov + scaling \\
-\hline
-Reconstruction & \texttt{compute\_multilayer\_stress\_profile()} & mechanical.py:1144 & Profils $\sigma_{ij}(z)$ \\
-\hline
-Endommagement D & \texttt{compute\_damage\_indicator()} & damage\_analysis.py:38 & $D = \max(|\sigma|/\sigma_{crit})$ \\
-\hline
-Critère Tsai-Wu & \texttt{compute\_tsai\_wu\_criterion()} & damage\_analysis.py:92 & Rupture si $F \geq 1$ \\
-\hline
-\textbf{Interface Streamlit} & & & \\
-\hline
-Dashboard & \texttt{render()} & dashboard\_home.py:431 & KPIs, jauges, 3D \\
-\hline
-Analyse Mécanique & \texttt{run\_full\_analysis()} & tabs/mechanical.py:161 & Workflow complet \\
-\hline
-Affichage Résultats & \texttt{display\_spectral\_results()} & tabs/mechanical.py:322 & Graphiques Plotly \\
-\hline
-
-\end{longtable}
-
-%==============================================================================
-\section{Forçage Thermique et Coefficients Beta}
-%==============================================================================
-
-\subsection{Coefficients de Contrainte Thermique $\beta_i$}
-
-Les coefficients $\beta_i$ relient les coefficients de dilatation thermique $\alpha_j$ aux contraintes induites via le tenseur de rigidité :
-
-\begin{definitionbox}[Calcul des Coefficients Beta]
-\begin{equation}
-    \beta_i = \sum_{j=1}^{3} C_{ij} \alpha_j = C_{i1}\alpha_1 + C_{i2}\alpha_2 + C_{i3}\alpha_3
-\end{equation}
-
-Pour un matériau orthotrope avec $\alpha_1 = \alpha_2 = \alpha_3 = \alpha$ (isotropie thermique) :
-\begin{align}
-    \beta_1 &= (C_{11} + C_{12} + C_{13}) \alpha \\
-    \beta_2 &= (C_{12} + C_{22} + C_{23}) \alpha \\
-    \beta_3 &= (C_{13} + C_{23} + C_{33}) \alpha
-\end{align}
-\end{definitionbox}
-
-\begin{lstlisting}[caption=Calcul des Beta (core/mechanical.py lignes 376-403)]
-def compute_beta_coefficients(alpha_coeffs, props=MECHANICAL_PROPS):
-    """
-    Calcule les coefficients de contrainte thermique beta.
-    beta_i = C_i1*alpha_1 + C_i2*alpha_2 + C_i3*alpha_3
-    """
-    if isinstance(alpha, dict):
-        a1 = alpha.get('alpha_1', 10e-6)
-        a2 = alpha.get('alpha_2', a1)
-        a3 = alpha.get('alpha_3', a1)
-    else:
-        a1 = a2 = a3 = alpha
-    
-    beta_1 = props['C11']*a1 + props['C12']*a2 + props['C13']*a3
-    beta_2 = props['C12']*a1 + props['C22']*a2 + props['C23']*a3
-    beta_3 = props['C13']*a1 + props['C23']*a2 + props['C33']*a3
-    
-    return np.array([beta_1, beta_2, beta_3])
-\end{lstlisting}
-
-\subsection{Vecteur de Forçage Thermique $\mathbf{F}_{th}$}
-
-Le forçage thermique apparaît dans le second membre du système d'équilibre :
-
-\begin{theorembox}[Équation 40 du PDF - Forçage Thermique]
-\begin{equation}
-\boxed{
-    \mathbf{F}_{th} = \hat{T} \begin{pmatrix} \beta_1 \delta_1 \\ \beta_2 \delta_2 \\ \beta_3 \lambda_{th} \end{pmatrix}
-}
-\end{equation}
-
-où $\hat{T}$ est l'amplitude de la perturbation de température et $\lambda_{th}$ l'exposant thermique.
-\end{theorembox}
-
-\textbf{Solution Particulière :} $\mathbf{A}_{part} = M(\lambda_{th})^{-1} \cdot \mathbf{F}_{th}$
-
-%==============================================================================
-\section{Stabilité Numérique : Régularisation de Tikhonov}
-%==============================================================================
-
-Le système multicouche peut être \textbf{mal conditionné} avec $\text{cond}(K) > 10^{30}$. Le code utilise plusieurs techniques :
-
-\subsection{Préconditionnement par Équilibrage}
-
-\begin{equation}
-    D_r \cdot K_{glob} \cdot D_c \cdot \mathbf{y} = D_r \cdot \mathbf{F}
-\end{equation}
-
-où $D_r$ (scaling lignes) et $D_c$ (scaling colonnes) sont des matrices diagonales :
-\begin{align}
-    D_r[i,i] &= \frac{1}{\max_j |K[i,j]|} \\
-    D_c[j,j] &= \frac{1}{\max_i |K_{scaled}[i,j]|}
-\end{align}
-
-\subsection{Régularisation de Tikhonov}
-
-Pour $\text{cond}(K) > 10^{10}$, on utilise la décomposition SVD :
-\begin{equation}
-    K = U \Sigma V^H
-\end{equation}
-
-La solution régularisée est :
-\begin{equation}
-\boxed{
-    \mathbf{x}_{reg} = \sum_{i=1}^{n} \frac{\sigma_i^2}{\sigma_i^2 + \lambda^2} \cdot \frac{\mathbf{u}_i^H \mathbf{b}}{\sigma_i} \cdot \mathbf{v}_i
-}
-\end{equation}
-
-où $\lambda$ est le paramètre de régularisation estimé par GCV (Generalized Cross-Validation).
-
-\begin{lstlisting}[caption=Régularisation Tikhonov (core/mechanical.py lignes 846-989)]
-def solve_regularized_system(K, F, tol=1e-12):
-    """Resolution robuste avec regularisation de Tikhonov adaptative."""
-    cond_K = np.linalg.cond(K)
-    
-    if cond_K < 1e10:
-        # Systeme bien conditionne - resolution directe
-        x = np.linalg.solve(K, F)
-    else:
-        # Decomposition SVD
-        U, s, Vh = np.linalg.svd(K)
-        
-        # Estimation du parametre lambda par GCV simplifie
-        lambda_reg = s[k_noise] * np.sqrt(noise_to_signal)
-        
-        # Facteurs de filtrage
-        filter_factors = s**2 / (s**2 + lambda_reg**2)
-        
-        # Solution regularisee
-        x = Vh.conj().T @ (filter_factors * (U.conj().T @ F) / s)
-    
-    return x, {'cond': cond_K, 'regularized': cond_K >= 1e10}
-\end{lstlisting}
+L'implémentation des critères d'endommagement se trouve dans \texttt{core/damage\_analysis.py}, fonctions \texttt{compute\_damage\_indicator()} et \texttt{compute\_tsai\_wu\_criterion()}.
 
 %==============================================================================
 \section{Interprétation Physique des Résultats}
@@ -1475,77 +522,6 @@ $\sigma_{13}, \sigma_{23}$ (Cisaillement) & Contraintes \textbf{tangentielles} a
 & Pics aux interfaces dus aux discontinuités de $C_{ij}$ et $\alpha$ \\
 \bottomrule
 \end{tabular}
-\end{center}
-
-\vspace{0.5cm}
-
-\begin{center}
-\textbf{Profils de Contraintes Typiques dans une Structure TBC}
-\vspace{0.3cm}
-
-\begin{tikzpicture}[scale=0.9]
-    % Axes
-    \draw[->] (0,0) -- (6,0) node[right] {$\sigma$ (MPa)};
-    \draw[->] (0,0) -- (0,5) node[above] {$z$};
-    
-    % Layers background
-    \fill[gray!20] (0,0) rectangle (6,2);
-    \fill[orange!20] (0,2) rectangle (6,2.3);
-    \fill[blue!15] (0,2.3) rectangle (6,4.5);
-    
-    % Layer labels
-    \node[right] at (6.2,1) {\footnotesize Substrat};
-    \node[right] at (6.2,2.15) {\footnotesize BC};
-    \node[right] at (6.2,3.4) {\footnotesize TBC};
-    
-    % Interface lines
-    \draw[dashed, thick] (0,2) -- (6,2);
-    \draw[dashed, thick] (0,2.3) -- (6,2.3);
-    
-    % sigma_33 profile
-    \draw[blue, very thick] (3,0) -- (3,1.8) -- (3.5,2) -- (3.3,2.3) -- (3.1,4.5);
-    \node[blue] at (4,4) {\footnotesize $\sigma_{33}$};
-    
-    % sigma_13 profile  
-    \draw[red, very thick] (3,0) -- (2.5,1) -- (2,2) -- (4,2.3) -- (3.5,3.5) -- (3,4.5);
-    \node[red] at (1.5,3) {\footnotesize $\sigma_{13}$};
-    
-    % Annotations
-    \draw[<->, thick] (-0.3,2) -- (-0.3,2.3);
-    \node[left] at (-0.3,2.15) {\scriptsize Pic};
-    
-    % Zero line
-    \draw[gray, dashed] (3,0) -- (3,5);
-    \node[below] at (3,0) {\footnotesize 0};
-    
-\end{tikzpicture}
-\hspace{1.5cm}
-\begin{tikzpicture}[scale=0.8]
-    % Damage indicator scale
-    \node at (0,5.5) {\textbf{Échelle Indicateur D}};
-    
-    % Gradient bar
-    \fill[green!70] (0,4) rectangle (1.5,5);
-    \fill[green!40] (0,3) rectangle (1.5,4);
-    \fill[yellow!60] (0,2) rectangle (1.5,3);
-    \fill[orange!60] (0,1) rectangle (1.5,2);
-    \fill[red!60] (0,0) rectangle (1.5,1);
-    
-    % Border
-    \draw[thick] (0,0) rectangle (1.5,5);
-    
-    % Values
-    \node[right] at (1.7,4.5) {\scriptsize $D < 0.3$ : Optimal};
-    \node[right] at (1.7,3.5) {\scriptsize $0.3 \leq D < 0.5$ : Bon};
-    \node[right] at (1.7,2.5) {\scriptsize $0.5 \leq D < 0.7$ : Prudence};
-    \node[right] at (1.7,1.5) {\scriptsize $0.7 \leq D < 0.9$ : Risque};
-    \node[right] at (1.7,0.5) {\scriptsize $D \geq 0.9$ : Critique};
-    
-    % Threshold line
-    \draw[red, very thick, dashed] (0,1) -- (1.5,1);
-    \node[left, red] at (0,1) {\scriptsize Seuil};
-    
-\end{tikzpicture}
 \end{center}
 
 \subsection{Zones Critiques Typiques}
@@ -1619,55 +595,46 @@ $\beta \downarrow$ (TBC moins conducteur) & Gradient plus concentré dans TBC & 
 \end{center}
 
 %==============================================================================
+\section{Stabilité Numérique}
+%==============================================================================
+
+Le système multicouche peut être \textbf{mal conditionné} avec $\text{cond}(K) > 10^{30}$. Plusieurs techniques sont utilisées :
+
+\subsection{Préconditionnement par Équilibrage}
+
+\begin{equation}
+    D_r \cdot K_{glob} \cdot D_c \cdot \mathbf{y} = D_r \cdot \mathbf{F}
+\end{equation}
+
+où $D_r$ (scaling lignes) et $D_c$ (scaling colonnes) sont des matrices diagonales :
+\begin{align}
+    D_r[i,i] &= \frac{1}{\max_j |K[i,j]|} \\
+    D_c[j,j] &= \frac{1}{\max_i |K_{scaled}[i,j]|}
+\end{align}
+
+\subsection{Régularisation de Tikhonov}
+
+Pour $\text{cond}(K) > 10^{10}$, on utilise la décomposition SVD :
+\begin{equation}
+    K = U \Sigma V^H
+\end{equation}
+
+La solution régularisée est :
+\begin{equation}
+\boxed{
+    \mathbf{x}_{reg} = \sum_{i=1}^{n} \frac{\sigma_i^2}{\sigma_i^2 + \lambda^2} \cdot \frac{\mathbf{u}_i^H \mathbf{b}}{\sigma_i} \cdot \mathbf{v}_i
+}
+\end{equation}
+
+où $\lambda$ est le paramètre de régularisation estimé par GCV (Generalized Cross-Validation).
+
+L'implémentation se trouve dans \texttt{core/mechanical.py}, fonction \texttt{solve\_regularized\_system()}.
+
+%==============================================================================
 \section{Comparaison : Méthode Spectrale vs CLT}
 %==============================================================================
 
 Le code implémente deux méthodes complémentaires :
-
-\begin{center}
-\begin{tikzpicture}[scale=0.85]
-    % CLT box
-    \begin{scope}[xshift=0cm]
-        \draw[thick, fill=blue!10, rounded corners] (-2.5,-2.5) rectangle (2.5,2.5);
-        \node[font=\bfseries] at (0,2) {CLT};
-        \node[font=\footnotesize, text width=4cm, align=center] at (0,1) {Théorie Classique\\des Stratifiés};
-        \draw[->] (-1.5,0) -- (1.5,0);
-        \draw[->] (0,-1.5) -- (0,0.5);
-        \node[font=\scriptsize] at (0,-0.8) {Contraintes planes};
-        \node[font=\scriptsize] at (0,-1.2) {$\sigma_{11}, \sigma_{22}, \sigma_{12}$};
-        \node[font=\scriptsize, green!60!black] at (0,-2) {$O(N)$ Rapide};
-    \end{scope}
-    
-    % Plus sign
-    \node[font=\Huge] at (3.5,0) {$+$};
-    
-    % Spectral box
-    \begin{scope}[xshift=7cm]
-        \draw[thick, fill=orange!10, rounded corners] (-2.5,-2.5) rectangle (2.5,2.5);
-        \node[font=\bfseries] at (0,2) {Spectrale};
-        \node[font=\footnotesize, text width=4cm, align=center] at (0,1) {Méthode Modale\\Fourier};
-        \draw[->] (-1.5,-1) -- (1.5,-1);
-        \draw[->] (-1,0) -- (-1,0.8);
-        \draw[blue, thick] (-1.3,0) sin (-0.7,0.3) cos (0,0) sin (0.7,-0.3) cos (1.3,0);
-        \node[font=\scriptsize] at (0,-0.3) {Effets 3D/bord};
-        \node[font=\scriptsize] at (0,-1.5) {$\sigma_{13}, \sigma_{23}, \sigma_{33}$};
-        \node[font=\scriptsize, orange!60!black] at (0,-2) {$O(N^3)$ Précis};
-    \end{scope}
-    
-    % Equals sign
-    \node[font=\Huge] at (10.5,0) {$=$};
-    
-    % Total box
-    \begin{scope}[xshift=14cm]
-        \draw[thick, fill=green!10, rounded corners] (-2.5,-2.5) rectangle (2.5,2.5);
-        \node[font=\bfseries] at (0,2) {Total};
-        \node[font=\footnotesize, text width=4cm, align=center] at (0,0.8) {Superposition\\Complète};
-        \node[font=\scriptsize, align=center] at (0,-0.2) {$\sigma_{total} = \sigma_{CLT}$\\$+ \sigma_{Spectral}$};
-        \node[font=\scriptsize, green!60!black] at (0,-1.5) {Toutes composantes};
-        \node[font=\scriptsize, green!60!black] at (0,-2) {\checkmark Validé};
-    \end{scope}
-\end{tikzpicture}
-\end{center}
 
 \begin{center}
 \begin{tabular}{p{6cm}p{6cm}}
@@ -1692,6 +659,7 @@ où CLT capture les contraintes planes moyennes et Spectral ajoute les effets 3D
 
 %==============================================================================
 \section{Validation : Référence ONERA/Safran}
+\label{sec:validation}
 %==============================================================================
 
 Les propriétés matériaux utilisées sont issues de publications ONERA/Safran :
@@ -1711,7 +679,6 @@ $C_{11}$ (GPa) & 259.6 & 260 \\
 $C_{12}$ (GPa) & 179.0 & 179 \\
 $C_{44}$ (GPa) & 109.6 & 110 \\
 $\alpha$ à RT (K$^{-1}$) & $4.95 \times 10^{-6}$ & $12 \times 10^{-6}$ (moyenne T) \\
-$\alpha$ à 1198K (K$^{-1}$) & $14.68 \times 10^{-6}$ & -- \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1723,160 +690,68 @@ $\alpha$ à 1198K (K$^{-1}$) & $14.68 \times 10^{-6}$ & -- \\
 \end{itemize}
 
 %==============================================================================
-\section{Annexe A : Équilibre Local et Solution Détaillée}
+\section{Architecture du Code et Interface}
 %==============================================================================
 
-Cette annexe reprend la dérivation complète de la méthode de résolution selon le document \texttt{equilibre\_local\_corrige.pdf}.
+\subsection{Structure des Répertoires}
 
-\subsection{Équilibre Local en Formulation Forte}
+\begin{codebox}[Arborescence du Projet]
+\begin{verbatim}
+projet-industriel5a/
++-- core/                          # Moteur de calcul
+|   +-- mechanical.py              # Solveur spectral principal
+|   +-- mechanical_pdf.py          # Solveur selon méthodologie PDF
+|   +-- damage_analysis.py         # Critères d'endommagement
+|   +-- clt_solver.py              # Théorie classique des stratifiés
+|   +-- constants.py               # Propriétés matériaux
+|   +-- calculation.py             # Solveur thermique
++-- tabs/                          # Interface Streamlit
+|   +-- dashboard_home.py          # Tableau de bord principal
+|   +-- mechanical.py              # Onglet analyse mécanique
+|   +-- optimization.py            # Onglet optimisation
+|   +-- mapping_3d.py              # Visualisation 3D
++-- Profil de temperature Aube.py  # Point d'entrée Streamlit
+\end{verbatim}
+\end{codebox}
 
-L'équilibre local est défini par :
-\begin{equation}
-    \text{div } \underline{\underline{\sigma}} = \vec{0}
-\end{equation}
+\subsection{Tableau de Correspondance Théorie $\leftrightarrow$ Code}
 
-En injectant la loi de comportement, on obtient le système d'équations différentielles suivant pour le milieu $(i)$.
+\begin{center}
+\begin{tabular}{|p{3.5cm}|p{4cm}|p{5cm}|}
+\hline
+\textbf{Étape} & \textbf{Fonction Python} & \textbf{Fichier} \\
+\hline
+Étapes 1-3: Thermique & \texttt{solve\_tbc\_model\_v2()} & \texttt{core/calculation.py} \\
+\hline
+Étape 4: Loi Hooke & Constantes \texttt{PROPS\_*} & \texttt{core/constants.py} \\
+\hline
+Étape 5-6: Matrice $\Gamma$ & \texttt{get\_Gamma\_matrix()} & \texttt{core/mechanical\_pdf.py} \\
+\hline
+Étape 6: Val. propres & \texttt{solve\_char\_poly()} & \texttt{core/mechanical\_pdf.py} \\
+\hline
+Étape 7: Termes $Q_\alpha$ & \texttt{compute\_Q\_thermal()} & \texttt{core/mechanical\_pdf.py} \\
+\hline
+Étape 7: Assemblage 9×9 & \texttt{assemble\_K\_dyn\_9x9()} & \texttt{core/mechanical\_pdf.py} \\
+\hline
+Étape 8: Multicouche & \texttt{solve\_multilayer()} & \texttt{core/mechanical.py} \\
+\hline
+Critère D & \texttt{compute\_damage\_indicator()} & \texttt{core/damage\_analysis.py} \\
+\hline
+Critère Tsai-Wu & \texttt{compute\_tsai\_wu\_criterion()} & \texttt{core/damage\_analysis.py} \\
+\hline
+\end{tabular}
+\end{center}
 
-\subsubsection{Équations de Champ ($x_3$)}
+\subsection{Interface Streamlit}
 
-\textbf{Équation \#1 : ($\alpha = 1, \beta = 2$)}
-\begin{multline}
-    -\left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) U_1^{(i)}(x_3) + C_{1313}^{(i)}\frac{d^2 U_1^{(i)}(x_3)}{dx_3^2} - \left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2 U_2^{(i)}(x_3) \\ 
-    + \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \frac{dU_3^{(i)}(x_3)}{dx_3} = \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 T(x_3 = \bar{h}^{(i)})
-\end{multline}
+L'application Streamlit propose plusieurs onglets :
 
-\textbf{Équation \#2 : ($\alpha = 2, \beta = 1$)}
-\begin{multline}
-    -\left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) U_2^{(i)}(x_3) + C_{2323}^{(i)}\frac{d^2 U_2^{(i)}(x_3)}{dx_3^2} - \left(C_{2211}^{(i)} + C_{1212}^{(i)}\right)\delta_2\delta_1 U_1^{(i)}(x_3) \\ 
-    + \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \frac{dU_3^{(i)}(x_3)}{dx_3} = \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 T(x_3 = \bar{h}^{(i)})
-\end{multline}
-
-\textbf{Équation \#3 : (Direction 3)}
-\begin{multline}
-    \sum_{\gamma=1}^2 \left[ -(C_{\gamma\gamma 33}^{(i)} + C_{\gamma 3\gamma 3}^{(i)}) \delta_\gamma \frac{dU_{\gamma}^{(i)}(x_3)}{dx_3} - C_{\gamma 3\gamma 3}^{(i)} \delta_\gamma^2 U_3^{(i)}(x_3) \right] + C_{3333}^{(i)} \frac{d^2 U_3^{(i)}(x_3)}{dx_3^2} \\
-    = \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
-\end{multline}
-
-\subsection{Forme de la Solution Générale}
-
-Pour $\alpha \in \{1, 2, 3\}$, la solution est recherchée sous forme de combinaison d'exponentielles :
-\begin{align}
-    U_{1}^{(i)}(x_3) &= A_{1}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{1}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{1}^{3(i)} e^{\tau_3^{(i)} x_3} \\
-    U_{2}^{(i)}(x_3) &= A_{2}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{2}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{2}^{3(i)} e^{\tau_3^{(i)} x_3} \\
-    U_{3}^{(i)}(x_3) &= A_{3}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{3}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{3}^{3(i)} e^{\tau_3^{(i)} x_3}
-\end{align}
-
-Où :
 \begin{itemize}
-    \item $A_{\alpha}^{r(i)}$ sont les amplitudes associées à chaque mode $r$ pour la direction $\alpha$.
-    \item $\tau_r^{(i)}$ sont les valeurs propres du milieu $(i)$, issues de l'analyse du système homogène.
+    \item \textbf{Dashboard} (\texttt{tabs/dashboard\_home.py}) : Affiche les KPIs, jauge de risque, radar multi-critères, visualisation 3D du champ thermique, et recommandations automatiques
+    \item \textbf{Analyse Mécanique} (\texttt{tabs/mechanical.py}) : Workflow complet d'analyse spectrale avec visualisation des profils de contraintes, indicateurs d'endommagement, et cercles de Mohr
+    \item \textbf{Optimisation} (\texttt{tabs/optimization.py}) : Optimisation paramétrique pour minimiser D
+    \item \textbf{Visualisation 3D} (\texttt{tabs/mapping\_3d.py}) : Cartographie 3D des contraintes avec Plotly
 \end{itemize}
-
-\subsection{Dérivées Premières et Secondes}
-
-\textbf{Dérivées premières :}
-\begin{align}
-    \frac{dU_{1}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{1}^{r(i)} e^{\tau_r^{(i)} x_3} \\
-    \frac{dU_{2}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{2}^{r(i)} e^{\tau_r^{(i)} x_3} \\
-    \frac{dU_{3}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{3}^{r(i)} e^{\tau_r^{(i)} x_3}
-\end{align}
-
-\textbf{Dérivées secondes :}
-\begin{align}
-    \frac{d^2 U_{\alpha}^{(i)}(x_3)}{dx_3^2} &= \sum_{r=1}^{3} (\tau_r^{(i)})^2 A_{\alpha}^{r(i)} e^{\tau_r^{(i)} x_3}
-\end{align}
-
-\subsection{Opérateurs $L_{jk}^{r(i)}$ de la Matrice Dynamique}
-
-\textbf{Termes diagonaux (couplage direct) :}
-\begin{align}
-    L_{11}^{r(i)} &= C_{1313}^{(i)}(\tau_r^{(i)})^2 - \left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) \\
-    L_{22}^{r(i)} &= C_{2323}^{(i)}(\tau_r^{(i)})^2 - \left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) \\
-    L_{33}^{r(i)} &= C_{3333}^{(i)}(\tau_r^{(i)})^2 - \left(C_{1313}^{(i)}\delta_1^2 + C_{2323}^{(i)}\delta_2^2\right)
-\end{align}
-
-\textbf{Termes croisés (couplage dans le plan) :}
-\begin{equation}
-    L_{12}^{r(i)} = L_{21}^{r(i)} = -\left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2
-\end{equation}
-
-\textbf{Termes hors-plan (faisant intervenir $\tau_r^{(i)}$) --- ANTISYMÉTRIQUES :}
-\begin{align}
-    L_{13}^{r(i)} &= \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} \\
-    L_{23}^{r(i)} &= \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)} \\
-    L_{31}^{r(i)} &= \textcolor{red}{-}\left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} \\
-    L_{32}^{r(i)} &= \textcolor{red}{-}\left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)}
-\end{align}
-
-\begin{warningbox}[Antisymétrie Critique]
-Les signes négatifs de $L_{31}$ et $L_{32}$ sont \textbf{essentiels} pour la physique correcte. Ils proviennent de l'équation d'équilibre en direction $x_3$.
-\end{warningbox}
-
-\subsection{Matrice $\Gamma(\tau)$ et Système Homogène}
-
-Le système homogène s'écrit $\Gamma(\tau) \cdot \mathbf{A} = \mathbf{0}$ :
-\begin{equation}
-\boxed{
-    \begin{bmatrix}
-        \Gamma_{11}^{(i)} & \Gamma_{12}^{(i)} & \Gamma_{13}^{(i)} \\
-        \Gamma_{21}^{(i)} & \Gamma_{22}^{(i)} & \Gamma_{23}^{(i)} \\
-        \Gamma_{31}^{(i)} & \Gamma_{32}^{(i)} & \Gamma_{33}^{(i)}
-    \end{bmatrix}
-    \begin{pmatrix}
-        A_1^{r(i)} \\
-        A_2^{r(i)} \\
-        A_3^{r(i)}
-    \end{pmatrix}
-    =
-    \begin{pmatrix}
-        0 \\ 0 \\ 0
-    \end{pmatrix}
-}
-\end{equation}
-
-Avec les composantes :
-\begin{align}
-    \Gamma_{11}^{(i)} &= C_{1313}^{(i)}(\tau_r^{(i)})^2 - (C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2) \\
-    \Gamma_{22}^{(i)} &= C_{2323}^{(i)}(\tau_r^{(i)})^2 - (C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2) \\
-    \Gamma_{33}^{(i)} &= C_{3333}^{(i)}(\tau_r^{(i)})^2 - (C_{1313}^{(i)}\delta_1^2 + C_{2323}^{(i)}\delta_2^2) \\
-    \Gamma_{12}^{(i)} &= \Gamma_{21}^{(i)} = -(C_{1122}^{(i)} + C_{1212}^{(i)})\delta_1\delta_2 \\
-    \Gamma_{13}^{(i)} &= (C_{1133}^{(i)} + C_{1313}^{(i)})\delta_1 \tau_r^{(i)} \\
-    \Gamma_{23}^{(i)} &= (C_{2233}^{(i)} + C_{2323}^{(i)})\delta_2 \tau_r^{(i)} \\
-    \Gamma_{31}^{(i)} &= -(C_{1133}^{(i)} + C_{1313}^{(i)})\delta_1 \tau_r^{(i)} \\
-    \Gamma_{32}^{(i)} &= -(C_{2233}^{(i)} + C_{2323}^{(i)})\delta_2 \tau_r^{(i)}
-\end{align}
-
-\subsection{Assemblage Complet du Système $9 \times 9$}
-
-Le système global pour une couche $(i)$ s'écrit :
-\begin{equation}
-    \left[ \mathbb{K}_{Dyn}^{(i)} \right]_{(9 \times 9)} \cdot \{ \mathcal{A}^{(i)} \}_{(9 \times 1)} = \{ \mathcal{F}_{Th}^{(i)} \}_{(9 \times 1)}
-\end{equation}
-
-La matrice $\mathbb{K}_{Dyn}$ est \textbf{bloc-diagonale} :
-\begin{equation}
-\boxed{
-    \mathbb{K}_{Dyn}^{(i)} = \begin{pmatrix}
-    \Gamma(\tau_1) & 0 & 0 \\
-    0 & \Gamma(\tau_2) & 0 \\
-    0 & 0 & \Gamma(\tau_3)
-    \end{pmatrix}_{9 \times 9}
-}
-\end{equation}
-
-Le vecteur d'amplitudes $\mathcal{A}$ et le vecteur thermique $\mathcal{F}_{Th}$ :
-\begin{equation}
-    \mathcal{A}^{(i)} = \begin{pmatrix} A_1^{1} \\ A_2^{1} \\ A_3^{1} \\ A_1^{2} \\ A_2^{2} \\ A_3^{2} \\ A_1^{3} \\ A_2^{3} \\ A_3^{3} \end{pmatrix}^{(i)}, \quad
-    \mathcal{F}_{Th}^{(i)} = \begin{pmatrix} Q_1 \\ Q_2 \\ Q_3 \\ Q_1 \\ Q_2 \\ Q_3 \\ Q_1 \\ Q_2 \\ Q_3 \end{pmatrix}^{(i)}
-\end{equation}
-
-\subsection{Termes de Sollicitation Thermique $\mathcal{Q}_\alpha$}
-
-\begin{align}
-    \mathcal{Q}_1^{(i)} &= \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 \, T(x_3 = \bar{h}^{(i)}) \\
-    \mathcal{Q}_2^{(i)} &= \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 \, T(x_3 = \bar{h}^{(i)}) \\
-    \mathcal{Q}_3^{(i)} &= \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
-\end{align}
 
 %==============================================================================
 \section{Conclusion}
@@ -1884,18 +759,18 @@ Le vecteur d'amplitudes $\mathcal{A}$ et le vecteur thermique $\mathcal{F}_{Th}$
 
 Ce rapport démontre la \textbf{traçabilité complète} entre :
 \begin{enumerate}
-    \item Les 8 étapes théoriques du document \textit{ProjectEstaca.pdf}
-    \item L'implémentation Python dans \texttt{core/mechanical.py} (1482 lignes)
+    \item La modélisation mathématique (méthode spectrale, matrice $\Gamma(\tau)$, opérateurs $L_{jk}$)
+    \item L'implémentation Python dans \texttt{core/mechanical\_pdf.py}
     \item L'interface utilisateur Streamlit avec visualisations interactives
 \end{enumerate}
 
 \textbf{Points clés de l'implémentation :}
 \begin{itemize}
-    \item \textbf{Méthode numérique robuste} : Identification des coefficients du polynôme caractéristique par évaluation numérique (évite les erreurs de formules analytiques)
+    \item \textbf{Méthode numérique robuste} : Identification des coefficients du polynôme caractéristique par évaluation numérique
     \item \textbf{Stabilité numérique} : Préconditionnement par scaling + régularisation Tikhonov pour les systèmes mal conditionnés
-    \item \textbf{Validation industrielle} : Propriétés matériaux issues des données ONERA/Safran (Bovet et al., 2025)
-    \item \textbf{Critères d'endommagement} : Indicateur D (max ratio) et Tsai-Wu pour identification des zones critiques
-    \item \textbf{Superposition CLT+Spectral} : Combinaison des contraintes planes (CLT) et effets 3D de bord (Spectral)
+    \item \textbf{Validation industrielle} : Propriétés matériaux issues des données ONERA/Safran
+    \item \textbf{Critères d'endommagement} : Indicateur D et Tsai-Wu pour identification des zones critiques
+    \item \textbf{Superposition CLT+Spectral} : Combinaison des contraintes planes et effets 3D de bord
 \end{itemize}
 
 \textbf{Recommandations d'utilisation :}

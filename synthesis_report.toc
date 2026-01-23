@@ -1,60 +1,32 @@
 \babel@toc {french}{}\relax 
-\contentsline {section}{Résumé Exécutif}{3}{section*.2}%
-\contentsline {section}{\numberline {1}Introduction}{4}{section.1}%
-\contentsline {subsection}{\numberline {1.1}Objectif Industriel}{4}{subsection.1.1}%
-\contentsline {subsection}{\numberline {1.2}Structure du Système Multicouche Étudié}{4}{subsection.1.2}%
-\contentsline {subsection}{\numberline {1.3}Paramètres Adimensionnels Clés}{4}{subsection.1.3}%
-\contentsline {subsection}{\numberline {1.4}Organigramme de l'Algorithme Spectral}{5}{subsection.1.4}%
-\contentsline {section}{\numberline {2}Architecture Globale du Code}{5}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Structure des Répertoires}{5}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}Diagramme de Flux des Données}{6}{subsection.2.2}%
-\contentsline {section}{\numberline {3}Interface Streamlit - Architecture des Onglets}{6}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Point d'Entrée : Profil de température Aube.py}{6}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Onglet Dashboard (tabs/dashboard\_home.py)}{7}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Onglet Mécanique (tabs/mechanical.py)}{7}{subsection.3.3}%
-\contentsline {subsection}{\numberline {3.4}Visualisations Avancées}{8}{subsection.3.4}%
-\contentsline {section}{\numberline {4}Modélisation Mathématique Détaillée (Étapes 1-8 du PDF)}{8}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Étape 1-2 : Représentation Spectrale de la Température}{8}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Étape 3 : Solution Thermique par Couche}{9}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Étape 4 : Loi de Comportement Thermo-Élastique}{9}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Étape 5 : Ansatz de Déplacement}{9}{subsection.4.4}%
-\contentsline {subsection}{\numberline {4.5}Étape 6 : Matrice Dynamique $\Gamma (\tau )$ et Valeurs Propres}{9}{subsection.4.5}%
-\contentsline {subsection}{\numberline {4.6}Étape 7 : Assemblage $9 \times 9$ et Termes Thermiques}{10}{subsection.4.6}%
-\contentsline {subsection}{\numberline {4.7}Étape 8 : Assemblage Multicouche}{11}{subsection.4.7}%
-\contentsline {subsection}{\numberline {4.8}Critères d'Endommagement}{12}{subsection.4.8}%
-\contentsline {section}{\numberline {5}Correspondance Théorie $\leftrightarrow $ Code : Implémentation Python}{12}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Étape 1-3 : Thermique (core/calculation.py)}{12}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Étape 4 : Loi de Comportement (core/constants.py)}{13}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Étape 5-6 : Ansatz et Système aux Valeurs Propres (core/mechanical.py)}{13}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Étape 7 : Matrice R et Conditions aux Limites}{14}{subsection.5.4}%
-\contentsline {subsection}{\numberline {5.5}Étape 8 : Assemblage Global (core/mechanical.py)}{15}{subsection.5.5}%
-\contentsline {subsection}{\numberline {5.6}Nouvelle Implémentation : Module mechanical\_pdf.py}{16}{subsection.5.6}%
-\contentsline {subsubsection}{\numberline {5.6.1}Section 2 : Forme de la Solution Générale}{16}{subsubsection.5.6.1}%
-\contentsline {subsubsection}{\numberline {5.6.2}Section 5 : Opérateurs $L_{jk}$ et Termes Thermiques}{16}{subsubsection.5.6.2}%
-\contentsline {subsubsection}{\numberline {5.6.3}Section 6 : Matrice $\Gamma (\tau )$}{18}{subsubsection.5.6.3}%
-\contentsline {subsubsection}{\numberline {5.6.4}Section 7 : Assemblage Matriciel $9 \times 9$}{18}{subsubsection.5.6.4}%
-\contentsline {section}{\numberline {6}Critères d'Endommagement (core/damage\_analysis.py)}{19}{section.6}%
-\contentsline {section}{\numberline {7}Tableau de Correspondance Complet}{19}{section.7}%
-\contentsline {section}{\numberline {8}Forçage Thermique et Coefficients Beta}{20}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Coefficients de Contrainte Thermique $\beta _i$}{20}{subsection.8.1}%
-\contentsline {subsection}{\numberline {8.2}Vecteur de Forçage Thermique $\mathbf {F}_{th}$}{21}{subsection.8.2}%
-\contentsline {section}{\numberline {9}Stabilité Numérique : Régularisation de Tikhonov}{21}{section.9}%
-\contentsline {subsection}{\numberline {9.1}Préconditionnement par Équilibrage}{21}{subsection.9.1}%
-\contentsline {subsection}{\numberline {9.2}Régularisation de Tikhonov}{21}{subsection.9.2}%
-\contentsline {section}{\numberline {10}Interprétation Physique des Résultats}{22}{section.10}%
-\contentsline {subsection}{\numberline {10.1}Signification des Contraintes Transverses}{22}{subsection.10.1}%
-\contentsline {subsection}{\numberline {10.2}Zones Critiques Typiques}{22}{subsection.10.2}%
-\contentsline {subsection}{\numberline {10.3}Influence des Paramètres sur les Contraintes}{22}{subsection.10.3}%
-\contentsline {subsection}{\numberline {10.4}Modes de Rupture aux Interfaces}{23}{subsection.10.4}%
-\contentsline {section}{\numberline {11}Comparaison : Méthode Spectrale vs CLT}{23}{section.11}%
-\contentsline {section}{\numberline {12}Validation : Référence ONERA/Safran}{23}{section.12}%
-\contentsline {section}{\numberline {13}Annexe A : Équilibre Local et Solution Détaillée}{24}{section.13}%
-\contentsline {subsection}{\numberline {13.1}Équilibre Local en Formulation Forte}{24}{subsection.13.1}%
-\contentsline {subsubsection}{\numberline {13.1.1}Équations de Champ ($x_3$)}{24}{subsubsection.13.1.1}%
-\contentsline {subsection}{\numberline {13.2}Forme de la Solution Générale}{24}{subsection.13.2}%
-\contentsline {subsection}{\numberline {13.3}Dérivées Premières et Secondes}{25}{subsection.13.3}%
-\contentsline {subsection}{\numberline {13.4}Opérateurs $L_{jk}^{r(i)}$ de la Matrice Dynamique}{25}{subsection.13.4}%
-\contentsline {subsection}{\numberline {13.5}Matrice $\Gamma (\tau )$ et Système Homogène}{26}{subsection.13.5}%
-\contentsline {subsection}{\numberline {13.6}Assemblage Complet du Système $9 \times 9$}{26}{subsection.13.6}%
-\contentsline {subsection}{\numberline {13.7}Termes de Sollicitation Thermique $\mathcal {Q}_\alpha $}{26}{subsection.13.7}%
-\contentsline {section}{\numberline {14}Conclusion}{27}{section.14}%
+\contentsline {section}{Résumé Exécutif}{2}{section*.2}%
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Contexte Industriel : Aubes de Turbines Nouvelle Génération}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Objectifs du Projet}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Système Multicouche Étudié}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Paramètres Adimensionnels Clés}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Propriétés Matériaux}{4}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Modélisation Mathématique}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Étape 1-2 : Représentation Spectrale de la Température}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Étape 3 : Solution Thermique par Couche}{4}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Étape 4 : Loi de Comportement Thermo-Élastique}{4}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Étape 5 : Ansatz de Déplacement}{5}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Étape 6 : Matrice Dynamique $\Gamma (\tau )$ et Valeurs Propres}{5}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Étape 7 : Assemblage $9 \times 9$ et Termes Thermiques}{6}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Étape 8 : Assemblage Multicouche}{6}{subsection.3.7}%
+\contentsline {section}{\numberline {4}Critères d'Endommagement}{7}{section.4}%
+\contentsline {section}{\numberline {5}Interprétation Physique des Résultats}{8}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Signification des Contraintes Transverses}{8}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Zones Critiques Typiques}{8}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Influence des Paramètres sur les Contraintes}{8}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Modes de Rupture aux Interfaces}{8}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Stabilité Numérique}{8}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Préconditionnement par Équilibrage}{8}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Régularisation de Tikhonov}{9}{subsection.6.2}%
+\contentsline {section}{\numberline {7}Comparaison : Méthode Spectrale vs CLT}{9}{section.7}%
+\contentsline {section}{\numberline {8}Validation : Référence ONERA/Safran}{9}{section.8}%
+\contentsline {section}{\numberline {9}Architecture du Code et Interface}{10}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Structure des Répertoires}{10}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Tableau de Correspondance Théorie $\leftrightarrow $ Code}{10}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Interface Streamlit}{10}{subsection.9.3}%
+\contentsline {section}{\numberline {10}Conclusion}{10}{section.10}%
