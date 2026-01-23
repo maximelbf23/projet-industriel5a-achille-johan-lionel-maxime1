@@ -1,0 +1,24 @@
+\babel@toc {french}{}\relax 
+\contentsline {section}{\numberline {1}Le Comptage Théorique : 27 Équations}{2}{}%
+\contentsline {subsection}{\numberline {1.1}Rappel du Problème}{2}{}%
+\contentsline {subsection}{\numberline {1.2}Décompte selon le PDF (Étape 8)}{2}{}%
+\contentsline {subsection}{\numberline {1.3}Détail des 27 Équations}{2}{}%
+\contentsline {section}{\numberline {2}La Clé : La Méthode des Modes Propres}{3}{}%
+\contentsline {subsection}{\numberline {2.1}L'Ansatz Modal}{3}{}%
+\contentsline {subsection}{\numberline {2.2}Injection dans l'Équation d'Équilibre}{3}{}%
+\contentsline {subsection}{\numberline {2.3}La Condition de Non-Trivialité}{3}{}%
+\contentsline {section}{\numberline {3}Pourquoi les 9 Équations d'Équilibre Disparaissent}{3}{}%
+\contentsline {subsection}{\numberline {3.1}Démonstration Pas à Pas}{3}{}%
+\contentsline {subsection}{\numberline {3.2}Illustration Graphique}{4}{}%
+\contentsline {section}{\numberline {4}Le Système Final : 18 Équations pour 18 Inconnues}{4}{}%
+\contentsline {subsection}{\numberline {4.1}Les 18 Inconnues}{4}{}%
+\contentsline {subsection}{\numberline {4.2}Les 18 Équations}{5}{}%
+\contentsline {subsection}{\numberline {4.3}Structure de la Matrice Globale $K_{glob}$}{5}{}%
+\contentsline {section}{\numberline {5}Formule Générale pour N Couches}{5}{}%
+\contentsline {subsection}{\numberline {5.1}Comptage des Équations}{5}{}%
+\contentsline {subsection}{\numberline {5.2}Comparaison des Approches}{6}{}%
+\contentsline {section}{\numberline {6}L'Implémentation dans le Code Python}{6}{}%
+\contentsline {subsection}{\numberline {6.1}Fonction d'Assemblage (core/mechanical.py)}{6}{}%
+\contentsline {subsection}{\numberline {6.2}Vérification de l'Équilibre a Posteriori}{6}{}%
+\contentsline {section}{\numberline {7}Références dans la Documentation}{7}{}%
+\contentsline {section}{\numberline {8}Résumé et Conclusion}{7}{}%

@@ -1,0 +1,272 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+
+\begin{document}
+
+\section*{Équilibre Local et Solution}
+
+L'équilibre local en \textbf{formulation forte} est défini par :
+\begin{equation}
+    \text{div } \underline{\underline{\sigma}} = \vec{0}
+\end{equation}
+
+En injectant la loi de comportement, on obtient le système d'équations différentielles suivant pour le milieu $(i)$ :
+
+\subsection*{1. Équations de champ ($x_3$)}
+
+\textbf{Eq \# 1 : ($\alpha = 1, \beta = 2$)}
+\begin{multline}
+    -\left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) U_1^{(i)}(x_3) + C_{1313}^{(i)}\frac{d^2 U_1^{(i)}(x_3)}{dx_3^2} - \left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2 U_2^{(i)}(x_3) \\ 
+    + \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \frac{dU_3^{(i)}(x_3)}{dx_3} = \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 T(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\textbf{Eq \# 2 : ($\alpha = 2, \beta = 1$)}
+\begin{multline}
+    -\left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) U_2^{(i)}(x_3) + C_{2323}^{(i)}\frac{d^2 U_2^{(i)}(x_3)}{dx_3^2} - \left(C_{2211}^{(i)} + C_{1212}^{(i)}\right)\delta_2\delta_1 U_1^{(i)}(x_3) \\ 
+    + \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \frac{dU_3^{(i)}(x_3)}{dx_3} = \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 T(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\textbf{Eq \# 3 : (Direction 3)}
+\begin{multline}
+    \sum_{\gamma=1}^2 \left[ -(C_{\gamma\gamma 33}^{(i)} + C_{\gamma 3\gamma 3}^{(i)}) \delta_\gamma \frac{dU_{\gamma}^{(i)}(x_3)}{dx_3} - C_{\gamma 3\gamma 3}^{(i)} \delta_\gamma^2 U_3^{(i)}(x_3) \right] + C_{3333}^{(i)} \frac{d^2 U_3^{(i)}(x_3)}{dx_3^2} \\
+    = \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
+\end{multline}
+
+\subsection*{2. Forme de la solution générale développée}
+
+Pour $\alpha \in \{1, 2, 3\}$, la solution pour les déplacements dans le milieu $(i)$ est recherchée sous la forme d'une combinaison d'exponentielles. En développant la somme $\sum_{r=1}^{3} A_{\alpha}^{r(i)} e^{\tau_r^{(i)} x_3}$, on obtient :
+
+\begin{align}
+    U_{1}^{(i)}(x_3) &= A_{1}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{1}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{1}^{3(i)} e^{\tau_3^{(i)} x_3} \\
+    U_{2}^{(i)}(x_3) &= A_{2}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{2}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{2}^{3(i)} e^{\tau_3^{(i)} x_3} \\
+    U_{3}^{(i)}(x_3) &= A_{3}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{3}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{3}^{3(i)} e^{\tau_3^{(i)} x_3}
+\end{align}
+
+Où :
+\begin{itemize}
+    \item $A_{\alpha}^{r(i)}$ sont les amplitudes associées à chaque mode $r$ pour la direction $\alpha$.
+    \item $\tau_r^{(i)}$ sont les coefficients caractéristiques (valeurs propres) du milieu $(i)$, \textbf{préalablement calculés} par l'analyse aux valeurs propres du système homogène.
+\end{itemize}
+
+\subsection*{3. Dérivées premières et secondes}
+
+Les dérivées successives par rapport à $x_3$ pour chaque composante $\alpha \in \{1, 2, 3\}$ s'écrivent :
+
+\subsubsection*{Dérivées premières}
+\begin{align}
+    \frac{dU_{1}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{1}^{r(i)} e^{\tau_r^{(i)} x_3} \\
+    \frac{dU_{2}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{2}^{r(i)} e^{\tau_r^{(i)} x_3} \\
+    \frac{dU_{3}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{3}^{r(i)} e^{\tau_r^{(i)} x_3}
+\end{align}
+
+\subsubsection*{Dérivées secondes}
+\begin{align}
+    \frac{d^2 U_{1}^{(i)}(x_3)}{dx_3^2} &= \sum_{r=1}^{3} (\tau_r^{(i)})^2 A_{1}^{r(i)} e^{\tau_r^{(i)} x_3} \\
+    \frac{d^2 U_{2}^{(i)}(x_3)}{dx_3^2} &= \sum_{r=1}^{3} (\tau_r^{(i)})^2 A_{2}^{r(i)} e^{\tau_r^{(i)} x_3} \\
+    \frac{d^2 U_{3}^{(i)}(x_3)}{dx_3^2} &= \sum_{r=1}^{3} (\tau_r^{(i)})^2 A_{3}^{r(i)} e^{\tau_r^{(i)} x_3}
+\end{align}
+
+\section*{4. Injection de la solution dans les équations d'équilibre}
+
+En injectant les expressions de $U_{\alpha}^{(i)}(x_3)$ et de leurs dérivées (définies en sections 2 et 3) dans les équations d'équilibre de la section 1, nous obtenons pour chaque mode $r \in \{1, 2, 3\}$ le système suivant :
+
+\subsection*{Équation \# 1 injectée ($\alpha = 1$)}
+\begin{multline}
+    \sum_{r=1}^{3} \left[ -\left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) A_1^{r(i)} + C_{1313}^{(i)}(\tau_r^{(i)})^2 A_1^{r(i)} - \left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2 A_2^{r(i)} \right. \\ 
+    \left. + \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} A_3^{r(i)} \right] e^{\tau_r^{(i)} x_3} = \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 T(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\subsection*{Équation \# 2 injectée ($\alpha = 2$)}
+\begin{multline}
+    \sum_{r=1}^{3} \left[ -\left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) A_2^{r(i)} + C_{2323}^{(i)}(\tau_r^{(i)})^2 A_2^{r(i)} - \left(C_{2211}^{(i)} + C_{1212}^{(i)}\right)\delta_2\delta_1 A_1^{r(i)} \right. \\ 
+    \left. + \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)} A_3^{r(i)} \right] e^{\tau_r^{(i)} x_3} = \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 T(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\subsection*{Équation \# 3 injectée (Direction 3)}
+\begin{multline}
+    \sum_{r=1}^{3} \left[ \sum_{\gamma=1}^2 \left( -(C_{\gamma\gamma 33}^{(i)} + C_{\gamma 3\gamma 3}^{(i)}) \delta_\gamma \tau_r^{(i)} A_{\gamma}^{r(i)} - C_{\gamma 3\gamma 3}^{(i)} \delta_\gamma^2 A_3^{r(i)} \right) \right. \\
+    \left. + C_{3333}^{(i)} (\tau_r^{(i)})^2 A_3^{r(i)} \right] e^{\tau_r^{(i)} x_3} = \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
+\end{multline}
+
+\section*{5. Développement des équations particulières (Non-Homogènes)}
+
+Pour déterminer les solutions particulières dans le milieu $(i)$, on injecte les expressions développées. Le système n'est plus nul mais égal aux termes sources thermiques $Q_{\alpha}^{(i)}$ :
+
+\subsection*{Équation \# 1 (Direction 1)}
+\begin{equation}
+\sum_{r=1}^3 \left[ L_{11}^{r(i)} A_1^{r(i)} + L_{12}^{r(i)} A_2^{r(i)} + L_{13}^{r(i)} A_3^{r(i)} \right] e^{\tau_r^{(i)} x_3} = Q_1^{(i)}(x_3 = \bar{h}^{(i)})
+\end{equation}
+Avec le terme source thermique :
+\begin{itemize}
+    \item $Q_1^{(i)} = \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 T(x_3 = \bar{h}^{(i)})$
+\end{itemize}
+
+\subsection*{Équation \# 2 (Direction 2)}
+\begin{equation}
+\sum_{r=1}^3 \left[ L_{21}^{r(i)} A_1^{r(i)} + L_{22}^{r(i)} A_2^{r(i)} + L_{23}^{r(i)} A_3^{r(i)} \right] e^{\tau_r^{(i)} x_3} = Q_2^{(i)}(x_3 = \bar{h}^{(i)})
+\end{equation}
+Avec le terme source thermique ($1 \leftrightarrow 2$) :
+\begin{itemize}
+    \item $Q_2^{(i)} = \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 T(x_3 = \bar{h}^{(i)})$
+\end{itemize}
+
+\subsection*{Équation \# 3 (Direction 3)}
+\begin{equation}
+\sum_{r=1}^3 \left[ L_{31}^{r(i)} A_1^{r(i)} + L_{32}^{r(i)} A_2^{r(i)} + L_{33}^{r(i)} A_3^{r(i)} \right] e^{\tau_r^{(i)} x_3} = Q_3^{(i)}(x_3 = \bar{h}^{(i)})
+\end{equation}
+Avec le terme source thermique :
+\begin{itemize}
+    \item $Q_3^{(i)} = \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}$
+\end{itemize}
+
+\paragraph{Définition explicite des facteurs $L_{jk}^{r(i)}$ :}
+
+En identifiant les termes facteurs des amplitudes $A_1$, $A_2$ et $A_3$ dans les équations d'équilibre injectées, on définit les opérateurs de la matrice dynamique pour chaque mode $r$.
+
+Pour les termes diagonaux (couplage direct) :
+\begin{align}
+    L_{11}^{r(i)} &= C_{1313}^{(i)}(\tau_r^{(i)})^2 - \left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) \\
+    L_{22}^{r(i)} &= C_{2323}^{(i)}(\tau_r^{(i)})^2 - \left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) \\
+    L_{33}^{r(i)} &= C_{3333}^{(i)}(\tau_r^{(i)})^2 - \left(C_{1313}^{(i)}\delta_1^2 + C_{2323}^{(i)}\delta_2^2\right)
+\end{align}
+
+Pour les termes croisés (couplage dans le plan) :
+\begin{align}
+    L_{12}^{r(i)} &= L_{21}^{r(i)} = -\left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2
+\end{align}
+
+Pour les termes de couplage hors plan (faisant intervenir $\tau_r^{(i)}$) :
+\begin{align}
+    L_{13}^{r(i)} &= \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} \\
+    L_{23}^{r(i)} &= \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)} \\
+    L_{31}^{r(i)} &= -\left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} \\
+    L_{32}^{r(i)} &= -\left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)}
+\end{align}
+
+\section*{6. Système factorisé pour le mode $r$}
+
+Pour qu'une solution existe, nous regroupons les termes pour mettre en évidence les amplitudes $A_{\alpha}^{r(i)}$. En réarrangeant les équations injectées précédemment, nous obtenons le système linéaire suivant pour chaque mode $r$ :
+
+\subsection*{Équation 1 (Direction 1)}
+\begin{multline}
+    \left[ C_{1313}^{(i)}(\tau_r^{(i)})^2 - \left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) \right] A_1^{r(i)} \\
+    - \left[ \left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2 \right] A_2^{r(i)} \\
+    + \left[ \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} \right] A_3^{r(i)} = \text{Terme Source}_1(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\subsection*{Équation 2 (Direction 2)}
+\begin{multline}
+    - \left[ \left(C_{2211}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2 \right] A_1^{r(i)} \\
+    + \left[ C_{2323}^{(i)}(\tau_r^{(i)})^2 - \left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) \right] A_2^{r(i)} \\
+    + \left[ \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)} \right] A_3^{r(i)} = \text{Terme Source}_2(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\subsection*{Équation 3 (Direction 3)}
+\begin{multline}
+    - \left[ \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right) \delta_1 \tau_r^{(i)} \right] A_1^{r(i)} \\
+    - \left[ \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right) \delta_2 \tau_r^{(i)} \right] A_2^{r(i)} \\
+    + \left[ C_{3333}^{(i)} (\tau_r^{(i)})^2 - \left( C_{1313}^{(i)} \delta_1^2 + C_{2323}^{(i)} \delta_2^2 \right) \right] A_3^{r(i)} = \text{Terme Source}_3(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\subsection*{Notation Matricielle}
+
+Le système homogène (sans les termes sources) peut s'écrire sous la forme compacte $[ \Gamma(\tau) ] \{ A \} = \{ 0 \}$ :
+
+\begin{equation}
+    \begin{bmatrix}
+        \Gamma_{11}^{(i)} & \Gamma_{12}^{(i)} & \Gamma_{13}^{(i)} \\
+        \Gamma_{21}^{(i)} & \Gamma_{22}^{(i)} & \Gamma_{23}^{(i)} \\
+        \Gamma_{31}^{(i)} & \Gamma_{32}^{(i)} & \Gamma_{33}^{(i)}
+    \end{bmatrix}
+    \begin{pmatrix}
+        A_1^{r(i)} \\
+        A_2^{r(i)} \\
+        A_3^{r(i)}
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+        0 \\ 0 \\ 0
+    \end{pmatrix}
+\end{equation}
+
+Avec les composantes de la matrice dynamique définies par :
+
+\begin{align}
+    \Gamma_{11}^{(i)} &= C_{1313}^{(i)}(\tau_r^{(i)})^2 - (C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2) \\
+    \Gamma_{22}^{(i)} &= C_{2323}^{(i)}(\tau_r^{(i)})^2 - (C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2) \\
+    \Gamma_{33}^{(i)} &= C_{3333}^{(i)}(\tau_r^{(i)})^2 - (C_{1313}^{(i)}\delta_1^2 + C_{2323}^{(i)}\delta_2^2) \\
+    \Gamma_{12}^{(i)} &= \Gamma_{21}^{(i)} = -(C_{1122}^{(i)} + C_{1212}^{(i)})\delta_1\delta_2 \\
+    \Gamma_{13}^{(i)} &= (C_{1133}^{(i)} + C_{1313}^{(i)})\delta_1 \tau_r^{(i)} \\
+    \Gamma_{23}^{(i)} &= (C_{2233}^{(i)} + C_{2323}^{(i)})\delta_2 \tau_r^{(i)} \\
+    \Gamma_{31}^{(i)} &= -(C_{1133}^{(i)} + C_{1313}^{(i)})\delta_1 \tau_r^{(i)} \\
+    \Gamma_{32}^{(i)} &= -(C_{2233}^{(i)} + C_{2323}^{(i)})\delta_2 \tau_r^{(i)}
+\end{align}
+
+\section*{7. Assemblage complet du système matriciel avec Thermique}
+
+L'écriture globale du problème dans la couche $(i)$, reliant les amplitudes inconnues $A_{\alpha}^{r(i)}$ au chargement thermique connu, prend la forme suivante :
+
+\begin{equation}
+    \left[ \mathbb{K}_{Dyn}^{(i)} \right]_{(9 \times 9)} \cdot \{ \mathcal{A}^{(i)} \}_{(9 \times 1)} = \{ \mathcal{F}_{Th}^{(i)} \}_{(9 \times 1)}
+\end{equation}
+
+En développant complètement les termes, on obtient l'assemblage ci-dessous.
+
+\begin{equation}
+\resizebox{1.05\textwidth}{!}{$ 
+    \left[
+    \begin{array}{ccc|ccc|ccc}
+        \Gamma_{11}(\tau_1) & \Gamma_{12}(\tau_1) & \Gamma_{13}(\tau_1) & 0 & 0 & 0 & 0 & 0 & 0 \\
+        \Gamma_{21}(\tau_1) & \Gamma_{22}(\tau_1) & \Gamma_{23}(\tau_1) & 0 & 0 & 0 & 0 & 0 & 0 \\
+        \Gamma_{31}(\tau_1) & \Gamma_{32}(\tau_1) & \Gamma_{33}(\tau_1) & 0 & 0 & 0 & 0 & 0 & 0 \\
+        \hline
+        0 & 0 & 0 & \Gamma_{11}(\tau_2) & \Gamma_{12}(\tau_2) & \Gamma_{13}(\tau_2) & 0 & 0 & 0 \\
+        0 & 0 & 0 & \Gamma_{21}(\tau_2) & \Gamma_{22}(\tau_2) & \Gamma_{23}(\tau_2) & 0 & 0 & 0 \\
+        0 & 0 & 0 & \Gamma_{31}(\tau_2) & \Gamma_{32}(\tau_2) & \Gamma_{33}(\tau_2) & 0 & 0 & 0 \\
+        \hline
+        0 & 0 & 0 & 0 & 0 & 0 & \Gamma_{11}(\tau_3) & \Gamma_{12}(\tau_3) & \Gamma_{13}(\tau_3) \\
+        0 & 0 & 0 & 0 & 0 & 0 & \Gamma_{21}(\tau_3) & \Gamma_{22}(\tau_3) & \Gamma_{23}(\tau_3) \\
+        0 & 0 & 0 & 0 & 0 & 0 & \Gamma_{31}(\tau_3) & \Gamma_{32}(\tau_3) & \Gamma_{33}(\tau_3)
+    \end{array}
+    \right]^{(i)}
+    \hspace{-0.5em}
+    \begin{pmatrix}
+        A_1^{1} \\ A_2^{1} \\ A_3^{1} \\
+        \hline
+        A_1^{2} \\ A_2^{2} \\ A_3^{2} \\
+        \hline
+        A_1^{3} \\ A_2^{3} \\ A_3^{3}
+    \end{pmatrix}^{(i)}
+    \hspace{-0.5em}
+    =
+    \begin{pmatrix}
+        \mathcal{Q}_1(\bar{h}^{(i)}) \\
+        \mathcal{Q}_2(\bar{h}^{(i)}) \\
+        \mathcal{Q}_3(\bar{h}^{(i)}) \\
+        \hline
+        \mathcal{Q}_1(\bar{h}^{(i)}) \\
+        \mathcal{Q}_2(\bar{h}^{(i)}) \\
+        \mathcal{Q}_3(\bar{h}^{(i)}) \\
+        \hline
+        \mathcal{Q}_1(\bar{h}^{(i)}) \\
+        \mathcal{Q}_2(\bar{h}^{(i)}) \\
+        \mathcal{Q}_3(\bar{h}^{(i)})
+    \end{pmatrix}^{(i)}
+$}
+\end{equation}
+
+\vspace{1em}
+Les composantes du vecteur de sollicitation thermique $\{ \mathcal{F}_{Th}^{(i)} \}$ sont explicites et identiques pour chaque bloc (si le chargement thermique est uniforme sur l'épaisseur du pli ou projeté identiquement) :
+
+\begin{align}
+    \mathcal{Q}_1^{(i)}(x_3 = \bar{h}^{(i)}) &= \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 \, T(x_3 = \bar{h}^{(i)}) \\
+    \mathcal{Q}_2^{(i)}(x_3 = \bar{h}^{(i)}) &= \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 \, T(x_3 = \bar{h}^{(i)}) \\
+    \mathcal{Q}_3^{(i)}(x_3 = \bar{h}^{(i)}) &= \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
+\end{align}
+
+\end{document}

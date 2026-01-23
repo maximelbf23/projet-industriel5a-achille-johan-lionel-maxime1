@@ -7,7 +7,22 @@ C_REF_GLOBAL = 200.0
 
 def get_M_matrix(tau, delta1, delta2, props=MECHANICAL_PROPS):
     """
-    Construit la matrice dynamique M(tau) 3x3.
+    Construit la matrice dynamique M(τ) = Γ(τ) 3x3.
+    
+    RÉFÉRENCE: equilibre_local_corrige.pdf, Section 6 - Notation Matricielle
+    =========================================================================
+    
+    La matrice Γ(τ) est définie par:
+        Γ₁₁ = C₅₅·τ² - (C₁₁·δ₁² + C₆₆·δ₂²)
+        Γ₂₂ = C₄₄·τ² - (C₂₂·δ₂² + C₆₆·δ₁²)
+        Γ₃₃ = C₃₃·τ² - (C₅₅·δ₁² + C₄₄·δ₂²)
+        Γ₁₂ = Γ₂₁ = -(C₁₂ + C₆₆)·δ₁·δ₂
+        Γ₁₃ = +(C₁₃ + C₅₅)·δ₁·τ
+        Γ₂₃ = +(C₂₃ + C₄₄)·δ₂·τ
+        Γ₃₁ = -(C₁₃ + C₅₅)·δ₁·τ  (antisymétrique)
+        Γ₃₂ = -(C₂₃ + C₄₄)·δ₂·τ  (antisymétrique)
+    
+    Notation Voigt: C₁₃₁₃→C55, C₂₃₂₃→C44, C₁₂₁₂→C66
     """
     # Extraction des constantes
     C11 = props['C11']
@@ -375,11 +390,18 @@ def compute_all_stress_eigenvectors(eigenvectors, delta1, delta2, props=MECHANIC
 
 def compute_beta_coefficients(alpha_coeffs, props=MECHANICAL_PROPS):
     """
-    Calcule les coefficients de contrainte thermique β_i (Eq. 37-39 du PDF).
+    Calcule les coefficients de contrainte thermique β_i.
     
-    β_i = C_i1*α_1 + C_i2*α_2 + C_i3*α_3
+    RÉFÉRENCE: equilibre_local_corrige.pdf, Section 7 - Termes Thermiques
+    =====================================================================
     
-    Pour un matériau orthotrope isotrope dans le plan (α_1 = α_2 = α_3 = α):
+    Formulation 3D généralisée (plus générale que le PDF):
+        β₁ = C₁₁·α₁ + C₁₂·α₂ + C₁₃·α₃
+        β₂ = C₁₂·α₁ + C₂₂·α₂ + C₂₃·α₃
+        β₃ = C₁₃·α₁ + C₂₃·α₂ + C₃₃·α₃
+    
+    NOTE: Le PDF utilise une simplification plan où Q₁=(C₁₁α₁₁+C₁₂α₂₂)δ₁T.
+    Cette implémentation est plus générale pour les matériaux orthotropes complets.
     """
     alpha = alpha_coeffs  # Suppose un seul coeff pour simplifier (matériau isotrope thermiquement)
     
@@ -407,8 +429,11 @@ def compute_thermal_forcing(lambda_th, delta1, delta2, T_hat, alpha_coeffs, prop
     """
     Calcule le vecteur de forçage thermique F_th et la solution particulière A_part.
     
-    F_th = T_hat * [β1*δ1, β2*δ2, β3*λ]  (Eq. 40 du PDF)
-    A_part = M(λ)^(-1) · F_th
+    RÉFÉRENCE: equilibre_local_corrige.pdf, Section 7 - Assemblage Thermique
+    =========================================================================
+    
+    F_th = T_hat × [β₁·δ₁, β₂·δ₂, β₃·λ]  (Vecteur source thermique)
+    A_part = M(λ)⁻¹ · F_th              (Solution particulière)
     
     Args:
         lambda_th: Exposant du mode thermique (valeur propre thermique)

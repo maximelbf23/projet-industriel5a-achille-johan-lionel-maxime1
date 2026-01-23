@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.1.9)  18 JAN 2026 17:04
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.1.9)  23 JAN 2026 21:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -924,304 +924,368 @@ Package hyperref Info: Link coloring OFF on input line 104.
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 \c@lstlisting=\count356
-LaTeX Font Info:    Trying to load font information for U+msa on input line 107
+LaTeX Font Info:    Trying to load font information for U+msa on input line 134
 .
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 107
+LaTeX Font Info:    Trying to load font information for U+msb on input line 134
 .
 
 (/usr/local/texlive/2025/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-(./synthesis_report.toc
 
 [1
 
 {/usr/local/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
-al/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}])
+al/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}]
+(./synthesis_report.toc)
 \tf@toc=\write5
 \openout5 = `synthesis_report.toc'.
 
 
 
+
+pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
+been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.159 \newpage
+               [1]
+
 [2]
 
 [3{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc
 }]
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10.95> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 234.
-
 
 [4]
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10.95> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 324.
+
 
 [5]
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 300.
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <8> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 301.
-
 
 [6]
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
+nput line 390.
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <8> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 391.
+
 
 [7]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 488.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\tau' on input line 488.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 488.
-
-
 
 [8]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 523.
+(hyperref)                removing `math shift' on input line 578.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\tau' on input line 523.
+(hyperref)                removing `\tau' on input line 578.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 523.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 542.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\Phi' on input line 542.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 542.
+(hyperref)                removing `math shift' on input line 578.
 
 
 
 [9]
 
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 613.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\tau' on input line 613.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 613.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 632.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\Phi' on input line 632.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 632.
+
+
+
 [10]
 
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 664.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\leftrightarrow' on input line 664.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 664.
-
-
-
 [11]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 754.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\leftrightarrow' on input line 754.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 754.
+
+
 
 [12]
 
 [13]
 
 [14]
-Underfull \hbox (badness 2653) in paragraph at lines 984--984
-[]|\T1/cmr/m/n/10.95 Étape 1-3 : Ther-
- []
-
-
-Overfull \hbox (6.60187pt too wide) in paragraph at lines 988--988
-[]|\T1/cmr/m/n/10.95 mechanical.py :8| 
- []
-
-
-Underfull \hbox (badness 2932) in paragraph at lines 990--990
-[]|\T1/cmr/m/n/10.95 Étape 6 : Va-leurs
- []
-
-
-Overfull \hbox (27.64825pt too wide) in paragraph at lines 990--990
-[]|\T1/cmtt/m/n/10.95 solve_characteristic_eq()| 
- []
-
-
-Overfull \hbox (12.0458pt too wide) in paragraph at lines 990--990
-[]|\T1/cmr/m/n/10.95 mechanical.py :78| 
- []
-
-
-Overfull \hbox (5.01477pt too wide) in paragraph at lines 992--992
-[]|\T1/cmtt/m/n/10.95 compute_eigenvector()| 
- []
-
-
-Overfull \hbox (17.48975pt too wide) in paragraph at lines 992--992
-[]|\T1/cmr/m/n/10.95 mechanical.py :205| 
- []
-
-
-Overfull \hbox (17.48975pt too wide) in paragraph at lines 994--994
-[]|\T1/cmr/m/n/10.95 mechanical.py :264| 
- []
-
-
-Overfull \hbox (44.62337pt too wide) in paragraph at lines 996--996
-[]|\T1/cmtt/m/n/10.95 compute_stress_eigenvector()| 
- []
-
-
-Overfull \hbox (17.48975pt too wide) in paragraph at lines 996--996
-[]|\T1/cmr/m/n/10.95 mechanical.py :337| 
- []
-
-
-Underfull \hbox (badness 2237) in paragraph at lines 998--998
-[]|\T1/cmr/m/n/10.95 Étape 8 : Ma-trice
- []
-
-
-Overfull \hbox (17.48975pt too wide) in paragraph at lines 998--998
-[]|\T1/cmr/m/n/10.95 mechanical.py :478| 
- []
-
-
-Underfull \hbox (badness 1320) in paragraph at lines 1000--1000
-[]|\T1/cmr/m/n/10.95 Étape 8 : Sys-tème
- []
-
-
-Overfull \hbox (17.48975pt too wide) in paragraph at lines 1000--1000
-[]|\T1/cmr/m/n/10.95 mechanical.py :992| 
- []
-
-
-Overfull \hbox (33.30663pt too wide) in paragraph at lines 1002--1002
-[]|\T1/cmtt/m/n/10.95 solve_regularized_system()| 
- []
-
-
-Overfull \hbox (17.48975pt too wide) in paragraph at lines 1002--1002
-[]|\T1/cmr/m/n/10.95 mechanical.py :846| 
- []
-
-
-Overfull \hbox (84.23196pt too wide) in paragraph at lines 1004--1004
-[]|\T1/cmtt/m/n/10.95 compute_multilayer_stress_profile()| 
- []
-
-
-Overfull \hbox (22.93369pt too wide) in paragraph at lines 1004--1004
-[]|\T1/cmr/m/n/10.95 mechanical.py :1144| 
- []
-
-
-Overfull \hbox (33.30663pt too wide) in paragraph at lines 1006--1006
-[]|\T1/cmtt/m/n/10.95 compute_damage_indicator()| 
- []
-
-
-Overfull \hbox (41.80424pt too wide) in paragraph at lines 1006--1006
-[]|\T1/cmr/m/n/10.95 damage_analysis.py :38| 
- []
-
-
-Overfull \hbox (38.965pt too wide) in paragraph at lines 1008--1008
-[]|\T1/cmtt/m/n/10.95 compute_tsai_wu_criterion()| 
- []
-
-
-Overfull \hbox (41.80424pt too wide) in paragraph at lines 1008--1008
-[]|\T1/cmr/m/n/10.95 damage_analysis.py :92| 
- []
-
-
-Overfull \hbox (48.0906pt too wide) in paragraph at lines 1012--1012
-[]|\T1/cmr/m/n/10.95 dashboard_home.py :431| 
- []
-
-
-Overfull \hbox (42.95648pt too wide) in paragraph at lines 1014--1014
-[]|\T1/cmr/m/n/10.95 tabs/mechanical.py :161| 
- []
-
-
-Overfull \hbox (33.30663pt too wide) in paragraph at lines 1016--1016
-[]|\T1/cmtt/m/n/10.95 display_spectral_results()| 
- []
-
-
-Overfull \hbox (42.95648pt too wide) in paragraph at lines 1016--1016
-[]|\T1/cmr/m/n/10.95 tabs/mechanical.py :322| 
- []
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1025.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\beta' on input line 1025.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 1025.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1025.
-
-
 
 [15]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1062.
+(hyperref)                removing `math shift' on input line 1037.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 1062.
+(hyperref)                removing `subscript' on input line 1037.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1062.
+(hyperref)                removing `math shift' on input line 1037.
 
 
 
 [16]
 
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1105.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\Gamma' on input line 1105.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\tau' on input line 1105.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1105.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1141.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\times' on input line 1141.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1141.
+
+
+
 [17]
-Underfull \hbox (badness 10000) in paragraph at lines 1353--1354
-[]|\T1/cmr/bx/n/10.95 CLT (Clas-si-cal La-mi-nate
+Underfull \hbox (badness 2653) in paragraph at lines 1257--1257
+[]|\T1/cmr/m/n/10.95 Étape 1-3 : Ther-
+ []
+
+
+Overfull \hbox (6.60187pt too wide) in paragraph at lines 1261--1261
+[]|\T1/cmr/m/n/10.95 mechanical.py :8| 
+ []
+
+
+Underfull \hbox (badness 2932) in paragraph at lines 1263--1263
+[]|\T1/cmr/m/n/10.95 Étape 6 : Va-leurs
+ []
+
+
+Overfull \hbox (27.64825pt too wide) in paragraph at lines 1263--1263
+[]|\T1/cmtt/m/n/10.95 solve_characteristic_eq()| 
+ []
+
+
+Overfull \hbox (12.0458pt too wide) in paragraph at lines 1263--1263
+[]|\T1/cmr/m/n/10.95 mechanical.py :78| 
+ []
+
+
+Overfull \hbox (5.01477pt too wide) in paragraph at lines 1265--1265
+[]|\T1/cmtt/m/n/10.95 compute_eigenvector()| 
+ []
+
+
+Overfull \hbox (17.48975pt too wide) in paragraph at lines 1265--1265
+[]|\T1/cmr/m/n/10.95 mechanical.py :205| 
+ []
+
+
+Overfull \hbox (17.48975pt too wide) in paragraph at lines 1267--1267
+[]|\T1/cmr/m/n/10.95 mechanical.py :264| 
+ []
+
+
+Overfull \hbox (44.62337pt too wide) in paragraph at lines 1269--1269
+[]|\T1/cmtt/m/n/10.95 compute_stress_eigenvector()| 
+ []
+
+
+Overfull \hbox (17.48975pt too wide) in paragraph at lines 1269--1269
+[]|\T1/cmr/m/n/10.95 mechanical.py :337| 
+ []
+
+
+Underfull \hbox (badness 2237) in paragraph at lines 1271--1271
+[]|\T1/cmr/m/n/10.95 Étape 8 : Ma-trice
+ []
+
+
+Overfull \hbox (17.48975pt too wide) in paragraph at lines 1271--1271
+[]|\T1/cmr/m/n/10.95 mechanical.py :478| 
+ []
+
+
+Underfull \hbox (badness 1320) in paragraph at lines 1273--1273
+[]|\T1/cmr/m/n/10.95 Étape 8 : Sys-tème
+ []
+
+
+Overfull \hbox (17.48975pt too wide) in paragraph at lines 1273--1273
+[]|\T1/cmr/m/n/10.95 mechanical.py :992| 
+ []
+
+
+Overfull \hbox (33.30663pt too wide) in paragraph at lines 1275--1275
+[]|\T1/cmtt/m/n/10.95 solve_regularized_system()| 
+ []
+
+
+Overfull \hbox (17.48975pt too wide) in paragraph at lines 1275--1275
+[]|\T1/cmr/m/n/10.95 mechanical.py :846| 
+ []
+
+
+Overfull \hbox (84.23196pt too wide) in paragraph at lines 1277--1277
+[]|\T1/cmtt/m/n/10.95 compute_multilayer_stress_profile()| 
+ []
+
+
+Overfull \hbox (22.93369pt too wide) in paragraph at lines 1277--1277
+[]|\T1/cmr/m/n/10.95 mechanical.py :1144| 
+ []
+
+
+Overfull \hbox (33.30663pt too wide) in paragraph at lines 1279--1279
+[]|\T1/cmtt/m/n/10.95 compute_damage_indicator()| 
+ []
+
+
+Overfull \hbox (41.80424pt too wide) in paragraph at lines 1279--1279
+[]|\T1/cmr/m/n/10.95 damage_analysis.py :38| 
+ []
+
+
+Overfull \hbox (38.965pt too wide) in paragraph at lines 1281--1281
+[]|\T1/cmtt/m/n/10.95 compute_tsai_wu_criterion()| 
+ []
+
+
+Overfull \hbox (41.80424pt too wide) in paragraph at lines 1281--1281
+[]|\T1/cmr/m/n/10.95 damage_analysis.py :92| 
+ []
+
+
+Overfull \hbox (48.0906pt too wide) in paragraph at lines 1285--1285
+[]|\T1/cmr/m/n/10.95 dashboard_home.py :431| 
+ []
+
+
+Overfull \hbox (42.95648pt too wide) in paragraph at lines 1287--1287
+[]|\T1/cmr/m/n/10.95 tabs/mechanical.py :161| 
+ []
+
+
+Overfull \hbox (33.30663pt too wide) in paragraph at lines 1289--1289
+[]|\T1/cmtt/m/n/10.95 display_spectral_results()| 
+ []
+
+
+Overfull \hbox (42.95648pt too wide) in paragraph at lines 1289--1289
+[]|\T1/cmr/m/n/10.95 tabs/mechanical.py :322| 
  []
 
 
 
 [18]
 
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1298.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\beta' on input line 1298.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 1298.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1298.
+
+
+
 [19]
 
-[20] (./synthesis_report.aux)
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1335.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 1335.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1335.
+
+
+
+[20]
+
+[21]
+Underfull \hbox (badness 10000) in paragraph at lines 1626--1627
+[]|\T1/cmr/bx/n/10.95 CLT (Clas-si-cal La-mi-nate
+ []
+
+
+
+[22]
+
+[23] (./synthesis_report.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
-Package rerunfilecheck Info: File `synthesis_report.out' has not changed.
-(rerunfilecheck)             Checksum: 47B0FA4404371F373740B52669D0C237;11543.
+
+
+Package rerunfilecheck Warning: File `synthesis_report.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `synthesis_report.out':
+(rerunfilecheck)             Before: 47B0FA4404371F373740B52669D0C237;11543
+(rerunfilecheck)             After:  A9CE0C1BF163CF19F321107EBD03DFE7;13090.
  ) 
 Here is how much of TeX's memory you used:
- 31120 strings out of 473190
- 601863 string characters out of 5715801
+ 31260 strings out of 473190
+ 603818 string characters out of 5715801
  1942760 words of memory out of 5000000
- 53379 multiletter control sequences out of 15000+600000
- 593427 words of font info for 137 fonts, out of 8000000 for 9000
+ 53421 multiletter control sequences out of 15000+600000
+ 592656 words of font info for 136 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,12n,87p,503b,2077s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,13n,87p,503b,2028s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><
@@ -1242,26 +1306,27 @@ exmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2025/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2025/texmf
 -dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2025/texmf-d
 ist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/2025/tex
-mf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local/texlive/2025/texmf
--dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/local/texlive/2025/texmf-d
-ist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2025/texmf-dis
-t/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2025/texmf-dist/
-fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2025/texmf-dist/fo
-nts/type1/public/cm-super/sfit0800.pfb></usr/local/texlive/2025/texmf-dist/font
-s/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2025/texmf-dist/fonts/
-type1/public/cm-super/sfrm0800.pfb></usr/local/texlive/2025/texmf-dist/fonts/ty
-pe1/public/cm-super/sfrm0900.pfb></usr/local/texlive/2025/texmf-dist/fonts/type
-1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/
-public/cm-super/sfrm1095.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/pu
-blic/cm-super/sfrm1200.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/publ
-ic/cm-super/sfrm1440.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public
-/cm-super/sfti1095.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/c
-m-super/sftt0800.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/cm-
-super/sftt1095.pfb>
-Output written on synthesis_report.pdf (20 pages, 717915 bytes).
+mf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2025
+/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local/texlive/2025/t
+exmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/local/texlive/2025/tex
+mf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2025/texmf
+-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2025/texmf-d
+ist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2025/texmf-dis
+t/fonts/type1/public/cm-super/sfit0800.pfb></usr/local/texlive/2025/texmf-dist/
+fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2025/texmf-dist/fo
+nts/type1/public/cm-super/sfrm0800.pfb></usr/local/texlive/2025/texmf-dist/font
+s/type1/public/cm-super/sfrm0900.pfb></usr/local/texlive/2025/texmf-dist/fonts/
+type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2025/texmf-dist/fonts/ty
+pe1/public/cm-super/sfrm1095.pfb></usr/local/texlive/2025/texmf-dist/fonts/type
+1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/
+public/cm-super/sfrm1440.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/pu
+blic/cm-super/sfti1095.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/publ
+ic/cm-super/sftt0800.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public
+/cm-super/sftt1095.pfb>
+Output written on synthesis_report.pdf (24 pages, 743149 bytes).
 PDF statistics:
- 1063 PDF objects out of 1200 (max. 8388607)
- 956 compressed objects within 10 object streams
- 508 named destinations out of 1000 (max. 500000)
+ 1199 PDF objects out of 1200 (max. 8388607)
+ 1085 compressed objects within 11 object streams
+ 607 named destinations out of 1000 (max. 500000)
  365 words of extra memory for PDF output out of 10000 (max. 10000000)
 

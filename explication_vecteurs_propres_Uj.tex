@@ -1,0 +1,320 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\geometry{margin=2cm}
+
+\definecolor{theoremcolor}{RGB}{59, 130, 246}
+\definecolor{definitioncolor}{RGB}{16, 185, 129}
+\definecolor{warningcolor}{RGB}{239, 68, 68}
+
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{theorembox}[1][]{colback=theoremcolor!5,colframe=theoremcolor,fonttitle=\bfseries,title={#1},breakable}
+\newtcolorbox{definitionbox}[1][]{colback=definitioncolor!5,colframe=definitioncolor,fonttitle=\bfseries,title={#1},breakable}
+\newtcolorbox{warningbox}[1][]{colback=warningcolor!5,colframe=warningcolor,fonttitle=\bfseries,title={#1},breakable}
+
+\title{\textbf{Explication des 27 Équations}\\
+\Large Conforme au document ProjectEstaca Achille.pdf}
+\author{Projet Industriel 5A}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section{Notations (Étapes 5-6 du PDF)}
+%==============================================================================
+
+\begin{definitionbox}[Séparation de Variables -- Étape 5]
+Champs de déplacement :
+\begin{align}
+u_\alpha(x_\omega, x_3) &= U_\alpha(x_3) \cos(\omega_\alpha x_\omega) \sin(\omega_\beta x_\varepsilon) \\
+u_3(x_\omega, x_3) &= U_3(x_3) \sin(\omega_\alpha x_\omega) \sin(\omega_\beta x_\varepsilon)
+\end{align}
+\end{definitionbox}
+
+\begin{definitionbox}[Ansatz Exponentiel -- Étape 6]
+\[
+U_\alpha(x_3) = A_\alpha e^{\tau x_3}, \qquad U_3(x_3) = A_3 e^{\tau x_3}
+\]
+
+Système caractéristique : $\mathbf{M}(\tau) \cdot \mathbf{A} = \mathbf{0}$ avec $\mathbf{A} = [A_\alpha, A_3]^t$
+
+Champ de déplacement par superposition (3 modes décroissants, $\text{Re}(\tau_r) < 0$) :
+\[
+\boxed{U_\alpha(x_3) = \sum_{r=1}^{3} A^r_\alpha \, e^{\tau_r x_3}, \qquad U_3(x_3) = \sum_{r=1}^{3} A^r_3 \, e^{\tau_r x_3}}
+\]
+\end{definitionbox}
+
+\begin{definitionbox}[Notation par Couche -- Étape 7]
+Pour chaque couche $i$ :
+\[
+\boxed{U^i_k(x_3) = \sum_{r=1}^{3} A^{i,r}_k \, e^{\tau^i_r x_3}}
+\]
+
+\textbf{Indices :}
+\begin{itemize}
+    \item $i \in \{1, 2, 3\}$ : numéro de couche
+    \item $r \in \{1, 2, 3\}$ : mode propre (racine $\tau_r$ à partie réelle négative)
+    \item $k \in \{\omega, 3\} = \{1, 2, 3\}$ : composante de déplacement
+\end{itemize}
+
+\textbf{Inconnues :} $3 \times 3 \times 3 = 27$ amplitudes $A^{i,r}_k$
+\end{definitionbox}
+
+%==============================================================================
+\section{Les 27 Équations}
+%==============================================================================
+
+\subsection{Équilibre Volumique (9 équations)}
+
+Pour chaque couche $i$, l'équilibre $\text{div}(\boldsymbol{\sigma}) = 0$ donne 3 équations.
+
+\begin{warningbox}[Forme EDP -- Étape 5 du PDF]
+\textbf{Équation $\alpha = 1$ :}
+\[
+-\left(C_{\omega\omega\omega\omega}\omega^2_\omega + C_{\omega\varepsilon\omega\varepsilon}\omega^2_\varepsilon\right)U_\alpha + C_{\omega 3\omega 3}\frac{d^2 U_\alpha}{dx_3^2} - (C_{\omega\omega\varepsilon\varepsilon} + C_{\omega\varepsilon\omega\varepsilon})\omega_\alpha\omega_\beta U_\varepsilon + (C_{\omega\omega 33} + C_{\omega 3\omega 3})\omega_\alpha \frac{dU_3}{dx_3} = F_{\text{th},\omega}
+\]
+
+\textbf{Équation $\alpha = 3$ :}
+\[
+-(C_{\vartheta\vartheta 33} + C_{\vartheta 3\vartheta 3})\omega_\vartheta \frac{dU_\vartheta}{dx_3} - C_{\vartheta 3\vartheta 3}\omega^2_\vartheta U_3 + C_{3333}\frac{d^2 U_3}{dx_3^2} = F_{\text{th},3}
+\]
+\end{warningbox}
+
+Après substitution de l'ansatz $U_k = A_k e^{\tau x_3}$ (donc $\frac{d}{dx_3} \to \tau$, $\frac{d^2}{dx_3^2} \to \tau^2$) :
+
+%------------------------------------------------------------------------------
+\subsubsection{Couche 1 -- Équations 1, 2, 3}
+
+\textbf{Éq. 1} ($\alpha = 1$, couche 1) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ \left(\tau_r^2 C_{1313} - \omega_1^2 C_{1111} - \omega_2^2 C_{1212}\right) A^{1,r}_1 - \omega_1\omega_2(C_{1222} + C_{1212}) A^{1,r}_2 + \tau_r\omega_1(C_{1133} + C_{1313}) A^{1,r}_3 \right] = F^1_{\text{th},1}
+\end{equation}
+
+\textbf{Éq. 2} ($\alpha = 2$, couche 1) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ -\omega_1\omega_2(C_{2211} + C_{2121}) A^{1,r}_1 + \left(\tau_r^2 C_{2323} - \omega_2^2 C_{2222} - \omega_1^2 C_{2121}\right) A^{1,r}_2 + \tau_r\omega_2(C_{2233} + C_{2323}) A^{1,r}_3 \right] = F^1_{\text{th},2}
+\end{equation}
+
+\textbf{Éq. 3} ($\alpha = 3$, couche 1) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ -\tau_r\omega_1 C_{1133} A^{1,r}_1 - \tau_r\omega_2 C_{2233} A^{1,r}_2 + \left(\tau_r^2 C_{3333} - \omega_1^2 C_{1313} - \omega_2^2 C_{2323}\right) A^{1,r}_3 \right] = F^1_{\text{th},3}
+\end{equation}
+
+%------------------------------------------------------------------------------
+\subsubsection{Couche 2 -- Équations 4, 5, 6}
+
+\textbf{Éq. 4} ($\alpha = 1$, couche 2) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ \left(\tau_r^2 C_{1313} - \omega_1^2 C_{1111} - \omega_2^2 C_{1212}\right) A^{2,r}_1 - \omega_1\omega_2(C_{1222} + C_{1212}) A^{2,r}_2 + \tau_r\omega_1(C_{1133} + C_{1313}) A^{2,r}_3 \right] = F^2_{\text{th},1}
+\end{equation}
+
+\textbf{Éq. 5} ($\alpha = 2$, couche 2) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ -\omega_1\omega_2(C_{2211} + C_{2121}) A^{2,r}_1 + \left(\tau_r^2 C_{2323} - \omega_2^2 C_{2222} - \omega_1^2 C_{2121}\right) A^{2,r}_2 + \tau_r\omega_2(C_{2233} + C_{2323}) A^{2,r}_3 \right] = F^2_{\text{th},2}
+\end{equation}
+
+\textbf{Éq. 6} ($\alpha = 3$, couche 2) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ -\tau_r\omega_1 C_{1133} A^{2,r}_1 - \tau_r\omega_2 C_{2233} A^{2,r}_2 + \left(\tau_r^2 C_{3333} - \omega_1^2 C_{1313} - \omega_2^2 C_{2323}\right) A^{2,r}_3 \right] = F^2_{\text{th},3}
+\end{equation}
+
+%------------------------------------------------------------------------------
+\subsubsection{Couche 3 -- Équations 7, 8, 9}
+
+\textbf{Éq. 7} ($\alpha = 1$, couche 3) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ \left(\tau_r^2 C_{1313} - \omega_1^2 C_{1111} - \omega_2^2 C_{1212}\right) A^{3,r}_1 - \omega_1\omega_2(C_{1222} + C_{1212}) A^{3,r}_2 + \tau_r\omega_1(C_{1133} + C_{1313}) A^{3,r}_3 \right] = F^3_{\text{th},1}
+\end{equation}
+
+\textbf{Éq. 8} ($\alpha = 2$, couche 3) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ -\omega_1\omega_2(C_{2211} + C_{2121}) A^{3,r}_1 + \left(\tau_r^2 C_{2323} - \omega_2^2 C_{2222} - \omega_1^2 C_{2121}\right) A^{3,r}_2 + \tau_r\omega_2(C_{2233} + C_{2323}) A^{3,r}_3 \right] = F^3_{\text{th},2}
+\end{equation}
+
+\textbf{Éq. 9} ($\alpha = 3$, couche 3) :
+\begin{equation}
+\sum_{r=1}^{3} \left[ -\tau_r\omega_1 C_{1133} A^{3,r}_1 - \tau_r\omega_2 C_{2233} A^{3,r}_2 + \left(\tau_r^2 C_{3333} - \omega_1^2 C_{1313} - \omega_2^2 C_{2323}\right) A^{3,r}_3 \right] = F^3_{\text{th},3}
+\end{equation}
+
+%==============================================================================
+\subsection{Conditions aux Interfaces (12 équations)}
+
+\begin{warningbox}[Conditions aux Interfaces -- Étape 7 du PDF]
+À l'interface $x_3 = x^i_3$ entre couches $i$ et $i+1$ :
+
+\textbf{Continuité des déplacements :} $[U_\alpha] = [U_3] = 0$
+
+\textbf{Continuité des tractions :}
+\[
+[C_{\omega 3\omega 3}(\partial_3 U_\alpha + \omega_\alpha U_3)] = 0
+\]
+\[
+[-C_{\vartheta\vartheta 33}\omega_\vartheta U_\vartheta + C_{3333}\partial_3 U_3] = [C_{\vartheta\vartheta 33}\alpha_{\vartheta\vartheta} + C_{3333}\alpha_{33}] T(x_3)
+\]
+\end{warningbox}
+
+%------------------------------------------------------------------------------
+\subsubsection{Interface 1--2 : Continuité des Déplacements (Éq. 10--12)}
+
+\textbf{Éq. 10} ($[U_1] = 0$ à $x_3 = h_1$) :
+\begin{equation}
+\sum_{r=1}^{3} A^{1,r}_1 \, e^{\tau^1_r h_1} - \sum_{s=1}^{3} A^{2,s}_1 = 0
+\end{equation}
+
+\textbf{Éq. 11} ($[U_2] = 0$ à $x_3 = h_1$) :
+\begin{equation}
+\sum_{r=1}^{3} A^{1,r}_2 \, e^{\tau^1_r h_1} - \sum_{s=1}^{3} A^{2,s}_2 = 0
+\end{equation}
+
+\textbf{Éq. 12} ($[U_3] = 0$ à $x_3 = h_1$) :
+\begin{equation}
+\sum_{r=1}^{3} A^{1,r}_3 \, e^{\tau^1_r h_1} - \sum_{s=1}^{3} A^{2,s}_3 = 0
+\end{equation}
+
+%------------------------------------------------------------------------------
+\subsubsection{Interface 1--2 : Continuité des Tractions (Éq. 13--15)}
+
+\textbf{Éq. 13} ($[\sigma_{13}] = 0$ à $x_3 = h_1$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{1313}(\tau^1_r A^{1,r}_1 + \omega_1 A^{1,r}_3) e^{\tau^1_r h_1} - \sum_{s=1}^{3} C_{1313}(\tau^2_s A^{2,s}_1 + \omega_1 A^{2,s}_3) = 0
+\end{equation}
+
+\textbf{Éq. 14} ($[\sigma_{23}] = 0$ à $x_3 = h_1$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{2323}(\tau^1_r A^{1,r}_2 + \omega_2 A^{1,r}_3) e^{\tau^1_r h_1} - \sum_{s=1}^{3} C_{2323}(\tau^2_s A^{2,s}_2 + \omega_2 A^{2,s}_3) = 0
+\end{equation}
+
+\textbf{Éq. 15} ($[\sigma_{33}] = \Delta\sigma_{\text{th}}$ à $x_3 = h_1$) :
+\begin{equation}
+\sum_{r=1}^{3} (-C_{1133}\omega_1 A^{1,r}_1 - C_{2233}\omega_2 A^{1,r}_2 + C_{3333}\tau^1_r A^{1,r}_3) e^{\tau^1_r h_1} - \sum_{s=1}^{3} (\cdots)^{(2)} = \Delta\sigma^{1\to 2}_{\text{th},33}
+\end{equation}
+
+%------------------------------------------------------------------------------
+\subsubsection{Interface 2--3 : Continuité des Déplacements (Éq. 16--18)}
+
+\textbf{Éq. 16} ($[U_1] = 0$ à $x_3 = h_1 + h_2$) :
+\begin{equation}
+\sum_{r=1}^{3} A^{2,r}_1 \, e^{\tau^2_r h_2} - \sum_{s=1}^{3} A^{3,s}_1 = 0
+\end{equation}
+
+\textbf{Éq. 17} ($[U_2] = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} A^{2,r}_2 \, e^{\tau^2_r h_2} - \sum_{s=1}^{3} A^{3,s}_2 = 0
+\end{equation}
+
+\textbf{Éq. 18} ($[U_3] = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} A^{2,r}_3 \, e^{\tau^2_r h_2} - \sum_{s=1}^{3} A^{3,s}_3 = 0
+\end{equation}
+
+%------------------------------------------------------------------------------
+\subsubsection{Interface 2--3 : Continuité des Tractions (Éq. 19--21)}
+
+\textbf{Éq. 19} ($[\sigma_{13}] = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{1313}(\tau^2_r A^{2,r}_1 + \omega_1 A^{2,r}_3) e^{\tau^2_r h_2} - \sum_{s=1}^{3} C_{1313}(\tau^3_s A^{3,s}_1 + \omega_1 A^{3,s}_3) = 0
+\end{equation}
+
+\textbf{Éq. 20} ($[\sigma_{23}] = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{2323}(\tau^2_r A^{2,r}_2 + \omega_2 A^{2,r}_3) e^{\tau^2_r h_2} - \sum_{s=1}^{3} C_{2323}(\tau^3_s A^{3,s}_2 + \omega_2 A^{3,s}_3) = 0
+\end{equation}
+
+\textbf{Éq. 21} ($[\sigma_{33}] = \Delta\sigma_{\text{th}}$) :
+\begin{equation}
+\sum_{r=1}^{3} (-C_{1133}\omega_1 A^{2,r}_1 - C_{2233}\omega_2 A^{2,r}_2 + C_{3333}\tau^2_r A^{2,r}_3) e^{\tau^2_r h_2} - (\cdots)^{(3)} = \Delta\sigma^{2\to 3}_{\text{th},33}
+\end{equation}
+
+%==============================================================================
+\subsection{Conditions aux Bords (6 équations)}
+
+\begin{warningbox}[Conditions aux Extrémités -- Étape 7 du PDF]
+En $x_3 = 0$ et $x_3 = H$ :
+\[
+C_{\omega 3\omega 3}(\partial_3 U_\alpha + \omega_\alpha U_3) = 0
+\]
+\[
+-C_{\vartheta\vartheta 33}\omega_\vartheta U_\vartheta + C_{3333}\partial_3 U_3 = t_{\text{bottom/top}} + (C_{\vartheta\vartheta 33}\alpha_{\vartheta\vartheta} + C_{3333}\alpha_{33}) T
+\]
+\end{warningbox}
+
+%------------------------------------------------------------------------------
+\subsubsection{Bord Inférieur $x_3 = 0$ (Éq. 22--24)}
+
+\textbf{Éq. 22} ($\sigma_{13}(0) = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{1313}(\tau^1_r A^{1,r}_1 + \omega_1 A^{1,r}_3) = -\sigma^1_{\text{th},13}(0)
+\end{equation}
+
+\textbf{Éq. 23} ($\sigma_{23}(0) = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{2323}(\tau^1_r A^{1,r}_2 + \omega_2 A^{1,r}_3) = -\sigma^1_{\text{th},23}(0)
+\end{equation}
+
+\textbf{Éq. 24} ($\sigma_{33}(0) = t_{\text{bottom}}$) :
+\begin{equation}
+\sum_{r=1}^{3} (-C_{1133}\omega_1 A^{1,r}_1 - C_{2233}\omega_2 A^{1,r}_2 + C_{3333}\tau^1_r A^{1,r}_3) = t_{\text{bottom}} - \sigma^1_{\text{th},33}(0)
+\end{equation}
+
+%------------------------------------------------------------------------------
+\subsubsection{Bord Supérieur $x_3 = H$ (Éq. 25--27)}
+
+\textbf{Éq. 25} ($\sigma_{13}(H) = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{1313}(\tau^3_r A^{3,r}_1 + \omega_1 A^{3,r}_3) e^{\tau^3_r h_3} = -\sigma^3_{\text{th},13}(H)
+\end{equation}
+
+\textbf{Éq. 26} ($\sigma_{23}(H) = 0$) :
+\begin{equation}
+\sum_{r=1}^{3} C_{2323}(\tau^3_r A^{3,r}_2 + \omega_2 A^{3,r}_3) e^{\tau^3_r h_3} = -\sigma^3_{\text{th},23}(H)
+\end{equation}
+
+\textbf{Éq. 27} ($\sigma_{33}(H) = t_{\text{top}}$) :
+\begin{equation}
+\sum_{r=1}^{3} (-C_{1133}\omega_1 A^{3,r}_1 - C_{2233}\omega_2 A^{3,r}_2 + C_{3333}\tau^3_r A^{3,r}_3) e^{\tau^3_r h_3} = t_{\text{top}} - \sigma^3_{\text{th},33}(H)
+\end{equation}
+
+%==============================================================================
+\section{Récapitulatif}
+%==============================================================================
+
+\begin{center}
+\begin{tabular}{|c|l|c|}
+\hline
+\textbf{N°} & \textbf{Description} & \textbf{Type} \\
+\hline
+1--3 & Équilibre couche 1 & $\text{div}(\sigma) = 0$ \\
+4--6 & Équilibre couche 2 & $\text{div}(\sigma) = 0$ \\
+7--9 & Équilibre couche 3 & $\text{div}(\sigma) = 0$ \\
+\hline
+10--12 & Interface 1-2 : $[U_k] = 0$ & Continuité déplacements \\
+13--15 & Interface 1-2 : $[\sigma_{k3}] = \Delta\sigma_{\text{th}}$ & Continuité tractions \\
+16--18 & Interface 2-3 : $[U_k] = 0$ & Continuité déplacements \\
+19--21 & Interface 2-3 : $[\sigma_{k3}] = \Delta\sigma_{\text{th}}$ & Continuité tractions \\
+\hline
+22--24 & Bord $x_3=0$ : $\sigma_{k3} = t_{\text{bottom}}$ & Condition limite \\
+25--27 & Bord $x_3=H$ : $\sigma_{k3} = t_{\text{top}}$ & Condition limite \\
+\hline
+\end{tabular}
+\end{center}
+
+\begin{theorembox}[Système Final -- Étape 8]
+\[
+\mathbf{M}_{\text{global}} \cdot \mathbf{A}_{\text{global}} = \mathbf{F}_{\text{thermique}}
+\]
+
+avec $\mathbf{A}_{\text{global}} \in \mathbb{R}^{27}$ contenant les amplitudes $\{A^{i,r}_k\}$.
+\end{theorembox}
+
+\end{document}
