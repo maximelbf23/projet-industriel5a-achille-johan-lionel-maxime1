@@ -277,13 +277,12 @@ Les paramètres d'entrée de l'application sont :
 \node (start) [startstop] {Entrée: $\alpha, \beta, L_w, T_{bot}, T_{top}$};
 \node (thermal) [process, below=of start] {Résolution Thermique $T(z)$};
 \node (delta) [process, below=of thermal] {Calcul $\delta_1 = \delta_2 = \pi/L_w$};
-\node (Mtau) [process, below=of delta] {Construction $M(\tau)$};
-\node (det) [process, below=of Mtau] {Résolution $\det(M(\tau)) = 0$};
-\node (eigv) [process, below=of det] {Calcul 6 vecteurs propres $\mathbf{V}_r$};
-\node (eigw) [process, below=of eigv] {Calcul $\mathbf{W}_r = R(\tau_r) \cdot \mathbf{V}_r$};
-\node (phi) [process, below=of eigw] {Construction $\Phi^{(k)}(z)$ par couche};
-\node (kglob) [process, below=of phi] {Assemblage $K_{glob}$ (18$\times$18)};
-\node (solve) [decision, below=of kglob] {cond(K) $> 10^{10}$?};
+\node (Gamma) [process, below=of delta] {Construction $\Gamma(\tau)$ (Opérateurs $L_{jk}$)};
+\node (det) [process, below=of Gamma] {Résolution $\det(\Gamma(\tau)) = 0$};
+\node (tau) [process, below=of det] {Sélection 3 valeurs propres $\tau_r$ (Re$<$0)};
+\node (Kdyn) [process, below=of tau] {Assemblage $\mathbb{K}_{Dyn}$ (9$\times$9 bloc-diagonal)};
+\node (Qth) [process, below=of Kdyn] {Calcul termes thermiques $\mathcal{Q}_\alpha$};
+\node (solve) [decision, below=of Qth] {cond(K) $> 10^{10}$?};
 \node (direct) [process, below left=0.6cm and -0.5cm of solve] {Résolution directe};
 \node (tikhonov) [process, below right=0.6cm and -0.5cm of solve] {Tikhonov SVD};
 \node (stress) [process, below=1.3cm of solve] {Reconstruction $\sigma_{ij}(z)$};
@@ -293,13 +292,12 @@ Les paramètres d'entrée de l'application sont :
 % Arrows
 \draw [arrow] (start) -- (thermal);
 \draw [arrow] (thermal) -- (delta);
-\draw [arrow] (delta) -- (Mtau);
-\draw [arrow] (Mtau) -- (det);
-\draw [arrow] (det) -- (eigv);
-\draw [arrow] (eigv) -- (eigw);
-\draw [arrow] (eigw) -- (phi);
-\draw [arrow] (phi) -- (kglob);
-\draw [arrow] (kglob) -- (solve);
+\draw [arrow] (delta) -- (Gamma);
+\draw [arrow] (Gamma) -- (det);
+\draw [arrow] (det) -- (tau);
+\draw [arrow] (tau) -- (Kdyn);
+\draw [arrow] (Kdyn) -- (Qth);
+\draw [arrow] (Qth) -- (solve);
 \draw [arrow] (solve) -- node[left, font=\scriptsize] {Non} (direct);
 \draw [arrow] (solve) -- node[right, font=\scriptsize] {Oui} (tikhonov);
 \draw [arrow] (direct) |- (stress);
@@ -308,9 +306,8 @@ Les paramètres d'entrée de l'application sont :
 \draw [arrow] (damage) -- (end);
 
 % Annotations
-\node[right=0.3cm of det, font=\scriptsize, text=codegray] {Polynôme cubique};
-\node[right=0.3cm of eigv, font=\scriptsize, text=codegray] {Cofacteurs};
-\node[right=0.3cm of phi, font=\scriptsize, text=codegray] {6$\times$6 par couche};
+\node[right=0.3cm of det, font=\scriptsize, text=codegray] {Polynôme cubique en $X=\tau^2$};
+\node[right=0.3cm of Kdyn, font=\scriptsize, text=codegray] {diag($\Gamma(\tau_1), \Gamma(\tau_2), \Gamma(\tau_3)$)};
 
 \end{tikzpicture}
 \end{center}
@@ -575,80 +572,90 @@ $C_{1111} \to C_{11}$ & $C_{1122} \to C_{12}$ & $C_{1133} \to C_{13}$ & $C_{1313
 avec $V_i(x_3) = A_i \cdot e^{\tau x_3}$ où $\tau$ est la \textbf{valeur propre} à déterminer.
 \end{theorembox}
 
-\subsection{Étape 6 : Matrice Dynamique M($\tau$) et Valeurs Propres}
+\subsection{Étape 6 : Matrice Dynamique $\Gamma(\tau)$ et Valeurs Propres}
 
-L'équation d'équilibre $\text{div}(\boldsymbol{\sigma}) = 0$ conduit au système :
+L'équation d'équilibre $\text{div}(\boldsymbol{\sigma}) = 0$ conduit au système homogène :
 \begin{equation}
-    M(\tau) \cdot \mathbf{A} = \mathbf{0}
+    \Gamma(\tau) \cdot \mathbf{A} = \mathbf{0}
 \end{equation}
 
-\begin{definitionbox}[Matrice $M(\tau)$ Complète]
+\begin{definitionbox}[Matrice $\Gamma(\tau)$ - Opérateurs $L_{jk}$]
 \begin{equation}
 \boxed{
-    M(\tau) = \begin{pmatrix}
-    C_{55}\tau^2 - K_{11} & -K_{12} & +K_{13}\tau \\[0.5em]
-    -K_{12} & C_{44}\tau^2 - K_{22} & +K_{23}\tau \\[0.5em]
-    \textcolor{red}{-K_{13}\tau} & \textcolor{red}{-K_{23}\tau} & C_{33}\tau^2 - K_{33}
+    \Gamma(\tau) = \begin{pmatrix}
+    L_{11} & L_{12} & L_{13} \\
+    L_{21} & L_{22} & L_{23} \\
+    L_{31} & L_{32} & L_{33}
     \end{pmatrix}
 }
 \end{equation}
 
-\textbf{Définition des termes $K_{ij}$ :}
+\textbf{Termes diagonaux :}
 \begin{align}
-    K_{11} &= C_{11}\delta_1^2 + C_{66}\delta_2^2 & K_{22} &= C_{66}\delta_1^2 + C_{22}\delta_2^2 \\
-    K_{12} &= (C_{12} + C_{66})\delta_1\delta_2 & K_{33} &= C_{55}\delta_1^2 + C_{44}\delta_2^2 \\
-    K_{13} &= (C_{13} + C_{55})\delta_1 & K_{23} &= (C_{23} + C_{44})\delta_2
+    L_{11} &= C_{55}\tau^2 - (C_{11}\delta_1^2 + C_{66}\delta_2^2) \\
+    L_{22} &= C_{44}\tau^2 - (C_{22}\delta_2^2 + C_{66}\delta_1^2) \\
+    L_{33} &= C_{33}\tau^2 - (C_{55}\delta_1^2 + C_{44}\delta_2^2)
+\end{align}
+
+\textbf{Termes croisés dans le plan (symétriques) :}
+\begin{equation}
+    L_{12} = L_{21} = -(C_{12} + C_{66})\delta_1\delta_2
+\end{equation}
+
+\textbf{Termes hors-plan (ANTISYMÉTRIQUES) :}
+\begin{align}
+    L_{13} &= +(C_{13} + C_{55})\delta_1\tau, \quad L_{31} = \textcolor{red}{-}(C_{13} + C_{55})\delta_1\tau \\
+    L_{23} &= +(C_{23} + C_{44})\delta_2\tau, \quad L_{32} = \textcolor{red}{-}(C_{23} + C_{44})\delta_2\tau
 \end{align}
 \end{definitionbox}
 
-\begin{warningbox}[Signes de $M_{31}$ et $M_{32}$]
-Les termes $M_{31} = -K_{13}\tau$ et $M_{32} = -K_{23}\tau$ ont des \textbf{signes négatifs} selon l'équation d'équilibre du PDF (Eq. 166). Cette correction est essentielle pour la physique correcte.
+\begin{warningbox}[Propriété d'Antisymétrie Critique]
+$L_{13} = -L_{31}$ et $L_{23} = -L_{32}$ : cette antisymétrie provient de l'équation d'équilibre en direction $x_3$ et est \textbf{essentielle} pour la physique correcte.
 \end{warningbox}
 
-\textbf{Équation Caractéristique :} Les 6 valeurs propres $\tau_r$ sont obtenues par :
+\textbf{Équation Caractéristique :}
 \begin{equation}
-    \det(M(\tau)) = 0 \quad \Rightarrow \quad \text{Polynôme cubique en } X = \tau^2
+    \det(\Gamma(\tau)) = 0 \quad \Rightarrow \quad \text{Polynôme d'ordre 6 : } P(\tau) = c_6\tau^6 + c_4\tau^4 + c_2\tau^2 + c_0 = 0
 \end{equation}
 
-\subsection{Étape 7 : Matrice R($\tau$) et Vecteurs Propres de Contrainte}
+En posant $X = \tau^2$, on obtient un polynôme cubique avec 3 racines $X_i$. 
+On sélectionne les 3 valeurs propres $\tau_r$ avec $\text{Re}(\tau_r) < 0$ (condition de radiation).
 
-\begin{definitionbox}[Matrice $R(\tau)$ - Passage Déplacement $\to$ Contrainte]
-La matrice $R(\tau)$ transforme le vecteur propre de déplacement $\mathbf{V}_r$ en vecteur propre de contrainte $\mathbf{W}_r$ :
+\subsection{Étape 7 : Assemblage $9 \times 9$ et Termes Thermiques}
+
+Le système global pour une couche $(i)$ s'écrit :
+\begin{equation}
+    \left[ \mathbb{K}_{Dyn}^{(i)} \right]_{(9 \times 9)} \cdot \{ \mathcal{A}^{(i)} \}_{(9 \times 1)} = \{ \mathcal{F}_{Th}^{(i)} \}_{(9 \times 1)}
+\end{equation}
+
+\begin{theorembox}[Matrice Bloc-Diagonale $\mathbb{K}_{Dyn}$]
 \begin{equation}
 \boxed{
-    R(\tau) = \begin{pmatrix}
-    C_{55}\tau & 0 & C_{55}\delta_1 \\
-    0 & C_{44}\tau & C_{44}\delta_2 \\
-    -C_{13}\delta_1 & -C_{23}\delta_2 & C_{33}\tau
-    \end{pmatrix}
+    \mathbb{K}_{Dyn}^{(i)} = \begin{pmatrix}
+    \Gamma(\tau_1) & 0 & 0 \\
+    0 & \Gamma(\tau_2) & 0 \\
+    0 & 0 & \Gamma(\tau_3)
+    \end{pmatrix}_{9 \times 9}
 }
 \end{equation}
-
-\textbf{Relation :} $\mathbf{W}_r = R(\tau_r) \cdot \mathbf{V}_r = \begin{pmatrix} \sigma_{13} \\ \sigma_{23} \\ \sigma_{33} \end{pmatrix}$
-\end{definitionbox}
-
-\textbf{Origine des signes négatifs (ligne 3) :} Les dérivées $\partial_{x_1}\cos(\delta_1 x_1) = -\delta_1\sin(\ldots)$ introduisent les signes négatifs dans $\sigma_{33}$.
-
-\subsection{Étape 8 : Matrice Modale $\Phi(z)$ et Assemblage Global}
-
-\begin{theorembox}[Matrice Modale $\Phi(z)$ de dimension $6 \times 6$]
-\begin{equation}
-    \Phi(z) = \begin{pmatrix}
-    V_1^{(1)}e^{\tau_1 z} & V_1^{(2)}e^{\tau_2 z} & \cdots & V_1^{(6)}e^{\tau_6 z} \\
-    V_2^{(1)}e^{\tau_1 z} & V_2^{(2)}e^{\tau_2 z} & \cdots & V_2^{(6)}e^{\tau_6 z} \\
-    V_3^{(1)}e^{\tau_1 z} & V_3^{(2)}e^{\tau_2 z} & \cdots & V_3^{(6)}e^{\tau_6 z} \\
-    W_1^{(1)}e^{\tau_1 z} & W_1^{(2)}e^{\tau_2 z} & \cdots & W_1^{(6)}e^{\tau_6 z} \\
-    W_2^{(1)}e^{\tau_1 z} & W_2^{(2)}e^{\tau_2 z} & \cdots & W_2^{(6)}e^{\tau_6 z} \\
-    W_3^{(1)}e^{\tau_1 z} & W_3^{(2)}e^{\tau_2 z} & \cdots & W_3^{(6)}e^{\tau_6 z}
-    \end{pmatrix}
-\end{equation}
+Chaque bloc $\Gamma(\tau_r)$ est la matrice $3 \times 3$ des opérateurs $L_{jk}$ évaluée à $\tau = \tau_r$.
 \end{theorembox}
 
-\textbf{Vecteur d'État :}
+\textbf{Vecteur d'amplitudes et vecteur thermique :}
 \begin{equation}
-    \mathbf{SV}(z) = \begin{pmatrix} u_1 \\ u_2 \\ u_3 \\ \sigma_{13} \\ \sigma_{23} \\ \sigma_{33} \end{pmatrix}
-    = \Phi(z) \cdot \mathbf{C} + \mathbf{SV}_{part}(z)
+    \mathcal{A}^{(i)} = \begin{pmatrix} A_1^{1} \\ A_2^{1} \\ A_3^{1} \\ A_1^{2} \\ A_2^{2} \\ A_3^{2} \\ A_1^{3} \\ A_2^{3} \\ A_3^{3} \end{pmatrix}^{(i)}, \quad
+    \mathcal{F}_{Th}^{(i)} = \begin{pmatrix} \mathcal{Q}_1 \\ \mathcal{Q}_2 \\ \mathcal{Q}_3 \\ \mathcal{Q}_1 \\ \mathcal{Q}_2 \\ \mathcal{Q}_3 \\ \mathcal{Q}_1 \\ \mathcal{Q}_2 \\ \mathcal{Q}_3 \end{pmatrix}^{(i)}
 \end{equation}
+
+\begin{definitionbox}[Termes de Sollicitation Thermique $\mathcal{Q}_\alpha$]
+\begin{align}
+    \mathcal{Q}_1^{(i)} &= \left(C_{11}\alpha_{11} + C_{12}\alpha_{22}\right)\delta_1 \, T(x_3 = \bar{h}^{(i)}) \\
+    \mathcal{Q}_2^{(i)} &= \left(C_{22}\alpha_{22} + C_{12}\alpha_{11}\right)\delta_2 \, T(x_3 = \bar{h}^{(i)}) \\
+    \mathcal{Q}_3^{(i)} &= \left(C_{13}\alpha_{11} + C_{23}\alpha_{22} + C_{33}\alpha_{33}\right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
+\end{align}
+\end{definitionbox}
+
+\subsection{Étape 8 : Assemblage Multicouche}
 
 \textbf{Système Global pour $N$ couches :}
 \begin{equation}
@@ -663,6 +670,48 @@ avec $6N$ inconnues (18 pour 3 couches).
     \item 3 équations : Surface libre en $z=H$
     \item \textbf{Total :} $3 + 6(N-1) + 3 = 6N$ équations $\checkmark$
 \end{itemize}
+
+\begin{warningbox}[Réduction du Nombre d'Équations : 27 $\to$ 18]
+\textbf{Formulation théorique complète} (pour $N=3$ couches) :
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Type d'équation} & \textbf{Nombre} & \textbf{Formule} \\
+\midrule
+Équilibre volumique (div $\sigma$ = 0) & 9 & 3 directions $\times$ 3 couches \\
+Continuité aux interfaces & 12 & 2 interfaces $\times$ 6 conditions \\
+Conditions aux limites ($\sigma=0$) & 6 & 2 surfaces $\times$ 3 composantes \\
+\midrule
+\textbf{Total théorique} & \textbf{27} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+\textbf{Réduction par l'approche modale (méthode spectrale)} :
+
+Les \textbf{9 équations d'équilibre volumique sont IMPLICITEMENT satisfaites} !
+
+En écrivant la solution sous la forme $U_\alpha(x_3) = \sum_r A_\alpha^r \cdot e^{\tau_r x_3}$ avec les $\tau_r$ \textbf{valeurs propres} de $\Gamma(\tau)$ (définies par $\det(\Gamma(\tau_r)) = 0$), l'équation d'équilibre $\Gamma(\tau_r) \cdot \mathbf{A}^r = 0$ est automatiquement vérifiée.
+
+\vspace{0.5em}
+\textbf{Système final résolu} :
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Type d'équation} & \textbf{Nombre} & \textbf{Implémentation} \\
+\midrule
+Équilibre volumique & 0 & $\checkmark$ Implicite (via $\tau_r$) \\
+Continuité aux interfaces & 12 & $\Phi^{(k)}(h_k) = \Phi^{(k+1)}(0)$ \\
+Conditions aux limites & 6 & $\sigma(0)=0$, $\sigma(H)=0$ \\
+\midrule
+\textbf{Total résolu} & \textbf{18} & = $6N$ pour $N$ couches \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Conclusion :} La puissance de la méthode spectrale réside dans la réduction de 27 $\to$ 18 équations grâce à la structure modale.
+\end{warningbox}
 
 \begin{center}
 \textbf{Structure de la Matrice Globale $K_{glob}$ (pour 3 couches)}
@@ -1258,19 +1307,19 @@ def compute_tsai_wu_criterion(sigma_13, sigma_23, sigma_33, layer_type='ceramic'
 \hline
 Étape 4: Loi Hooke & \texttt{PROPS\_*}, \texttt{ALPHA\_*} & constants.py & Tenseur $C_{ij}$, $\alpha_{ij}$ \\
 \hline
-Étape 5: Ansatz & \texttt{get\_M\_matrix()} & mechanical.py:8 & Construction $M(\tau)$ \\
+Étape 5: Ansatz & \texttt{get\_Gamma\_matrix()} & mechanical\_pdf.py & Construction $\Gamma(\tau)$ avec $L_{jk}$ \\
 \hline
-Étape 6: Valeurs propres & \texttt{solve\_characteristic\_eq()} & mechanical.py:78 & Résolution $\det(M)=0$ \\
+Étape 6: Valeurs propres & \texttt{solve\_characteristic\_polynomial()} & mechanical\_pdf.py & Résolution $\det(\Gamma)=0$ \\
 \hline
-Étape 6: Vecteurs propres & \texttt{compute\_eigenvector()} & mechanical.py:205 & Calcul $\mathbf{V}_r$ par cofacteurs \\
+Étape 6: Sélection $\tau_r$ & -- & mechanical\_pdf.py & 3 racines avec Re$(\tau)<0$ \\
 \hline
-Étape 7: Matrice R & \texttt{get\_R\_matrix()} & mechanical.py:264 & Passage $\mathbf{V} \to \mathbf{W}$ \\
+Étape 7: Termes $\mathcal{Q}_\alpha$ & \texttt{compute\_Q\_thermal\_vector()} & mechanical\_pdf.py & Sollicitation thermique \\
 \hline
-Étape 7: Vecteurs W & \texttt{compute\_stress\_eigenvector()} & mechanical.py:337 & $\mathbf{W}_r = R \cdot \mathbf{V}_r$ \\
+Étape 7: Assemblage $9\times 9$ & \texttt{assemble\_K\_dyn\_9x9()} & mechanical\_pdf.py & $\mathbb{K}_{Dyn}$ bloc-diagonal \\
 \hline
-Étape 8: Matrice $\Phi(z)$ & \texttt{build\_Phi\_matrix()} & mechanical.py:478 & Assemblage 6$\times$6 \\
+Étape 8: Résolution & \texttt{solve\_amplitude\_system()} & mechanical\_pdf.py & $\mathbb{K}_{Dyn} \cdot \mathcal{A} = \mathcal{F}_{Th}$ \\
 \hline
-Étape 8: Système global & \texttt{solve\_multilayer()} & mechanical.py:992 & $K_{glob} \cdot C = F$ \\
+Étape 8: Système global & \texttt{solve\_multilayer()} & mechanical.py & $K_{glob} \cdot C = F$ \\
 \hline
 Étape 8: Préconditionnement & \texttt{solve\_regularized\_system()} & mechanical.py:846 & Tikhonov + scaling \\
 \hline
@@ -1672,6 +1721,162 @@ $\alpha$ à 1198K (K$^{-1}$) & $14.68 \times 10^{-6}$ & -- \\
     \item Contraintes de von Mises typiques FEM : 400--800 MPa
     \item Concentration à la racine de l'aube : jusqu'à 1000 MPa
 \end{itemize}
+
+%==============================================================================
+\section{Annexe A : Équilibre Local et Solution Détaillée}
+%==============================================================================
+
+Cette annexe reprend la dérivation complète de la méthode de résolution selon le document \texttt{equilibre\_local\_corrige.pdf}.
+
+\subsection{Équilibre Local en Formulation Forte}
+
+L'équilibre local est défini par :
+\begin{equation}
+    \text{div } \underline{\underline{\sigma}} = \vec{0}
+\end{equation}
+
+En injectant la loi de comportement, on obtient le système d'équations différentielles suivant pour le milieu $(i)$.
+
+\subsubsection{Équations de Champ ($x_3$)}
+
+\textbf{Équation \#1 : ($\alpha = 1, \beta = 2$)}
+\begin{multline}
+    -\left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) U_1^{(i)}(x_3) + C_{1313}^{(i)}\frac{d^2 U_1^{(i)}(x_3)}{dx_3^2} - \left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2 U_2^{(i)}(x_3) \\ 
+    + \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \frac{dU_3^{(i)}(x_3)}{dx_3} = \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 T(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\textbf{Équation \#2 : ($\alpha = 2, \beta = 1$)}
+\begin{multline}
+    -\left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) U_2^{(i)}(x_3) + C_{2323}^{(i)}\frac{d^2 U_2^{(i)}(x_3)}{dx_3^2} - \left(C_{2211}^{(i)} + C_{1212}^{(i)}\right)\delta_2\delta_1 U_1^{(i)}(x_3) \\ 
+    + \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \frac{dU_3^{(i)}(x_3)}{dx_3} = \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 T(x_3 = \bar{h}^{(i)})
+\end{multline}
+
+\textbf{Équation \#3 : (Direction 3)}
+\begin{multline}
+    \sum_{\gamma=1}^2 \left[ -(C_{\gamma\gamma 33}^{(i)} + C_{\gamma 3\gamma 3}^{(i)}) \delta_\gamma \frac{dU_{\gamma}^{(i)}(x_3)}{dx_3} - C_{\gamma 3\gamma 3}^{(i)} \delta_\gamma^2 U_3^{(i)}(x_3) \right] + C_{3333}^{(i)} \frac{d^2 U_3^{(i)}(x_3)}{dx_3^2} \\
+    = \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
+\end{multline}
+
+\subsection{Forme de la Solution Générale}
+
+Pour $\alpha \in \{1, 2, 3\}$, la solution est recherchée sous forme de combinaison d'exponentielles :
+\begin{align}
+    U_{1}^{(i)}(x_3) &= A_{1}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{1}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{1}^{3(i)} e^{\tau_3^{(i)} x_3} \\
+    U_{2}^{(i)}(x_3) &= A_{2}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{2}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{2}^{3(i)} e^{\tau_3^{(i)} x_3} \\
+    U_{3}^{(i)}(x_3) &= A_{3}^{1(i)} e^{\tau_1^{(i)} x_3} + A_{3}^{2(i)} e^{\tau_2^{(i)} x_3} + A_{3}^{3(i)} e^{\tau_3^{(i)} x_3}
+\end{align}
+
+Où :
+\begin{itemize}
+    \item $A_{\alpha}^{r(i)}$ sont les amplitudes associées à chaque mode $r$ pour la direction $\alpha$.
+    \item $\tau_r^{(i)}$ sont les valeurs propres du milieu $(i)$, issues de l'analyse du système homogène.
+\end{itemize}
+
+\subsection{Dérivées Premières et Secondes}
+
+\textbf{Dérivées premières :}
+\begin{align}
+    \frac{dU_{1}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{1}^{r(i)} e^{\tau_r^{(i)} x_3} \\
+    \frac{dU_{2}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{2}^{r(i)} e^{\tau_r^{(i)} x_3} \\
+    \frac{dU_{3}^{(i)}(x_3)}{dx_3} &= \sum_{r=1}^{3} \tau_r^{(i)} A_{3}^{r(i)} e^{\tau_r^{(i)} x_3}
+\end{align}
+
+\textbf{Dérivées secondes :}
+\begin{align}
+    \frac{d^2 U_{\alpha}^{(i)}(x_3)}{dx_3^2} &= \sum_{r=1}^{3} (\tau_r^{(i)})^2 A_{\alpha}^{r(i)} e^{\tau_r^{(i)} x_3}
+\end{align}
+
+\subsection{Opérateurs $L_{jk}^{r(i)}$ de la Matrice Dynamique}
+
+\textbf{Termes diagonaux (couplage direct) :}
+\begin{align}
+    L_{11}^{r(i)} &= C_{1313}^{(i)}(\tau_r^{(i)})^2 - \left(C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2\right) \\
+    L_{22}^{r(i)} &= C_{2323}^{(i)}(\tau_r^{(i)})^2 - \left(C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2\right) \\
+    L_{33}^{r(i)} &= C_{3333}^{(i)}(\tau_r^{(i)})^2 - \left(C_{1313}^{(i)}\delta_1^2 + C_{2323}^{(i)}\delta_2^2\right)
+\end{align}
+
+\textbf{Termes croisés (couplage dans le plan) :}
+\begin{equation}
+    L_{12}^{r(i)} = L_{21}^{r(i)} = -\left(C_{1122}^{(i)} + C_{1212}^{(i)}\right)\delta_1\delta_2
+\end{equation}
+
+\textbf{Termes hors-plan (faisant intervenir $\tau_r^{(i)}$) --- ANTISYMÉTRIQUES :}
+\begin{align}
+    L_{13}^{r(i)} &= \left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} \\
+    L_{23}^{r(i)} &= \left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)} \\
+    L_{31}^{r(i)} &= \textcolor{red}{-}\left(C_{1133}^{(i)} + C_{1313}^{(i)}\right)\delta_1 \tau_r^{(i)} \\
+    L_{32}^{r(i)} &= \textcolor{red}{-}\left(C_{2233}^{(i)} + C_{2323}^{(i)}\right)\delta_2 \tau_r^{(i)}
+\end{align}
+
+\begin{warningbox}[Antisymétrie Critique]
+Les signes négatifs de $L_{31}$ et $L_{32}$ sont \textbf{essentiels} pour la physique correcte. Ils proviennent de l'équation d'équilibre en direction $x_3$.
+\end{warningbox}
+
+\subsection{Matrice $\Gamma(\tau)$ et Système Homogène}
+
+Le système homogène s'écrit $\Gamma(\tau) \cdot \mathbf{A} = \mathbf{0}$ :
+\begin{equation}
+\boxed{
+    \begin{bmatrix}
+        \Gamma_{11}^{(i)} & \Gamma_{12}^{(i)} & \Gamma_{13}^{(i)} \\
+        \Gamma_{21}^{(i)} & \Gamma_{22}^{(i)} & \Gamma_{23}^{(i)} \\
+        \Gamma_{31}^{(i)} & \Gamma_{32}^{(i)} & \Gamma_{33}^{(i)}
+    \end{bmatrix}
+    \begin{pmatrix}
+        A_1^{r(i)} \\
+        A_2^{r(i)} \\
+        A_3^{r(i)}
+    \end{pmatrix}
+    =
+    \begin{pmatrix}
+        0 \\ 0 \\ 0
+    \end{pmatrix}
+}
+\end{equation}
+
+Avec les composantes :
+\begin{align}
+    \Gamma_{11}^{(i)} &= C_{1313}^{(i)}(\tau_r^{(i)})^2 - (C_{1111}^{(i)}\delta_1^2 + C_{1212}^{(i)}\delta_2^2) \\
+    \Gamma_{22}^{(i)} &= C_{2323}^{(i)}(\tau_r^{(i)})^2 - (C_{2222}^{(i)}\delta_2^2 + C_{1212}^{(i)}\delta_1^2) \\
+    \Gamma_{33}^{(i)} &= C_{3333}^{(i)}(\tau_r^{(i)})^2 - (C_{1313}^{(i)}\delta_1^2 + C_{2323}^{(i)}\delta_2^2) \\
+    \Gamma_{12}^{(i)} &= \Gamma_{21}^{(i)} = -(C_{1122}^{(i)} + C_{1212}^{(i)})\delta_1\delta_2 \\
+    \Gamma_{13}^{(i)} &= (C_{1133}^{(i)} + C_{1313}^{(i)})\delta_1 \tau_r^{(i)} \\
+    \Gamma_{23}^{(i)} &= (C_{2233}^{(i)} + C_{2323}^{(i)})\delta_2 \tau_r^{(i)} \\
+    \Gamma_{31}^{(i)} &= -(C_{1133}^{(i)} + C_{1313}^{(i)})\delta_1 \tau_r^{(i)} \\
+    \Gamma_{32}^{(i)} &= -(C_{2233}^{(i)} + C_{2323}^{(i)})\delta_2 \tau_r^{(i)}
+\end{align}
+
+\subsection{Assemblage Complet du Système $9 \times 9$}
+
+Le système global pour une couche $(i)$ s'écrit :
+\begin{equation}
+    \left[ \mathbb{K}_{Dyn}^{(i)} \right]_{(9 \times 9)} \cdot \{ \mathcal{A}^{(i)} \}_{(9 \times 1)} = \{ \mathcal{F}_{Th}^{(i)} \}_{(9 \times 1)}
+\end{equation}
+
+La matrice $\mathbb{K}_{Dyn}$ est \textbf{bloc-diagonale} :
+\begin{equation}
+\boxed{
+    \mathbb{K}_{Dyn}^{(i)} = \begin{pmatrix}
+    \Gamma(\tau_1) & 0 & 0 \\
+    0 & \Gamma(\tau_2) & 0 \\
+    0 & 0 & \Gamma(\tau_3)
+    \end{pmatrix}_{9 \times 9}
+}
+\end{equation}
+
+Le vecteur d'amplitudes $\mathcal{A}$ et le vecteur thermique $\mathcal{F}_{Th}$ :
+\begin{equation}
+    \mathcal{A}^{(i)} = \begin{pmatrix} A_1^{1} \\ A_2^{1} \\ A_3^{1} \\ A_1^{2} \\ A_2^{2} \\ A_3^{2} \\ A_1^{3} \\ A_2^{3} \\ A_3^{3} \end{pmatrix}^{(i)}, \quad
+    \mathcal{F}_{Th}^{(i)} = \begin{pmatrix} Q_1 \\ Q_2 \\ Q_3 \\ Q_1 \\ Q_2 \\ Q_3 \\ Q_1 \\ Q_2 \\ Q_3 \end{pmatrix}^{(i)}
+\end{equation}
+
+\subsection{Termes de Sollicitation Thermique $\mathcal{Q}_\alpha$}
+
+\begin{align}
+    \mathcal{Q}_1^{(i)} &= \left(C_{1111}^{(i)}\alpha_{11}^{(i)} + C_{1122}^{(i)}\alpha_{22}^{(i)}\right)\delta_1 \, T(x_3 = \bar{h}^{(i)}) \\
+    \mathcal{Q}_2^{(i)} &= \left(C_{2222}^{(i)}\alpha_{22}^{(i)} + C_{2211}^{(i)}\alpha_{11}^{(i)}\right)\delta_2 \, T(x_3 = \bar{h}^{(i)}) \\
+    \mathcal{Q}_3^{(i)} &= \left( \sum_{\gamma=1}^2 C_{\gamma\gamma 33}^{(i)} \alpha_{\gamma\gamma}^{(i)} + C_{3333}^{(i)} \alpha_{33}^{(i)} \right) \frac{dT}{dx_3}\bigg|_{x_3 = \bar{h}^{(i)}}
+\end{align}
 
 %==============================================================================
 \section{Conclusion}
