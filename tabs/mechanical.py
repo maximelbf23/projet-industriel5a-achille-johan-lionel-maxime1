@@ -148,18 +148,25 @@ def render():
                 n_modes = 1
             show_math = st.checkbox("Détails math.", value=False)
     
-    # Bouton de calcul
-    st.divider()
-    if st.button("🚀 Lancer le Calcul Complet", type="primary", use_container_width=True):
-        run_full_analysis(h_tbc_um, h_bc_um, T_hat, Lw, method, show_math, 
-                          alpha_sidebar, beta_sidebar, T_perturb_bottom, T_perturb_top, n_modes)
+    # --- CALCUL AUTOMATIQUE ET RÉACTIF ---
+    # Plus besoin de bouton, le calcul est lancé automatiquement grâce au cache
+    
+    # Appel de la fonction cachée
+    # On passe toutes les dépendances explicites pour que le cache fonctionne bien
+    results = compute_mech_results(
+        h_tbc_um, h_bc_um, T_hat, Lw, method, 
+        alpha_sidebar, beta_sidebar, T_perturb_bottom, T_perturb_top, n_modes
+    )
     
     # --- AFFICHAGE DES RÉSULTATS ---
-    if "mech_spectral_results" in st.session_state:
-        display_spectral_results(st.session_state["mech_spectral_results"], show_math)
+    if results:
+        display_spectral_results(results, show_math)
 
-def run_full_analysis(h_tbc, h_bc_unused, T_hat, Lw, method, show_math, alpha, beta, t_bottom, t_top, n_modes=1):
-    """Lance l'analyse complète et stocke les résultats."""
+@st.cache_data(show_spinner="Calcul mécanique en cours...")
+def compute_mech_results(h_tbc, h_bc_unused, T_hat, Lw, method, alpha, beta, t_bottom, t_top, n_modes=1):
+    """
+    Lance l'analyse complète et RETOURNE les résultats (fonction pure pour le cache).
+    """
     
     # Import des constantes (épaisseurs fixes)
     from core.constants import CONSTANTS
@@ -187,137 +194,108 @@ def run_full_analysis(h_tbc, h_bc_unused, T_hat, Lw, method, show_math, alpha, b
         (h_tbc_m, PROPS_CERAMIC, ALPHA_CERAMIC)         # Couche 3: Céramique YSZ
     ]
     
-    with st.spinner("🔄 Calcul des modes propres et contraintes..."):
-        try:
-            # === ÉTAPE 7: Résolution équation caractéristique ===
-            char_eq_result = solve_characteristic_equation(delta1, delta2, props)
-            tau_roots = char_eq_result['tau_roots']
-            coeffs_poly = char_eq_result['coeffs_poly']
+    try:
+        # === ÉTAPE 7: Résolution équation caractéristique ===
+        char_eq_result = solve_characteristic_equation(delta1, delta2, props)
+        tau_roots = char_eq_result['tau_roots']
+        coeffs_poly = char_eq_result['coeffs_poly']
+        
+        # === ÉTAPE 8.1: Vecteurs propres de déplacement ===
+        eigenvectors = compute_all_eigenvectors(tau_roots, delta1, delta2, props)
+        
+        # === ÉTAPE 8.3: Vecteurs propres de contrainte ===
+        eigenvectors_with_stress = compute_all_stress_eigenvectors(eigenvectors, delta1, delta2, props)
+        
+        # === Forçage thermique (utilise propriétés de la céramique pour l'analyse spectrale) ===
+        # RÉCUPÉRATION DU CHAMP THERMIQUE COMPLET
+        # Appel du solveur thermique pour avoir les profils réels (A*exp(lam*z) + B*exp(-lam*z))
+        
+        thermal_res = solve_tbc_model_v2(alpha, beta, Lw, t_bottom, t_top, n_modes=n_modes)
+        
+        if not thermal_res['success']:
+            return None # Ou gérer l'erreur autrement
             
-            # === ÉTAPE 8.1: Vecteurs propres de déplacement ===
-            eigenvectors = compute_all_eigenvectors(tau_roots, delta1, delta2, props)
+        # Extraction des coeffs (A, B) et lambdas
+        # Si multi-modes, on passe directement la liste des modes
+        if 'modes' in thermal_res['profile_params']:
+            T_hat_list = thermal_res['profile_params']['modes']
+        else:
+            # Fallback legacy (si le cache n'est pas invalidé)
+            th_coeffs = thermal_res['profile_params']['coeffs']
+            th_lambdas = thermal_res['profile_params']['lambdas']
             
-            # === ÉTAPE 8.3: Vecteurs propres de contrainte ===
-            eigenvectors_with_stress = compute_all_stress_eigenvectors(eigenvectors, delta1, delta2, props)
-            
-            # === Forçage thermique (utilise propriétés de la céramique pour l'analyse spectrale) ===
-            # === Forçage thermique (utilise propriétés de la céramique pour l'analyse spectrale) ===
-            # RÉCUPÉRATION DU CHAMP THERMIQUE COMPLET
-            # Appel du solveur thermique pour avoir les profils réels (A*exp(lam*z) + B*exp(-lam*z))
-            
-            thermal_res = solve_tbc_model_v2(alpha, beta, Lw, t_bottom, t_top, n_modes=n_modes)
-            
-            if not thermal_res['success']:
-                raise ValueError(f"Erreur thermique: {thermal_res.get('error')}")
-                
-            # Extraction des coeffs (A, B) et lambdas
-            # Si multi-modes, on passe directement la liste des modes
-            if 'modes' in thermal_res['profile_params']:
-                T_hat_list = thermal_res['profile_params']['modes']
-            else:
-                # Fallback legacy (si le cache n'est pas invalidé)
-                th_coeffs = thermal_res['profile_params']['coeffs']
-                th_lambdas = thermal_res['profile_params']['lambdas']
-                
-                # Construction des données thermiques par couche
-                th_data_1 = {'A': th_coeffs[0], 'B': th_coeffs[1], 'lambda': th_lambdas[0]}
-                th_data_2 = {'A': th_coeffs[2], 'B': th_coeffs[3], 'lambda': th_lambdas[1]}
-                th_data_3 = {'A': th_coeffs[4], 'B': th_coeffs[5], 'lambda': th_lambdas[2]}
-                
-                # Mode unique
-                T_hat_list = [{
-                    'm': 1,
-                    'delta_eta': np.pi / Lw,
-                    'lambdas': th_lambdas,
-                    'coeffs': th_coeffs,
-                    'interfaces': thermal_res['profile_params']['interfaces']
-                }]
+            # Mode unique
+            T_hat_list = [{
+                'm': 1,
+                'delta_eta': np.pi / Lw,
+                'lambdas': th_lambdas,
+                'coeffs': th_coeffs,
+                'interfaces': thermal_res['profile_params']['interfaces']
+            }]
 
-            # Note: On garde 'beta' (coeff dilatation) pour affichage, mais le calcul utilise th_data
-            beta_mech = compute_beta_coefficients(ALPHA_CERAMIC, props)
-            # Dummy forcing pour affichage compatibilité
-            thermal_forcing = {'beta': beta_mech, 'lambda_th': lambda_th, 'T_hat': T_hat}
-            
-            # === Résolution multicouche complète (PERTURBATION) ===
-            # On passe T_hat_list au lieu de T_hat (scalaire). 
-            # Le solver mécanique patché saura gérer cette liste.
-            spectral_res = solve_multilayer_problem(layer_configs, Lw, lambda_th, T_hat_list, method='spectral')
-            
-            # === Résolution CLT (CHAMP MOYEN) ===
-            # Calcul des contraintes de base dues à la dilatation thermique différentielle
-            # On utilise le profil de température MOYEN (approx T_top - T_bottom sur l'épaisseur)
-            # Delta_T par rapport à référence 20°C ? 
-            # Ici on prend Delta_T local pour chaque couche.
-            # Approx: Profil linéaire entre T_bottom et T_top
-            # Mais CLT prend un delta_T global ou un gradient ? 
-            # Notre solveur CLT simplifié prend un delta_T constant pour l'instant dans solve_multilayer_clt.
-            # On va utiliser T_mean_ceramic = (T_bottom + T_top)/2 - 25 (Ref)
-            # Ou mieux: Delta_T effectif = T_top - T_bottom (Gradient)
-            # Pour être précis, on passe le Delta T moyen vu par la structure
-            T_ref = 20.0
-            T_mean_struct = (t_bottom + t_top)/2 - T_ref
-            clt_res = solve_multilayer_clt(layer_configs, T_mean_struct)
-            
-            # === SUPERPOSITION DES CONTRAINTES ===
-            # Total = Mean (CLT) + Perturbation (Spectral)
-            
-            stress_total = {}
-            stress_spec = spectral_res['stress_profile']
-            stress_clt = clt_res['stress_profile']
-            
-            # Interpolation CLT sur la grille spectrale (z_spec)
-            z_spec = stress_spec['z']
-            
-            # Composantes
-            # Sigma 11, 22 : Dominés par CLT (tension membrane) + petite flexion spectrale ?
-            # Le spectral donne sigma_11_spec aussi mais on ne l'a pas extrait explicitement dans stress_profile['sigma_11'] ?
-            # solve_multilayer_problem renvoie 13, 23, 33. On approxime 11, 22 spec par Poisson.
-            # Pour l'instant on garde CLT pour 11,22.
-            
-            s11_clt_interp = np.interp(z_spec, stress_clt['z'], stress_clt['sigma_11'])
-            s22_clt_interp = np.interp(z_spec, stress_clt['z'], stress_clt['sigma_22'])
-            
-            # Sigma 33, 13, 23 : Dominés par Spectral (Peeling/Shear)
-            # CLT donne approx 0 pour 33.
-            
-            # Somme quadratique ou absolu pour 'Pire Cas' ?
-            # Superposition linéaire:
-            # S_total_max = S_clt + |S_spec| (pour être conservatif sur traction)
-            
-            stress_total['z'] = z_spec
-            stress_total['sigma_11'] = s11_clt_interp # + contribution spec
-            stress_total['sigma_22'] = s22_clt_interp
-            stress_total['sigma_33'] = np.abs(stress_spec['sigma_33']) # + 0
-            stress_total['sigma_13'] = np.abs(stress_spec['sigma_13']) + np.abs(np.interp(z_spec, stress_clt['z'], stress_clt['sigma_13']))
-            stress_total['sigma_23'] = np.abs(stress_spec['sigma_23'])
-            
-            # Propager layer_idx pour que analyze_damage_profile utilise les bons seuils
-            stress_total['layer_idx'] = stress_spec.get('layer_idx', np.zeros(len(z_spec), dtype=int))
-            
-            # === Matrice Phi à z=0 (pour affichage) ===
-            Phi_0 = build_Phi_matrix(0, eigenvectors_with_stress, props)
-            
-            # Stocker tous les résultats
-            st.session_state["mech_spectral_results"] = {
-                'tau_roots': tau_roots,
-                'eigenvectors': eigenvectors_with_stress,
-                'beta': beta,
-                'thermal_forcing': thermal_forcing,
-                'Phi_0': Phi_0,
-                'full_results': {'stress_profile': stress_total}, # On remplace par le total superposé
-                'params': {
-                    'h_tbc': h_tbc, 'h_bc': int(h_bc_m * 1e6), 'T_hat': T_hat, 'Lw': Lw,
-                    'delta1': delta1, 'delta2': delta2, 'lambda_th': lambda_th,
-                    'method': 'superposition' # Force label
-                }
+        # Note: On garde 'beta' (coeff dilatation) pour affichage, mais le calcul utilise th_data
+        beta_mech = compute_beta_coefficients(ALPHA_CERAMIC, props)
+        # Dummy forcing pour affichage compatibilité
+        thermal_forcing = {'beta': beta_mech, 'lambda_th': lambda_th, 'T_hat': T_hat}
+        
+        # === Résolution multicouche complète (PERTURBATION) ===
+        # On passe T_hat_list au lieu de T_hat (scalaire). 
+        # Le solver mécanique patché saura gérer cette liste.
+        spectral_res = solve_multilayer_problem(layer_configs, Lw, lambda_th, T_hat_list, method='spectral')
+        
+        # === Résolution CLT (CHAMP MOYEN) ===
+        # Calcul des contraintes de base dues à la dilatation thermique différentielle
+        T_ref = 20.0
+        T_mean_struct = (t_bottom + t_top)/2 - T_ref
+        clt_res = solve_multilayer_clt(layer_configs, T_mean_struct)
+        
+        # === SUPERPOSITION DES CONTRAINTES ===
+        # Total = Mean (CLT) + Perturbation (Spectral)
+        
+        stress_total = {}
+        stress_spec = spectral_res['stress_profile']
+        stress_clt = clt_res['stress_profile']
+        
+        # Interpolation CLT sur la grille spectrale (z_spec)
+        z_spec = stress_spec['z']
+        
+        s11_clt_interp = np.interp(z_spec, stress_clt['z'], stress_clt['sigma_11'])
+        s22_clt_interp = np.interp(z_spec, stress_clt['z'], stress_clt['sigma_22'])
+        
+        # Superposition linéaire:
+        stress_total['z'] = z_spec
+        stress_total['sigma_11'] = s11_clt_interp # + contribution spec
+        stress_total['sigma_22'] = s22_clt_interp
+        stress_total['sigma_33'] = np.abs(stress_spec['sigma_33']) # + 0
+        stress_total['sigma_13'] = np.abs(stress_spec['sigma_13']) + np.abs(np.interp(z_spec, stress_clt['z'], stress_clt['sigma_13']))
+        stress_total['sigma_23'] = np.abs(stress_spec['sigma_23'])
+        
+        # Propager layer_idx pour que analyze_damage_profile utilise les bons seuils
+        stress_total['layer_idx'] = stress_spec.get('layer_idx', np.zeros(len(z_spec), dtype=int))
+        
+        # === Matrice Phi à z=0 (pour affichage) ===
+        Phi_0 = build_Phi_matrix(0, eigenvectors_with_stress, props)
+        
+        # Stocker tous les résultats DANS UN DICT (pas session_state)
+        return {
+            'tau_roots': tau_roots,
+            'eigenvectors': eigenvectors_with_stress,
+            'beta': beta,
+            'thermal_forcing': thermal_forcing,
+            'Phi_0': Phi_0,
+            'full_results': {'stress_profile': stress_total}, # On remplace par le total superposé
+            'params': {
+                'h_tbc': h_tbc, 'h_bc': int(h_bc_m * 1e6), 'T_hat': T_hat, 'Lw': Lw,
+                'delta1': delta1, 'delta2': delta2, 'lambda_th': lambda_th,
+                'method': 'superposition' # Force label
             }
-            
-            st.success("✅ Calcul terminé (Superposition CLT + Spectral) !")
-            
-        except Exception as e:
-            st.error(f"❌ Erreur: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
+        }
+        
+    except Exception as e:
+        st.error(f"❌ Erreur de calcul: {str(e)}")
+        # import traceback
+        # st.code(traceback.format_exc())
+        return None
 
 def display_spectral_results(results, show_math):
     """Affiche les résultats de l'analyse spectrale avec visualisations premium."""
