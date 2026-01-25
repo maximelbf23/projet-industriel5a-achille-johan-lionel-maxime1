@@ -154,15 +154,12 @@ def render():
             T_perturb_top = t_top_sidebar * (perturb_pct / 100.0)
             T_perturb_bottom = t_bottom_sidebar * (perturb_pct / 100.0)
         
-        with col2:
-            method = st.radio("Solveur", ["spectral", "clt"], index=0, horizontal=True,
-                             help="Spectral (recommandé) | CLT (classique)")
-        
-            if method == "spectral":
-                n_modes = st.slider("Modes Fourier", 1, 21, 5, step=2)
-            else:
-                n_modes = 1
+            # Options spectrales (Méthode unique validée)
+            n_modes = st.slider("Modes Fourier", 1, 21, 5, step=2)
             show_math = st.checkbox("Détails math.", value=False)
+            
+            # Note informative sur la suppression du CLT
+            st.caption("ℹ️ Méthode Spectrale unique (CLT retiré car non valide pour le délaminage)")
             
     # Fonction callback pour le bouton critique
     def set_critical_config():
@@ -228,17 +225,6 @@ def compute_mech_results(h_tbc, h_bc_unused, T_hat, Lw, method, alpha, beta, t_b
     ]
     
     try:
-        # === ÉTAPE 7: Résolution équation caractéristique ===
-        char_eq_result = solve_characteristic_equation(delta1, delta2, props)
-        tau_roots = char_eq_result['tau_roots']
-        coeffs_poly = char_eq_result['coeffs_poly']
-        
-        # === ÉTAPE 8.1: Vecteurs propres de déplacement ===
-        eigenvectors = compute_all_eigenvectors(tau_roots, delta1, delta2, props)
-        
-        # === ÉTAPE 8.3: Vecteurs propres de contrainte ===
-        eigenvectors_with_stress = compute_all_stress_eigenvectors(eigenvectors, delta1, delta2, props)
-        
         # === Forçage thermique (utilise propriétés de la céramique pour l'analyse spectrale) ===
         # RÉCUPÉRATION DU CHAMP THERMIQUE COMPLET
         # Appel du solveur thermique pour avoir les profils réels (A*exp(lam*z) + B*exp(-lam*z))
@@ -246,9 +232,52 @@ def compute_mech_results(h_tbc, h_bc_unused, T_hat, Lw, method, alpha, beta, t_b
         thermal_res = solve_tbc_model_v2(alpha, beta, Lw, t_bottom, t_top, n_modes=n_modes)
         
         if not thermal_res['success']:
-            return None # Ou gérer l'erreur autrement
+            return None 
             
+        # === CORRECTION MATÉRIAUX (DÉPENDANCE EN T°) ===
+        # On utilise les températures calculées aux interfaces pour ajuster la rigidité
+        # T_at_h1 = Interface Sub/BC, T_at_h2 = Interface BC/TBC
+        T_sub_avg = (t_bottom + thermal_res['T_at_h1']) / 2 + 273.15
+        T_bc_avg = (thermal_res['T_at_h1'] + thermal_res['T_at_h2']) / 2 + 273.15
+        T_tbc_avg = (thermal_res['T_at_h2'] + t_top) / 2 + 273.15
+        
+        # Fonctions de dégradation thermique (Lois phénoménologiques simplifiées)
+        # Inconel 718 : Perte ~35% à 1000°C
+        factor_sub = max(0.5, 1.0 - 4e-4 * (T_sub_avg - 293))
+        # Bond Coat : Similaire Ni
+        factor_bc = max(0.4, 1.0 - 5e-4 * (T_bc_avg - 293))
+        # YSZ : Perte plus faible (~15% à 1200°C)
+        factor_tbc = max(0.7, 1.0 - 1.5e-4 * (T_tbc_avg - 293))
+        
+        # Application des facteurs aux copies des propriétés
+        props_sub_hot = {k: v * factor_sub for k, v in PROPS_SUBSTRATE.items()}
+        props_bc_hot = {k: v * factor_bc for k, v in PROPS_BONDCOAT.items()}
+        props_tbc_hot = {k: v * factor_tbc for k, v in PROPS_CERAMIC.items()}
+        
+        # Mise à jour de la configuration couches
+        layer_configs = [
+            (h_sub_m, props_sub_hot, ALPHA_SUBSTRATE),
+            (h_bc_m, props_bc_hot, ALPHA_BONDCOAT),
+            (h_tbc_m, props_tbc_hot, ALPHA_CERAMIC)
+        ]
+        
+        # === ÉTAPE 7: Résolution équation caractéristique (POUR AFFICHAGE UNIQUEMENT) ===
+        # On utilise les propriétés HOT du TBC pour l'affichage des modes représentatifs
+        props = props_tbc_hot.copy()
+        
+        char_eq_result = solve_characteristic_equation(delta1, delta2, props)
+        tau_roots = char_eq_result['tau_roots']
+        
+        # === ÉTAPE 8.1: Vecteurs propres de déplacement ===
+        eigenvectors = compute_all_eigenvectors(tau_roots, delta1, delta2, props)
+        
+        # === ÉTAPE 8.3: Vecteurs propres de contrainte ===
+        eigenvectors_with_stress = compute_all_stress_eigenvectors(eigenvectors, delta1, delta2, props) 
+
+        # ... (La suite du code utilise layer_configs donc c'est bon)
+
         # Extraction des coeffs (A, B) et lambdas
+
         # Si multi-modes, on passe directement la liste des modes
         if 'modes' in thermal_res['profile_params']:
             T_hat_list = thermal_res['profile_params']['modes']
@@ -295,12 +324,16 @@ def compute_mech_results(h_tbc, h_bc_unused, T_hat, Lw, method, alpha, beta, t_b
         s11_clt_interp = np.interp(z_spec, stress_clt['z'], stress_clt['sigma_11'])
         s22_clt_interp = np.interp(z_spec, stress_clt['z'], stress_clt['sigma_22'])
         
-        # Superposition linéaire:
+        # Superposition SÉLECTIVE (Physique uniquement)
+        # - Sigma 11, 22 (Plan) : CLT (Membrane) dominent
+        # - Sigma 33, 13, 23 (Hors plan) : Spectral (Perturbation) UNIQUEMENT
+        #   (On ne rajoute PAS les contraintes heuristiques du CLT qui sont fausses)
+        
         stress_total['z'] = z_spec
-        stress_total['sigma_11'] = s11_clt_interp # + contribution spec
+        stress_total['sigma_11'] = s11_clt_interp
         stress_total['sigma_22'] = s22_clt_interp
-        stress_total['sigma_33'] = np.abs(stress_spec['sigma_33']) # + 0
-        stress_total['sigma_13'] = np.abs(stress_spec['sigma_13']) + np.abs(np.interp(z_spec, stress_clt['z'], stress_clt['sigma_13']))
+        stress_total['sigma_33'] = np.abs(stress_spec['sigma_33'])
+        stress_total['sigma_13'] = np.abs(stress_spec['sigma_13'])
         stress_total['sigma_23'] = np.abs(stress_spec['sigma_23'])
         
         # Propager layer_idx pour que analyze_damage_profile utilise les bons seuils
