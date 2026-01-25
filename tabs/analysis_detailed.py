@@ -340,93 +340,94 @@ def render(alpha_in, beta_in, lw_in, t_bottom, t_top, t_bottom_cata, t_top_cata)
 
     st.divider()
 
-    # --- C. GRAPHIQUES DÉTAILLÉS (Full Width) ---
+    # --- C. GRAPHIQUE PREMIUM : PROFIL THERMIQUE (Style demandée) ---
+    st.markdown("### 🌡️ Profil Thermique à travers les Couches")
+    
+    # Préparation des données
     x_plot, T_vals, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
-    x_mm = x_plot * 1000
+    z_mm = x_plot * 1000  # Axe Y (Altitude)
     
-    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08,
-        subplot_titles=("🌡️ Profil de Température", "⬇️ Flux Normal (Q3)", "↔️ Flux Transverse (Q1)"))
-    
-    # --- AMÉLIORATION : Zones Matériaux et Lignes de Température ---
+    # Dimensions couches
     h1_mm = CONSTANTS['h1'] * 1000
     h2_mm = CONSTANTS['h2'] * 1000
     h3_mm = res['h3'] * 1000
+    H_total_mm = h1_mm + h2_mm + h3_mm
     
-    # 1. Lignes de température critiques (Traces explicites pour visibilité et légende)
-    fig.add_trace(go.Scatter(
-        x=[x_mm[0], x_mm[-1]], y=[CONSTANTS['T_crit'], CONSTANTS['T_crit']],
-        mode='lines', name='T° Critique',
-        line=dict(color='#ef4444', width=2, dash='dash'),
-        hoverinfo='name+y',
-        legendgroup="limits", legendgrouptitle_text="Limites"
-    ), row=1, col=1)
+    # Figure Température Premium
+    fig_temp = go.Figure()
     
-    fig.add_trace(go.Scatter(
-        x=[x_mm[0], x_mm[-1]], y=[T_secu, T_secu],
-        mode='lines', name='T° Sécurité',
-        line=dict(color='#f97316', width=2, dash='dash'),
-        hoverinfo='name+y',
-        legendgroup="limits"
-    ), row=1, col=1)
+    # 1. Fond zones couches (Horizontal)
+    # Substrat (Bas)
+    fig_temp.add_hrect(y0=0, y1=h1_mm, fillcolor="#334155", opacity=0.8, layer="below", line_width=0, 
+                      annotation_text="SUBSTRAT", annotation_position="top left", annotation_font=dict(color="white"))
+    # Bond Coat
+    fig_temp.add_hrect(y0=h1_mm, y1=h1_mm+h2_mm, fillcolor="#f59e0b", opacity=0.7, layer="below", line_width=0, 
+                      annotation_text="BOND COAT", annotation_position="right", annotation_font=dict(color="black", size=10))
+    # Céramique (Haut)
+    fig_temp.add_hrect(y0=h1_mm+h2_mm, y1=H_total_mm, fillcolor="#3b82f6", opacity=0.6, layer="below", line_width=0, 
+                      annotation_text="CÉRAMIQUE (TBC)", annotation_position="top left", annotation_font=dict(color="white"))
 
-    # 2. Zones matériaux en fond
-    zones = [
-        {'x0': 0, 'x1': h1_mm, 'color': "#cbd5e1", 'label': "Alliage"}, # Slate-300
-        {'x0': h1_mm, 'x1': h1_mm + h2_mm, 'color': "#fdba74", 'label': "Liaison"}, # Orange-300
-        {'x0': h1_mm + h2_mm, 'x1': h1_mm + h2_mm + h3_mm, 'color': "#bae6fd", 'label': "Céramique"} # Sky-200
-    ]
-    
-    # Ajout de traces invisibles pour créer une légende pour les zones
-    for i, zone in enumerate(zones):
-        fig.add_trace(go.Scatter(
-            x=[None], y=[None], mode='markers',
-            marker=dict(size=12, color=zone['color'], symbol='square'),
-            showlegend=True, name=zone['label'],
-            legendgroup=f"zones",
-            legendgrouptitle_text="Couches" if i == 0 else ""
-        ), row=1, col=1)
+    # 2. Ligne T_critique (Verticale)
+    fig_temp.add_vline(x=CONSTANTS['T_crit'], line_dash="dash", line_color="#ef4444", line_width=2,
+                      annotation_text=f"T_crit = {CONSTANTS['T_crit']}°C", annotation_position="top")
 
-    # Création des rectangles de couleur pour les zones
-    for r in [1, 2, 3]:
-        for zone in zones:
-            fig.add_vrect(
-                x0=zone['x0'], x1=zone['x1'], 
-                fillcolor=zone['color'], opacity=0.3,
-                layer="below", line_width=0, 
-                row=r, col=1
-            )
-    
-    # Courbes avec style premium
-    fig.add_trace(go.Scatter(x=x_mm, y=T_vals, name="Température", line=dict(color=PALETTE['temp'], width=3), showlegend=True, legendgroup="curves", legendgrouptitle_text="Profils"), row=1, col=1)
-    fig.add_trace(go.Scatter(x=x_mm, y=Q3_vals, name="Flux Normal", line=dict(color=PALETTE['flux_norm'], width=2), showlegend=True, legendgroup="curves"), row=2, col=1)
-    fig.add_trace(go.Scatter(x=x_mm, y=Q1_vals, name="Flux Transverse", line=dict(color=PALETTE['flux_trans'], width=2), fill='tozeroy', showlegend=True, legendgroup="curves"), row=3, col=1)
-    
-    # Mettre à jour la plage de l'axe Y pour inclure les températures critiques
-    if len(T_vals) > 0:
-        min_y_range = min(T_vals.min(), T_secu) * 0.98
-        max_y_range = max(T_vals.max(), CONSTANTS['T_crit']) * 1.02
-        fig.update_yaxes(range=[min_y_range, max_y_range], row=1, col=1)
+    # 3. Courbe de Température (X=Temp, Y=z)
+    fig_temp.add_trace(go.Scatter(
+        x=T_vals, y=z_mm,
+        mode='lines', line=dict(color='cyan', width=6, shape='spline'), opacity=0.3, showlegend=False, hoverinfo='skip'
+    ))
+    fig_temp.add_trace(go.Scatter(
+        x=T_vals, y=z_mm,
+        mode='lines', name='Température',
+        line=dict(color='white', width=3, shape='spline'),
+        hovertemplate='T: %{x:.1f}°C<br>z: %{y:.2f} mm'
+    ))
 
+    # 4. Point Critique Interface
+    T_int = res['T_at_h1']
+    z_int = h1_mm
+    
+    fig_temp.add_trace(go.Scatter(
+        x=[T_int], y=[z_int],
+        mode='markers+text',
+        marker=dict(color='red', size=15, line=dict(color='white', width=2), symbol='circle'),
+        text=[f"T_interface ≈ {T_int:.0f}°C"], textposition="top center",
+        textfont=dict(color='white', size=14, family="Arial Black"),
+        name='Point Critique'
+    ))
+    
     # Layout Premium
-    fig.update_layout(
-        height=700, 
-        showlegend=True, 
-        hovermode="x unified",
-        legend=dict(
-            orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-            bgcolor="rgba(255,255,255,0.95)", bordercolor="#e2e8f0", borderwidth=1,
-            font=dict(color="#334155", size=11)
-        ),
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text'])
+    fig_temp.update_layout(
+        height=550,
+        plot_bgcolor='#0f172a', # Slate-900
+        paper_bgcolor='#0f172a',
+        font=dict(color='#f1f5f9'),
+        xaxis=dict(title="Température (°C)", showgrid=True, gridcolor='#334155', zeroline=False),
+        yaxis=dict(title="Profondeur / Altitude z (mm)", showgrid=False, zeroline=False),
+        margin=dict(l=20, r=20, t=40, b=40),
+        showlegend=False
     )
     
-    # Grilles
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'], zeroline=False)
+    st.plotly_chart(fig_temp, use_container_width=True)
+    
+    # --- GRAPHIQUES FLUX (Secondaires) ---
+    st.markdown("#### 📉 Profils de Flux Thermiques")
+    col_q1, col_q3 = st.columns(2)
+    
+    with col_q1:
+        fig_q3 = go.Figure()
+        fig_q3.add_trace(go.Scatter(x=z_mm, y=Q3_vals, mode='lines', line=dict(color='#ef4444', width=3), name='Q3'))
+        fig_q3.update_layout(title="Flux Normal (Q3)", xaxis_title="z (mm)", yaxis_title="Flux (W/m²)", height=300, margin=dict(l=20,r=20,t=40,b=20))
+        st.plotly_chart(fig_q3, use_container_width=True)
+        
+    with col_q3:
+        fig_q1 = go.Figure()
+        fig_q1.add_trace(go.Scatter(x=z_mm, y=Q1_vals, mode='lines', line=dict(color='#10b981', width=3), name='Q1', fill='tozeroy'))
+        fig_q1.update_layout(title="Flux Transverse (Q1)", xaxis_title="z (mm)", yaxis_title="Flux (W/m²)", height=300, margin=dict(l=20,r=20,t=40,b=20))
+        st.plotly_chart(fig_q1, use_container_width=True)
 
-    st.plotly_chart(fig, use_container_width=True)
+    
+
 
     # --- INTERPRÉTATION PHYSIQUE ---
     with st.expander("📚 Interprétation Physique des Graphiques", expanded=False):
