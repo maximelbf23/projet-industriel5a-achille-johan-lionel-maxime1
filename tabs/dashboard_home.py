@@ -667,6 +667,11 @@ def render():
     x_plot = np.concatenate([z_substrate, z_bondcoat[1:], z_ceramic[1:]])
     T_vals = np.concatenate([T_substrate, T_bondcoat[1:], T_ceramic[1:]])
     
+    # Calcul du flux thermique Q = -k * dT/dz (Loi de Fourier)
+    # Le flux est constant à travers toutes les couches (régime permanent)
+    Q_constant = delta_T / R_total  # W/m²
+    Q1_vals = np.full_like(T_vals, Q_constant)
+    
     fig_3d = create_structure_3d(h_sub, h_bc, h_tbc, T_vals, x_plot)
     st.plotly_chart(fig_3d, use_container_width=True)
     
