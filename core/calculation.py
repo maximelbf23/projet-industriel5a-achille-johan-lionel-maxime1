@@ -42,10 +42,14 @@ def solve_tbc_model_v2(alpha, beta_ceramique, lw_val, t_bottom, t_top, n_modes=1
         for i_mode in range(n_modes):
             m = 2 * i_mode + 1
             
-            # Amplitude thermique du mode m (Décomposition en série de Fourier d'un échelon)
-            # T(x) = sum( T_m * sin(m*pi*x/Lw) )
-            # Pour un chargement uniforme T, le coeff est 4/(m*pi)
-            fourier_factor = 4 / (m * np.pi)
+            # Amplitude thermique
+            # Correction : Si n_modes=1, on veut que l'amplitude max SOIT t_top, pas 1.27*t_top (Gibbs)
+            if n_modes == 1:
+                fourier_factor = 1.0
+            else:
+                # Série de Fourier d'un signal carré (Square Wave)
+                fourier_factor = 4 / (m * np.pi)
+                
             t_bot_m = t_bottom * fourier_factor
             t_top_m = t_top * fourier_factor
             
