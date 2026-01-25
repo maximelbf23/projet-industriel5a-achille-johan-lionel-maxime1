@@ -634,19 +634,38 @@ def render():
     # === ROW 3: VISUALISATION 3D STRUCTURE ===
     st.markdown("### 🏗️ Visualisation 3D du Champ Thermique")
     
-    # Calcul des profils
-    x_plot, T_vals, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
-    
     # ═══════════════════════════════════════════════════════════════════════
-    # CORRECTION: Clipping des températures aux conditions limites réelles
-    # L'approche Fourier peut dépasser les conditions car c'est une série 
-    # (oscillations de Gibbs). On clip pour cohérence avec les paramètres UI.
+    # PROFIL THERMIQUE RÉALISTE (Résistances en série)
+    # Évite les artefacts Fourier pour la visualisation 3D
     # ═══════════════════════════════════════════════════════════════════════
-    T_vals = np.clip(T_vals, t_bottom, t_top)
-    
     h_sub = CONSTANTS['h1']
     h_bc = CONSTANTS['h2']
     h_tbc = res['h3']
+    H_total = h_sub + h_bc + h_tbc
+    
+    # Résistances thermiques par couche
+    R1 = h_sub / CONSTANTS['k33_1']
+    R2 = h_bc / CONSTANTS['k33_2']
+    R3 = h_tbc / CONSTANTS['k33_3']
+    R_total = R1 + R2 + R3
+    
+    # Températures aux interfaces (modèle résistances en série)
+    T_at_h1 = t_bottom + delta_T * (R1 / R_total)
+    T_at_h2 = t_bottom + delta_T * ((R1 + R2) / R_total)
+    
+    # Création du profil z monotone
+    n_points = 200
+    z_substrate = np.linspace(0, h_sub, n_points // 3)
+    z_bondcoat = np.linspace(h_sub, h_sub + h_bc, n_points // 6)
+    z_ceramic = np.linspace(h_sub + h_bc, H_total, n_points // 2)
+    
+    # Températures linéaires par couche
+    T_substrate = np.linspace(t_bottom, T_at_h1, len(z_substrate))
+    T_bondcoat = np.linspace(T_at_h1, T_at_h2, len(z_bondcoat))
+    T_ceramic = np.linspace(T_at_h2, t_top, len(z_ceramic))
+    
+    x_plot = np.concatenate([z_substrate, z_bondcoat[1:], z_ceramic[1:]])
+    T_vals = np.concatenate([T_substrate, T_bondcoat[1:], T_ceramic[1:]])
     
     fig_3d = create_structure_3d(h_sub, h_bc, h_tbc, T_vals, x_plot)
     st.plotly_chart(fig_3d, use_container_width=True)
