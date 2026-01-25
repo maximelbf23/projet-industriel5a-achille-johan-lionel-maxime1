@@ -308,12 +308,12 @@ def render(alpha_in, beta_in, lw_in, t_bottom, t_top, t_bottom_cata, t_top_cata)
     # 3. Courbe de Température (X=Temp, Y=z)
     fig_temp.add_trace(go.Scatter(
         x=T_vals, y=z_mm,
-        mode='lines', line=dict(color='cyan', width=6, shape='spline'), opacity=0.3, showlegend=False, hoverinfo='skip'
+        mode='lines', line=dict(color='cyan', width=6, shape='linear'), opacity=0.3, showlegend=False, hoverinfo='skip'
     ))
     fig_temp.add_trace(go.Scatter(
         x=T_vals, y=z_mm,
         mode='lines', name='Température',
-        line=dict(color='white', width=3, shape='spline'),
+        line=dict(color='white', width=3, shape='linear'),
         hovertemplate='T: %{x:.1f}°C<br>z: %{y:.2f} mm'
     ))
 
