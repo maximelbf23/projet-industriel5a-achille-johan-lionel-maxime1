@@ -591,49 +591,190 @@ def display_spectral_results(results, show_math):
         if stress and 'z' in stress:
             z_mm = stress['z'] * 1e3
             
-            fig_stress = make_subplots(rows=1, cols=2, 
-                                       subplot_titles=("Contrainte d'Arrachement σ₃₃", "Contrainte de Cisaillement σ₁₃"))
+            # === RÉCUPÉRATION DES ÉPAISSEURS DES COUCHES ===
+            from core.constants import CONSTANTS
+            h_sub_mm = CONSTANTS['h1'] * 1000  # mm
+            h_bc_mm = CONSTANTS['h2'] * 1000   # mm
+            h_tbc_mm = params['h_tbc'] / 1000  # µm → mm
+            H_total_mm = h_sub_mm + h_bc_mm + h_tbc_mm
             
-            # σ₃₃
-            fig_stress.add_trace(go.Scatter(
-                x=z_mm, y=stress['sigma_33']/1e9,
-                mode='lines', name='σ₃₃',
-                line=dict(color=PALETTE['danger'], width=3),
-                fill='tozeroy', fillcolor='rgba(239, 68, 68, 0.15)'
-            ), row=1, col=1)
+            # === GRAPHIQUE σ₃₃ (ARRACHEMENT) ===
+            col_s33, col_s13 = st.columns(2)
             
-            # σ₁₃
-            fig_stress.add_trace(go.Scatter(
-                x=z_mm, y=stress['sigma_13']/1e9,
-                mode='lines', name='σ₁₃',
-                line=dict(color=PALETTE['primary'], width=3),
-                fill='tozeroy', fillcolor='rgba(59, 130, 246, 0.15)'
-            ), row=1, col=2)
+            with col_s33:
+                fig_s33 = go.Figure()
+                
+                # Zones de couches colorées
+                fig_s33.add_vrect(x0=0, x1=h_sub_mm, fillcolor="#64748b", opacity=0.2,
+                                 layer="below", line_width=0)
+                fig_s33.add_vrect(x0=h_sub_mm, x1=h_sub_mm + h_bc_mm, fillcolor="#f59e0b", opacity=0.25,
+                                 layer="below", line_width=0)
+                fig_s33.add_vrect(x0=h_sub_mm + h_bc_mm, x1=H_total_mm, fillcolor="#3b82f6", opacity=0.2,
+                                 layer="below", line_width=0)
+                
+                # Courbe σ₃₃ en MPa
+                sigma_33_mpa = stress['sigma_33'] / 1e6
+                fig_s33.add_trace(go.Scatter(
+                    x=z_mm, y=sigma_33_mpa,
+                    mode='lines', name='σ₃₃',
+                    line=dict(color='#ef4444', width=3),
+                    fill='tozeroy', fillcolor='rgba(239, 68, 68, 0.15)'
+                ))
+                
+                # Seuils critiques (lignes horizontales)
+                fig_s33.add_hline(y=CRITICAL_STRESS['ceramic']['sigma_tensile']/1e6, 
+                                 line_dash="dash", line_color="#22d3ee", line_width=2,
+                                 annotation_text=f"σ_crit TBC ({CRITICAL_STRESS['ceramic']['sigma_tensile']/1e6:.0f} MPa)",
+                                 annotation_position="top right",
+                                 annotation_font=dict(size=10, color="#22d3ee"))
+                fig_s33.add_hline(y=-CRITICAL_STRESS['ceramic']['sigma_compressive']/1e6, 
+                                 line_dash="dash", line_color="#22d3ee", line_width=2,
+                                 annotation_text=f"Compression ({-CRITICAL_STRESS['ceramic']['sigma_compressive']/1e6:.0f} MPa)",
+                                 annotation_position="bottom right",
+                                 annotation_font=dict(size=10, color="#22d3ee"))
+                
+                # Lignes verticales pour interfaces
+                fig_s33.add_vline(x=h_sub_mm, line_dash="dot", line_color="#94a3b8", line_width=1,
+                                 annotation_text="Sub/BC", annotation_position="top")
+                fig_s33.add_vline(x=h_sub_mm + h_bc_mm, line_dash="dot", line_color="#f59e0b", line_width=1,
+                                 annotation_text="BC/TBC", annotation_position="top")
+                
+                fig_s33.update_layout(
+                    title=dict(text="⬇️ Contrainte d'Arrachement σ₃₃(z)", font=dict(size=16, color='#f1f5f9')),
+                    xaxis_title="Profondeur z (mm)",
+                    yaxis_title="σ₃₃ (MPa)",
+                    height=450,
+                    plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#f1f5f9'),
+                    showlegend=False,
+                    xaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)'),
+                    yaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)')
+                )
+                st.plotly_chart(fig_s33, use_container_width=True)
             
-            fig_stress.update_layout(
-                height=400,
-                plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                font=dict(color='#f1f5f9'),
-                showlegend=False
-            )
-            fig_stress.update_xaxes(title_text="z (mm)", showgrid=True, gridcolor='rgba(96, 165, 250, 0.1)')
-            fig_stress.update_yaxes(title_text="GPa", showgrid=True, gridcolor='rgba(96, 165, 250, 0.1)')
+            # === GRAPHIQUE σ₁₃ (CISAILLEMENT) ===
+            with col_s13:
+                fig_s13 = go.Figure()
+                
+                # Zones de couches colorées
+                fig_s13.add_vrect(x0=0, x1=h_sub_mm, fillcolor="#64748b", opacity=0.2,
+                                 layer="below", line_width=0)
+                fig_s13.add_vrect(x0=h_sub_mm, x1=h_sub_mm + h_bc_mm, fillcolor="#f59e0b", opacity=0.25,
+                                 layer="below", line_width=0)
+                fig_s13.add_vrect(x0=h_sub_mm + h_bc_mm, x1=H_total_mm, fillcolor="#3b82f6", opacity=0.2,
+                                 layer="below", line_width=0)
+                
+                # Courbe σ₁₃ en MPa
+                sigma_13_mpa = stress['sigma_13'] / 1e6
+                fig_s13.add_trace(go.Scatter(
+                    x=z_mm, y=sigma_13_mpa,
+                    mode='lines', name='σ₁₃',
+                    line=dict(color='#f59e0b', width=3),
+                    fill='tozeroy', fillcolor='rgba(245, 158, 11, 0.15)'
+                ))
+                
+                # Seuil critique cisaillement
+                fig_s13.add_hline(y=CRITICAL_STRESS['ceramic']['sigma_shear']/1e6, 
+                                 line_dash="dash", line_color="#8b5cf6", line_width=2,
+                                 annotation_text=f"τ_crit TBC ({CRITICAL_STRESS['ceramic']['sigma_shear']/1e6:.0f} MPa)",
+                                 annotation_position="top right",
+                                 annotation_font=dict(size=10, color="#8b5cf6"))
+                fig_s13.add_hline(y=CRITICAL_STRESS['bondcoat']['sigma_shear']/1e6, 
+                                 line_dash="dot", line_color="#f472b6", line_width=2,
+                                 annotation_text=f"τ_crit BC ({CRITICAL_STRESS['bondcoat']['sigma_shear']/1e6:.0f} MPa)",
+                                 annotation_position="top left",
+                                 annotation_font=dict(size=10, color="#f472b6"))
+                
+                # Lignes verticales pour interfaces
+                fig_s13.add_vline(x=h_sub_mm, line_dash="dot", line_color="#94a3b8", line_width=1,
+                                 annotation_text="Sub/BC", annotation_position="top")
+                fig_s13.add_vline(x=h_sub_mm + h_bc_mm, line_dash="dot", line_color="#f59e0b", line_width=1,
+                                 annotation_text="BC/TBC", annotation_position="top")
+                
+                fig_s13.update_layout(
+                    title=dict(text="↔️ Contrainte de Cisaillement σ₁₃(z)", font=dict(size=16, color='#f1f5f9')),
+                    xaxis_title="Profondeur z (mm)",
+                    yaxis_title="σ₁₃ (MPa)",
+                    height=450,
+                    plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#f1f5f9'),
+                    showlegend=False,
+                    xaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)'),
+                    yaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)')
+                )
+                st.plotly_chart(fig_s13, use_container_width=True)
             
-            st.plotly_chart(fig_stress, use_container_width=True)
+            # === LÉGENDE DES COUCHES ===
+            st.markdown("""
+            <div style="display: flex; justify-content: center; gap: 2rem; margin: 1rem 0;">
+                <span style="color: #94a3b8;">
+                    <span style="background: rgba(100, 116, 139, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px;">■</span> Substrat (Ni)
+                </span>
+                <span style="color: #f59e0b;">
+                    <span style="background: rgba(245, 158, 11, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px;">■</span> Bond Coat (MCrAlY)
+                </span>
+                <span style="color: #3b82f6;">
+                    <span style="background: rgba(59, 130, 246, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px;">■</span> TBC (YSZ)
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # === ANALYSE RÉSUMÉE ===
+            max_s33_mpa = np.max(np.abs(sigma_33_mpa))
+            max_s13_mpa = np.max(np.abs(sigma_13_mpa))
+            crit_s33 = CRITICAL_STRESS['ceramic']['sigma_tensile'] / 1e6
+            crit_s13 = CRITICAL_STRESS['ceramic']['sigma_shear'] / 1e6
+            
+            ratio_s33 = max_s33_mpa / crit_s33
+            ratio_s13 = max_s13_mpa / crit_s13
+            
+            cols_resume = st.columns(3)
+            
+            with cols_resume[0]:
+                color_33 = "#10b981" if ratio_s33 < 0.7 else "#f59e0b" if ratio_s33 < 1.0 else "#ef4444"
+                st.markdown(f"""
+                <div style="background: {color_33}15; padding: 1rem; border-radius: 12px; border: 1px solid {color_33}; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">⬇️ σ₃₃ max</span>
+                    <div style="color: {color_33}; font-size: 1.6rem; font-weight: 700;">{max_s33_mpa:.1f} MPa</div>
+                    <span style="color: #64748b; font-size: 0.8rem;">Ratio: {ratio_s33:.0%} du seuil</span>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with cols_resume[1]:
+                color_13 = "#10b981" if ratio_s13 < 0.7 else "#f59e0b" if ratio_s13 < 1.0 else "#ef4444"
+                st.markdown(f"""
+                <div style="background: {color_13}15; padding: 1rem; border-radius: 12px; border: 1px solid {color_13}; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">↔️ σ₁₃ max</span>
+                    <div style="color: {color_13}; font-size: 1.6rem; font-weight: 700;">{max_s13_mpa:.1f} MPa</div>
+                    <span style="color: #64748b; font-size: 0.8rem;">Ratio: {ratio_s13:.0%} du seuil</span>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with cols_resume[2]:
+                zone_crit = "Interface BC/TBC" if ratio_s13 > ratio_s33 else "Volume TBC"
+                mode_crit = "Cisaillement" if ratio_s13 > ratio_s33 else "Arrachement"
+                st.markdown(f"""
+                <div style="background: rgba(139, 92, 246, 0.15); padding: 1rem; border-radius: 12px; border: 1px solid #8b5cf6; text-align: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">📍 Zone Critique</span>
+                    <div style="color: #a78bfa; font-size: 1.2rem; font-weight: 700;">{zone_crit}</div>
+                    <span style="color: #64748b; font-size: 0.8rem;">Mode: {mode_crit}</span>
+                </div>
+                """, unsafe_allow_html=True)
             
             # Interprétation
             st.markdown("""
-            <div style="background: rgba(30, 41, 59, 0.5); padding: 1rem; border-radius: 8px;">
+            <div style="background: rgba(30, 41, 59, 0.5); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
                 <h5 style="color: #60a5fa; margin: 0 0 0.5rem 0;">📚 Interprétation Physique</h5>
-                <ul style="color: #cbd5e1; font-size: 0.9rem;">
-                    <li><strong>σ₃₃ (Arrachement)</strong> : Contrainte perpendiculaire aux interfaces. Responsable de la délamination.</li>
+                <ul style="color: #cbd5e1; font-size: 0.9rem; margin: 0; padding-left: 1.5rem;">
+                    <li><strong>σ₃₃ (Arrachement)</strong> : Contrainte perpendiculaire aux interfaces. Responsable de la <em>délamination</em>.</li>
                     <li><strong>σ₁₃ (Cisaillement)</strong> : Contrainte tangentielle. Maximum aux interfaces (discontinuité de propriétés).</li>
-                    <li><strong>Zones critiques</strong> : Interfaces Substrat/BondCoat et BondCoat/TBC.</li>
+                    <li><strong>Zones critiques</strong> : Les pics se situent aux interfaces Substrat/BondCoat et surtout BondCoat/TBC.</li>
+                    <li><strong>Seuils</strong> : Les lignes pointillées indiquent les limites admissibles pour chaque matériau.</li>
                 </ul>
             </div>
             """, unsafe_allow_html=True)
         else:
-            st.warning("Pas de données de contrainte disponibles.")
+            st.warning("Pas de données de contrainte disponibles. Lancez un calcul d'abord.")
     
     # --- TAB 2: ANALYSE D'ENDOMMAGEMENT ---
     with tabs[1]:
