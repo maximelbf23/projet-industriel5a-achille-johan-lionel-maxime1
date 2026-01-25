@@ -667,13 +667,11 @@ def render():
     x_plot = np.concatenate([z_substrate, z_bondcoat[1:], z_ceramic[1:]])
     T_vals = np.concatenate([T_substrate, T_bondcoat[1:], T_ceramic[1:]])
     
-    # Calcul du flux thermique Q = -k * dT/dz (Loi de Fourier)
-    # Le flux est constant à travers toutes les couches (régime permanent)
-    Q_constant = delta_T / R_total  # W/m²
-    Q1_vals = np.full_like(T_vals, Q_constant)
-    
     fig_3d = create_structure_3d(h_sub, h_bc, h_tbc, T_vals, x_plot)
     st.plotly_chart(fig_3d, use_container_width=True)
+    
+    # Récupérer les profils Fourier pour les graphiques 2D (flux avec variation)
+    x_plot_fourier, T_vals_fourier, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
     
     # === ROW 4: RECOMMANDATIONS INTELLIGENTES ===
     st.markdown("### 💡 Recommandations Intelligentes")
@@ -706,7 +704,7 @@ def render():
     with col_temp:
         fig_temp = go.Figure()
         fig_temp.add_trace(go.Scatter(
-            x=x_plot * 1000, y=T_vals,
+            x=x_plot_fourier * 1000, y=np.clip(T_vals_fourier, t_bottom, t_top),
             mode='lines',
             line=dict(color='#3b82f6', width=3),
             fill='tozeroy',
@@ -731,7 +729,7 @@ def render():
     with col_flux:
         fig_flux = go.Figure()
         fig_flux.add_trace(go.Scatter(
-            x=x_plot * 1000, y=Q1_vals,
+            x=x_plot_fourier * 1000, y=Q1_vals,
             mode='lines',
             line=dict(color='#10b981', width=3),
             fill='tozeroy',
