@@ -1,0 +1,783 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{hyperref}
+
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\setlength{\headheight}{14pt}
+
+% Couleurs
+\definecolor{orateurA}{RGB}{59, 130, 246}   % Bleu
+\definecolor{orateurB}{RGB}{16, 185, 129}   % Vert
+\definecolor{orateurC}{RGB}{249, 115, 22}   % Orange
+\definecolor{orateurD}{RGB}{139, 92, 246}   % Violet
+\definecolor{codecolor}{RGB}{30, 41, 59}
+
+% Boîtes pour chaque orateur
+\newtcolorbox{orateurAbox}[1][]{
+    colback=orateurA!5, colframe=orateurA,
+    fonttitle=\bfseries\large, title={#1}, breakable,
+    left=3mm, right=3mm
+}
+\newtcolorbox{orateurBbox}[1][]{
+    colback=orateurB!5, colframe=orateurB,
+    fonttitle=\bfseries\large, title={#1}, breakable,
+    left=3mm, right=3mm
+}
+\newtcolorbox{orateurCbox}[1][]{
+    colback=orateurC!5, colframe=orateurC,
+    fonttitle=\bfseries\large, title={#1}, breakable,
+    left=3mm, right=3mm
+}
+\newtcolorbox{orateurDbox}[1][]{
+    colback=orateurD!5, colframe=orateurD,
+    fonttitle=\bfseries\large, title={#1}, breakable,
+    left=3mm, right=3mm
+}
+
+% En-tête
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Projet 5A-IDSA -- Script de Soutenance}
+\lhead{TBC Multicouche}
+\rfoot{Page \thepage}
+
+\title{\textbf{SCRIPT DE SOUTENANCE}\\[0.5cm]
+\Large Évaluation Thermomécanique des Zones Critiques\\
+d'Endommagement dans les Aubes de Turbines\\
+Multicouches Nouvelle Génération\\[1cm]
+\normalsize Projet Industriel 5A-IDSA -- Encadrement ONERA / ESTACA}
+\author{Équipe : Achille, Johan, Lionel, Maxime}
+\date{Soutenance Janvier 2026}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\vspace{1cm}
+
+\begin{center}
+\begin{tcolorbox}[colback=codecolor!10, colframe=codecolor, width=0.95\textwidth]
+\centering
+\textbf{LÉGENDE DES ORATEURS}\\[0.5cm]
+\begin{tabular}{llll}
+\textcolor{orateurA}{\rule{1cm}{0.4cm}} \textbf{Orateur A} & 
+\textcolor{orateurB}{\rule{1cm}{0.4cm}} \textbf{Orateur B} &
+\textcolor{orateurC}{\rule{1cm}{0.4cm}} \textbf{Orateur C} &
+\textcolor{orateurD}{\rule{1cm}{0.4cm}} \textbf{Orateur D}
+\end{tabular}\\[0.3cm]
+\textit{Durée totale : 40 minutes (10 min chacun) + 15 min questions}
+\end{tcolorbox}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Orateur} & \textbf{Sections} & \textbf{Difficulté} & \textbf{Durée} \\
+\hline
+\textcolor{orateurA}{\textbf{A}} & Intro + Matrice $\Gamma(\tau)$ & Moyenne + Élevée & 10 min \\
+\textcolor{orateurB}{\textbf{B}} & Contexte TBC + Assemblage 9×9 & Facile + Élevée & 10 min \\
+\textcolor{orateurC}{\textbf{C}} & Implémentation + Validation ONERA & Moyenne + Moyenne & 10 min \\
+\textcolor{orateurD}{\textbf{D}} & Dashboard + Résultats + Conclusion & Facile + Moyenne & 10 min \\
+\hline
+\end{tabular}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section*{OUVERTURE (30 secondes)}
+\addcontentsline{toc}{section}{OUVERTURE}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{orateurAbox}[ORATEUR A -- Slide 1 : Titre]
+\textbf{[Se lever, sourire au jury]}
+
+<<~Bonjour à tous, merci d'être présents pour notre soutenance.
+
+Je suis [Prénom A], et avec mes collègues [Prénoms B, C, D], nous allons vous présenter notre projet industriel de 5\ieme{} année.
+
+Notre sujet : \textbf{``Évaluation Thermomécanique des Zones Critiques d'Endommagement dans les Aubes de Turbines Multicouches Nouvelle Génération''}.
+
+Ce projet a été réalisé sous l'encadrement de l'ONERA, avec Monsieur Aurélien Vattré, et de l'ESTACA, avec Monsieur Daniel Gaffié, en partenariat avec Safran.~>>
+\end{orateurAbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{PARTIE 1 : Introduction et Contexte (10 min)}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{orateurAbox}[ORATEUR A -- Slide 2 : Sommaire Général (30 sec)]
+<<~Voici le plan de notre présentation.
+
+\textbf{Partie 1} : Je vais commencer par poser le contexte industriel et introduire les bases mathématiques de notre approche spectrale.
+
+\textbf{Partie 2} : [Prénom B] détaillera l'architecture du système TBC multicouche et présentera l'assemblage matriciel complet.
+
+\textbf{Partie 3} : [Prénom C] vous montrera l'implémentation logicielle et la validation avec les données ONERA.
+
+\textbf{Partie 4} : Enfin, [Prénom D] présentera l'interface utilisateur, les résultats clés et nos conclusions.~>>
+\end{orateurAbox}
+
+\begin{orateurAbox}[ORATEUR A -- Slide 3 : Contexte Aéronautique (1 min)]
+<<~Commençons par replacer notre projet dans son contexte.
+
+Les turbines haute pression sont le \textbf{cœur} des moteurs aéronautiques modernes. Elles extraient l'énergie des gaz de combustion pour entraîner le compresseur et la soufflante.
+
+\textbf{Les enjeux industriels sont considérables} :
+\begin{itemize}[leftmargin=*]
+    \item Les températures en sortie de chambre de combustion dépassent \textbf{1500°C}
+    \item Chaque gain de 10°C sur la température de fonctionnement améliore le rendement de \textbf{1 à 2\%}
+    \item Mais ces températures sont \textbf{au-delà} des limites des matériaux métalliques actuels
+\end{itemize}
+
+C'est pourquoi l'industrie utilise des revêtements protecteurs appelés \textbf{TBC} -- Thermal Barrier Coatings.~>>
+\end{orateurAbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 4 : Les Aubes de Turbines HP (1 min)]
+<<~\textbf{[Transition de A vers B]}
+
+Merci [Prénom A]. Je vais maintenant vous présenter plus en détail les aubes de turbines.
+
+\textbf{[Pointer le schéma d'une aube]}
+
+Une aube de turbine HP subit des conditions extrêmes :
+\begin{itemize}[leftmargin=*]
+    \item Température des gaz : \textbf{supérieure à 1500°C}
+    \item Vitesse de rotation : \textbf{10 000 à 15 000 tr/min}
+    \item Forces centrifuges : plusieurs \textbf{tonnes} de traction sur chaque aube
+    \item Environnement corrosif : oxydation à haute température
+\end{itemize}
+
+Le matériau de base est un \textbf{superalliage monocristallin} à base de nickel, comme l'Inconel 718. Mais même ce matériau ne peut pas résister seul à ces températures.~>>
+\end{orateurBbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 5 : Architecture TBC Multicouche (1 min 30)]
+<<~C'est là qu'intervient le \textbf{système TBC multicouche}.
+
+\textbf{[Pointer le schéma en coupe]}
+
+Notre système comporte \textbf{trois couches} empilées :
+
+\textbf{1. Le substrat} -- Épaisseur typique : 500 micromètres
+\begin{itemize}[leftmargin=*]
+    \item Superalliage base nickel (Inconel 718)
+    \item Assure la \textbf{résistance mécanique} structurelle
+\end{itemize}
+
+\textbf{2. La couche d'accroche} (Bond Coat) -- Épaisseur : 10 micromètres
+\begin{itemize}[leftmargin=*]
+    \item Alliage MCrAlY (Nickel-Chrome-Aluminium-Yttrium)
+    \item Assure l'\textbf{adhésion} entre substrat et céramique
+    \item Protection contre l'\textbf{oxydation}
+\end{itemize}
+
+\textbf{3. La céramique TBC} -- Épaisseur variable : 50 à 500 micromètres
+\begin{itemize}[leftmargin=*]
+    \item Zircone stabilisée à l'yttrium (YSZ 7\%)
+    \item Assure l'\textbf{isolation thermique} principale
+    \item Conductivité très faible : seulement 1{,}5 W/m·K
+\end{itemize}
+
+Cette architecture permet de créer un \textbf{gradient thermique} de plusieurs centaines de degrés sur quelques millimètres.~>>
+\end{orateurBbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 6 : Problématiques d'Endommagement (1 min 30)]
+<<~Malheureusement, ces systèmes multicouches présentent des \textbf{modes de défaillance} critiques.
+
+\textbf{[Montrer les photos/schémas]}
+
+\textbf{La délamination} : décohésion entre les couches, souvent à l'interface bond coat/céramique. C'est notre mode de rupture principal.
+
+\textbf{L'écaillage} : perte de morceaux entiers du revêtement céramique. Expose directement le substrat aux gaz chauds.
+
+\textbf{La fissuration} : propagation de fissures depuis les zones de concentration de contraintes.
+
+\textbf{Statistiquement}, ces phénomènes d'interface représentent la \textbf{cause principale de défaillance} des systèmes TBC en service.
+
+L'impact économique est majeur : chaque arrêt non programmé coûte des \textbf{centaines de milliers d'euros} à une compagnie aérienne.~>>
+\end{orateurBbox}
+
+\begin{orateurAbox}[ORATEUR A -- Slide 7 : Objectifs du Projet (1 min)]
+<<~\textbf{[Transition de B vers A]}
+
+C'est dans ce contexte que s'inscrit notre projet.
+
+Notre objectif principal : développer un \textbf{outil de simulation numérique} permettant de :
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Modéliser} la réponse thermomécanique 3D des architectures multicouches
+    \item \textbf{Prédire} les zones critiques d'endommagement aux interfaces
+    \item \textbf{Quantifier} les effets de l'anisotropie élastique et des paramètres géométriques
+    \item \textbf{Fournir} des cartes de sensibilité pour guider la conception de futures aubes
+\end{enumerate}
+
+Notre approche : une \textbf{méthode spectrale semi-analytique}, plus légère et plus rapide que les éléments finis traditionnels.~>>
+\end{orateurAbox}
+
+\begin{orateurAbox}[ORATEUR A -- Slide 8 : Introduction Méthode Spectrale (1 min)]
+<<~Permettez-moi maintenant d'introduire les \textbf{fondements mathématiques} de notre approche.
+
+La \textbf{méthode spectrale} repose sur un principe simple mais puissant : décomposer tous les champs physiques en \textbf{séries de Fourier}.
+
+\textbf{Pourquoi cette approche ?}
+\begin{itemize}[leftmargin=*]
+    \item Solution \textbf{semi-analytique} : pas de maillage spatial
+    \item \textbf{Précision} contrôlée par le nombre de modes
+    \item \textbf{Rapidité} de calcul : idéal pour les études paramétriques
+\end{itemize}
+
+Le champ de température s'écrit sous la forme :
+\[
+T(x_1, x_2, x_3) = \sum_{m,n} T_{mn}(x_3) \cdot \sin(\delta_1 x_1) \cdot \sin(\delta_2 x_2)
+\]
+
+où $\delta_1 = \delta_2 = \frac{\pi}{L_w}$ sont les \textbf{nombres d'onde spectraux}.~>>
+\end{orateurAbox}
+
+\begin{orateurAbox}[ORATEUR A -- Slide 9 : Matrice Dynamique $\Gamma(\tau)$ (2 min) -- PARTIE TECHNIQUE]
+<<~Le cœur de notre méthode est la construction de la \textbf{matrice dynamique} $\Gamma(\tau)$.
+
+\textbf{[Pointer la matrice affichée]}
+
+En injectant l'ansatz de déplacement modal dans les équations d'équilibre, on obtient un système homogène :
+\[
+\Gamma(\tau) \cdot \mathbf{A} = \mathbf{0}
+\]
+
+La matrice $\Gamma$ est une matrice $3 \times 3$ composée de \textbf{9 opérateurs} $L_{jk}$ :
+
+\textbf{Les termes diagonaux} dépendent des rigidités $C_{ij}$ et du carré de $\tau$ :
+\begin{align*}
+L_{11} &= C_{55}\tau^2 - (C_{11}\delta_1^2 + C_{66}\delta_2^2) \\
+L_{22} &= C_{44}\tau^2 - (C_{22}\delta_2^2 + C_{66}\delta_1^2) \\
+L_{33} &= C_{33}\tau^2 - (C_{55}\delta_1^2 + C_{44}\delta_2^2)
+\end{align*}
+
+\textbf{Point crucial} : les termes croisés $L_{13}$ et $L_{31}$ sont \textbf{antisymétriques} :
+\[
+L_{13} = +(C_{13} + C_{55})\delta_1\tau \quad \text{mais} \quad L_{31} = \textcolor{red}{-}(C_{13} + C_{55})\delta_1\tau
+\]
+
+Cette antisymétrie est \textbf{essentielle} -- elle traduit la physique correcte de l'équilibre en direction $x_3$.~>>
+\end{orateurAbox}
+
+\begin{orateurAbox}[ORATEUR A -- Slide 10 : Équation Caractéristique (1 min)]
+<<~Pour trouver les \textbf{valeurs propres} $\tau$, on résout l'équation caractéristique :
+\[
+\det(\Gamma(\tau)) = 0
+\]
+
+C'est un \textbf{polynôme d'ordre 6} en $\tau$ :
+\[
+P(\tau) = c_6\tau^6 + c_4\tau^4 + c_2\tau^2 + c_0 = 0
+\]
+
+\textbf{Astuce mathématique} : en posant $X = \tau^2$, on se ramène à un polynôme \textbf{cubique} avec 3 racines.
+
+On sélectionne ensuite les 3 valeurs $\tau_r$ telles que $\mathrm{Re}(\tau_r) < 0$ -- c'est la \textbf{condition de radiation} qui assure la décroissance physique des modes.
+
+Je passe maintenant la parole à [Prénom B] pour la suite de la modélisation.~>>
+\end{orateurAbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{PARTIE 2 : Assemblage Multicouche (10 min)}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{orateurBbox}[ORATEUR B -- Slide 11 : Assemblage 9×9 (1 min 30) -- PARTIE TECHNIQUE]
+<<~Merci [Prénom A]. Je vais maintenant vous montrer comment nous assemblons le \textbf{système complet}.
+
+Pour chaque couche, nous construisons une matrice \textbf{bloc-diagonale} $K_{Dyn}$ de dimension $9 \times 9$ :
+
+\[
+K_{Dyn} = \begin{pmatrix}
+\Gamma(\tau_1) & 0 & 0 \\
+0 & \Gamma(\tau_2) & 0 \\
+0 & 0 & \Gamma(\tau_3)
+\end{pmatrix}
+\]
+
+Chaque bloc $\Gamma(\tau_r)$ correspond à l'une des 3 valeurs propres sélectionnées.
+
+Le \textbf{vecteur d'amplitudes} $\mathcal{A}$ contient 9 inconnues :
+\[
+\mathcal{A} = \begin{pmatrix} A_1^1 & A_2^1 & A_3^1 & A_1^2 & A_2^2 & A_3^2 & A_1^3 & A_2^3 & A_3^3 \end{pmatrix}^T
+\]
+
+où l'exposant désigne le mode et l'indice la direction spatiale.~>>
+\end{orateurBbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 12 : Termes Thermiques (1 min 30)]
+<<~Le \textbf{second membre} $\mathcal{F}_{Th}$ représente la \textbf{sollicitation thermique}.
+
+Les termes $Q_\alpha$ traduisent le couplage thermo-mécanique :
+
+\begin{align*}
+Q_1 &= (C_{11}\alpha_{11} + C_{12}\alpha_{22}) \cdot \delta_1 \cdot T \\
+Q_2 &= (C_{22}\alpha_{22} + C_{12}\alpha_{11}) \cdot \delta_2 \cdot T \\
+Q_3 &= (C_{13}\alpha_{11} + C_{23}\alpha_{22} + C_{33}\alpha_{33}) \cdot \frac{dT}{dx_3}
+\end{align*}
+
+Physiquement, $Q_1$ et $Q_2$ représentent les \textbf{dilatations dans le plan}, tandis que $Q_3$ représente l'effet du \textbf{gradient de température} sur la direction normale.
+
+Ces termes dépendent à la fois des rigidités $C_{ij}$ et des coefficients de dilatation thermique $\alpha_{ij}$.~>>
+\end{orateurBbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 13 : Système Multicouche Global (1 min 30)]
+<<~Pour un système à \textbf{N couches}, le problème devient plus complexe.
+
+\textbf{Nombre d'inconnues} : $6N$ coefficients (pour 3 couches : 18 inconnues).
+
+\textbf{Équations disponibles} :
+\begin{itemize}[leftmargin=*]
+    \item \textbf{3 équations} : surface libre en $z = 0$ \quad ($\sigma_{13} = \sigma_{23} = \sigma_{33} = 0$)
+    \item \textbf{6(N-1) équations} : continuité aux interfaces (déplacements + contraintes)
+    \item \textbf{3 équations} : surface libre en $z = H$
+\end{itemize}
+
+\textbf{Total} : $3 + 6(N-1) + 3 = 6N$ équations $\checkmark$
+
+Le système est bien fermé !~>>
+\end{orateurBbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 14 : Réduction 27 → 18 (1 min)]
+<<~\textbf{Point clé} de notre approche : la \textbf{réduction du nombre d'équations}.
+
+\textbf{[Montrer le tableau comparatif]}
+
+En théorie, pour 3 couches, on aurait \textbf{27 équations} :
+\begin{itemize}[leftmargin=*]
+    \item Équilibre volumique (div $\sigma$ = 0) : 9 équations
+    \item Continuité aux interfaces : 12 équations
+    \item Conditions aux limites : 6 équations
+\end{itemize}
+
+Mais grâce à l'approche modale, les \textbf{9 équations d'équilibre volumique} sont \textbf{implicitement satisfaites} !
+
+En écrivant la solution avec les valeurs propres $\tau_r$ de $\Gamma(\tau)$, l'équation $\Gamma(\tau_r) \cdot \mathbf{A}^r = \mathbf{0}$ est automatiquement vérifiée.
+
+\textbf{Résultat} : nous ne résolvons que \textbf{18 équations} au lieu de 27.~>>
+\end{orateurBbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 15 : Critères d'Endommagement (1 min 30)]
+<<~Une fois les contraintes calculées, nous devons \textbf{évaluer le risque d'endommagement}.
+
+\textbf{Indicateur de Dommage D} :
+\[
+D = \max_{ij} \left( \frac{|\sigma_{ij}|}{\sigma_{crit}^{ij}} \right)
+\]
+
+\textbf{Interprétation} :
+\begin{itemize}[leftmargin=*]
+    \item $D < 0.5$ : \textcolor{green}{\textbf{Zone sûre}} -- pas de risque immédiat
+    \item $0.5 \leq D < 0.8$ : \textcolor{orange}{\textbf{Zone de prudence}} -- surveillance recommandée
+    \item $D \geq 0.8$ : \textcolor{red}{\textbf{Zone critique}} -- risque de délamination élevé
+    \item $D \geq 1$ : \textcolor{red}{\textbf{Rupture probable}}
+\end{itemize}
+
+Pour les matériaux anisotropes, nous utilisons également le \textbf{critère de Tsai-Wu}.~>>
+\end{orateurBbox}
+
+\begin{orateurBbox}[ORATEUR B -- Slide 16 : Propriétés Matériaux (1 min)]
+<<~Nos calculs reposent sur des \textbf{propriétés matériaux validées} issues des publications ONERA/Safran.
+
+\textbf{[Montrer le tableau]}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Propriété} & \textbf{Substrat} & \textbf{Bond Coat} & \textbf{Céramique} \\
+\midrule
+$C_{11}$ (GPa) & 260 & 180 & 50 \\
+$C_{12}$ (GPa) & 179 & 80 & 10 \\
+$C_{44}$ (GPa) & 110 & 60 & 20 \\
+$\alpha$ (K$^{-1}$) & $12 \times 10^{-6}$ & $14 \times 10^{-6}$ & $10 \times 10^{-6}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Ces valeurs proviennent de l'article de \textbf{Bovet, Chiaruttini et Vattré} (ONERA/Safran, 2025).
+
+Je laisse maintenant la parole à [Prénom C] pour l'implémentation.~>>
+\end{orateurBbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{PARTIE 3 : Implémentation et Validation (10 min)}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{orateurCbox}[ORATEUR C -- Slide 17 : Architecture du Projet (1 min)]
+<<~Merci [Prénom B]. Je vais vous présenter comment nous avons \textbf{implémenté} cette méthodologie.
+
+Notre projet représente environ \textbf{3000 lignes de code Python} organisées comme suit :
+
+\textbf{Répertoire} \texttt{core/} -- Moteur de calcul :
+\begin{itemize}[leftmargin=*]
+    \item \texttt{mechanical\_pdf.py} : solveur spectral (1031 lignes)
+    \item \texttt{mechanical.py} : assemblage multicouche (1507 lignes)
+    \item \texttt{damage\_analysis.py} : critères d'endommagement (367 lignes)
+    \item \texttt{calculation.py} : solveur thermique (269 lignes)
+    \item \texttt{constants.py} : propriétés matériaux ONERA
+\end{itemize}
+
+\textbf{Répertoire} \texttt{tabs/} -- Interface Streamlit : 8 onglets interactifs~>>
+\end{orateurCbox}
+
+\begin{orateurCbox}[ORATEUR C -- Slide 18 : Choix Technologiques (45 sec)]
+<<~Nos \textbf{choix technologiques} :
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Python 3.x} : langage scientifique de référence
+    \item \textbf{NumPy / SciPy} : calcul matriciel haute performance
+    \item \textbf{Streamlit} : création rapide d'interfaces web
+    \item \textbf{Plotly} : visualisations 3D interactives
+\end{itemize}
+
+Ces technologies permettent un développement rapide tout en conservant de bonnes performances numériques.~>>
+\end{orateurCbox}
+
+\begin{orateurCbox}[ORATEUR C -- Slide 19 : Module mechanical\_pdf.py (1 min 30)]
+<<~Le cœur du solveur est le module \texttt{mechanical\_pdf.py}.
+
+\textbf{Fonctions principales} :
+
+\begin{itemize}[leftmargin=*]
+    \item \texttt{compute\_L\_operators()} : calcul des 9 opérateurs $L_{jk}$
+    \item \texttt{get\_Gamma\_matrix()} : assemblage de la matrice $\Gamma(\tau)$
+    \item \texttt{solve\_characteristic\_polynomial()} : résolution du polynôme cubique
+    \item \texttt{assemble\_K\_dyn\_9x9()} : construction de la matrice bloc-diagonale
+    \item \texttt{compute\_Q\_thermal\_vector()} : calcul des termes thermiques
+\end{itemize}
+
+Chaque fonction est \textbf{documentée} avec des docstrings détaillées et des références aux équations du PDF méthodologique.~>>
+\end{orateurCbox}
+
+\begin{orateurCbox}[ORATEUR C -- Slide 20 : Stabilité Numérique (1 min 30)]
+<<~Un défi majeur : la \textbf{stabilité numérique}.
+
+Le système multicouche peut être \textbf{extrêmement mal conditionné} -- nous avons observé des conditionnements supérieurs à $10^{30}$ !
+
+\textbf{Nos solutions} :
+
+\textbf{1. Préconditionnement par scaling}
+\begin{itemize}[leftmargin=*]
+    \item Matrices diagonales $D_r$ et $D_c$ pour équilibrer les lignes et colonnes
+\end{itemize}
+
+\textbf{2. Régularisation de Tikhonov via SVD}
+\begin{itemize}[leftmargin=*]
+    \item Filtrage des valeurs singulières trop petites
+    \item Paramètre $\lambda$ estimé par validation croisée généralisée
+\end{itemize}
+
+\textbf{3. Normalisation par $C_{REF} = 200$ GPa}
+\begin{itemize}[leftmargin=*]
+    \item Évite les grands nombres dans les déterminants
+\end{itemize}~>>
+\end{orateurCbox}
+
+\begin{orateurCbox}[ORATEUR C -- Slide 21 : Traçabilité Théorie → Code (1 min)]
+<<~Un point fort de notre projet : la \textbf{traçabilité complète} entre théorie et code.
+
+\textbf{[Montrer le tableau de correspondance]}
+
+\begin{center}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Étape PDF} & \textbf{Fonction Python} & \textbf{Fichier} \\
+\hline
+Étape 6 : Matrice $\Gamma$ & \texttt{get\_Gamma\_matrix()} & mechanical\_pdf.py \\
+Étape 6 : Valeurs propres & \texttt{solve\_char\_poly()} & mechanical\_pdf.py \\
+Étape 7 : Assemblage 9×9 & \texttt{assemble\_K\_dyn()} & mechanical\_pdf.py \\
+Étape 8 : Multicouche & \texttt{solve\_multilayer()} & mechanical.py \\
+Critère D & \texttt{compute\_damage()} & damage\_analysis.py \\
+\hline
+\end{tabular}
+\end{center}
+
+Cette traçabilité facilite la maintenance et la validation du code.~>>
+\end{orateurCbox}
+
+\begin{orateurCbox}[ORATEUR C -- Slide 22 : Validation ONERA (1 min 30)]
+<<~Nous avons \textbf{validé nos résultats} par rapport aux données ONERA.
+
+\textbf{Comparaison des propriétés matériaux} :
+\begin{itemize}[leftmargin=*]
+    \item $C_{11}$ code = 260 GPa vs ONERA = 259{,}6 GPa → écart $< 1\%$
+    \item $C_{12}$ code = 179 GPa vs ONERA = 179{,}0 GPa → écart $< 1\%$
+\end{itemize}
+
+\textbf{Plages de contraintes validées} :
+\begin{itemize}[leftmargin=*]
+    \item Contraintes de von Mises typiques FEM : 400--800 MPa
+    \item Concentration à la racine de l'aube : jusqu'à 1000 MPa
+    \item \textbf{Nos résultats sont dans ces plages} $\checkmark$
+\end{itemize}
+
+Le dashboard affiche un badge \textbf{``Conforme ONERA''} lorsque les résultats sont validés.~>>
+\end{orateurCbox}
+
+\begin{orateurCbox}[ORATEUR C -- Slide 23 : Tests Automatisés (1 min)]
+<<~La qualité du code est assurée par des \textbf{tests automatisés}.
+
+\textbf{Tests unitaires} (pytest) :
+\begin{itemize}[leftmargin=*]
+    \item \texttt{test\_mechanical.py} : fonctions de base
+    \item \texttt{test\_multilayer.py} : assemblage multicouche
+    \item Couverture des cas limites et edge cases
+\end{itemize}
+
+\textbf{Validation croisée} :
+\begin{itemize}[leftmargin=*]
+    \item Vérification $P(\tau=3)$ reconstruit vs direct
+    \item Tests de symétrie/antisymétrie de la matrice $\Gamma$
+\end{itemize}
+
+Je passe maintenant la parole à [Prénom D] pour la présentation des résultats.~>>
+\end{orateurCbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section{PARTIE 4 : Interface, Résultats et Conclusions (10 min)}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{orateurDbox}[ORATEUR D -- Slide 24 : Dashboard Principal (1 min 30)]
+<<~Merci [Prénom C]. Je vais maintenant vous présenter notre \textbf{interface utilisateur}.
+
+\textbf{[Montrer la capture d'écran du dashboard]}
+
+Le dashboard offre une \textbf{vue panoramique} du système TBC avec :
+
+\textbf{6 KPIs Cards} colorées :
+\begin{itemize}[leftmargin=*]
+    \item Température interface (code couleur critique/attention/OK)
+    \item Épaisseur TBC
+    \item Indicateur D avec niveau de risque
+    \item Performance thermique
+    \item Gradient $\Delta T$
+    \item Marge de sécurité
+\end{itemize}
+
+\textbf{Jauge de Risque Global} : visualisation semi-circulaire intuitive
+
+\textbf{Radar Multi-Critères} : 5 axes (isolation, intégrité, masse, durée de vie, marge)~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 25 : Visualisations 3D (1 min)]
+<<~L'interface propose des \textbf{visualisations 3D interactives} avec Plotly.
+
+\textbf{[Montrer la visualisation 3D]}
+
+On peut voir :
+\begin{itemize}[leftmargin=*]
+    \item La surface du champ thermique avec dégradé de couleurs
+    \item Les lignes d'interfaces entre couches
+    \item Le profil de température dans l'épaisseur
+\end{itemize}
+
+L'utilisateur peut \textbf{interagir} : zoom, rotation, survol pour voir les valeurs exactes.
+
+D'autres onglets proposent la cartographie 3D des contraintes et des études paramétriques.~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 26 : Résultats Thermiques (1 min)]
+<<~Passons aux \textbf{résultats concrets}.
+
+\textbf{Profil de température typique} :
+\begin{itemize}[leftmargin=*]
+    \item Température en surface chaude : \textbf{1400°C}
+    \item Température interface bond coat/céramique : \textbf{800 à 1050°C}
+    \item Température côté froid : \textbf{500°C}
+\end{itemize}
+
+Le gradient se concentre principalement dans la \textbf{couche céramique} grâce à sa faible conductivité.
+
+La température critique $T_{crit} = 1100$°C ne doit pas être dépassée à l'interface.~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 27 : Résultats Mécaniques (1 min 30)]
+<<~\textbf{Contraintes transverses calculées} :
+
+\textbf{Contrainte d'arrachement $\sigma_{33}$} :
+\begin{itemize}[leftmargin=*]
+    \item Valeurs typiques : 50 à 200 MPa
+    \item Seuil critique céramique : 150 MPa (traction)
+    \item Pics observés aux interfaces
+\end{itemize}
+
+\textbf{Contraintes de cisaillement $\sigma_{13}$, $\sigma_{23}$} :
+\begin{itemize}[leftmargin=*]
+    \item Valeurs typiques : 20 à 80 MPa
+    \item Seuil critique : 120 MPa
+\end{itemize}
+
+\textbf{Zone identifiée comme la plus critique} : l'interface \textbf{bond coat / céramique}, en raison du fort contraste de propriétés entre ces deux couches.~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 28 : Études Paramétriques (1 min 30)]
+<<~Nous avons réalisé des \textbf{études paramétriques} pour identifier les leviers de conception.
+
+\textbf{Influence de l'épaisseur TBC ($\alpha$)} :
+\begin{itemize}[leftmargin=*]
+    \item $\alpha \uparrow$ → indicateur D $\downarrow$
+    \item Un TBC plus épais \textbf{réduit} les contraintes aux interfaces
+    \item \textbf{Recommandation} : $\alpha \geq 0.2$ pour applications HP
+\end{itemize}
+
+\textbf{Influence de la longueur d'onde ($L_w$)} :
+\begin{itemize}[leftmargin=*]
+    \item $L_w \downarrow$ → D $\uparrow$
+    \item Des perturbations latérales courtes créent des \textbf{gradients plus forts}
+\end{itemize}
+
+\textbf{Influence du gradient thermique ($\Delta T$)} :
+\begin{itemize}[leftmargin=*]
+    \item Effet linéaire sur les contraintes
+    \item Chaque 100°C supplémentaire augmente D d'environ 10-15\%
+\end{itemize}~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 29 : Limites du Modèle (1 min)]
+<<~Notre modèle présente certaines \textbf{limites} qu'il est important de mentionner :
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Géométrie simplifiée} : plaque plane multicouche (pas de courbure d'aube)
+    \item \textbf{Chargement stationnaire} : pas de prise en compte du cyclage thermique
+    \item \textbf{Comportement élastique} : pas de fluage ni de plasticité
+    \item \textbf{Interfaces parfaites} : pas de modélisation de rugosité ou d'oxyde
+\end{itemize}
+
+Ces simplifications sont appropriées pour une \textbf{première évaluation} des zones critiques.~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 30 : Perspectives (1 min)]
+<<~Pour la suite, plusieurs \textbf{pistes d'amélioration} s'offrent à nous :
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Géométrie} : extension vers des formes cylindriques ou complexes
+    \item \textbf{Physique} : couplage avec la fatigue thermique et le fluage
+    \item \textbf{Données} : base de données matériaux étendue à d'autres alliages
+    \item \textbf{Intelligence artificielle} : utilisation du machine learning pour accélérer l'optimisation paramétrique
+\end{itemize}
+
+Ces développements permettraient d'approcher un outil de conception industriel complet.~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 31 : Conclusion (1 min)]
+<<~En conclusion :
+
+\textbf{Objectifs atteints} $\checkmark$
+\begin{itemize}[leftmargin=*]
+    \item Modélisation thermomécanique 3D fonctionnelle
+    \item Identification des zones critiques aux interfaces
+    \item Outil paramétrique pour l'aide à la conception
+\end{itemize}
+
+\textbf{Livrables} :
+\begin{itemize}[leftmargin=*]
+    \item Module Python de calcul (~3000 lignes)
+    \item Interface Streamlit interactive (8 onglets)
+    \item Documentation technique complète
+\end{itemize}
+
+\textbf{Traçabilité} : correspondance complète entre les équations théoriques et le code.
+
+\textbf{Validation} : résultats conformes aux plages ONERA/Safran.~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 32 : Remerciements (30 sec)]
+<<~Nous tenons à remercier :
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Aurélien Vattré} de l'ONERA pour son expertise et son encadrement scientifique
+    \item \textbf{Daniel Gaffié} de l'ESTACA pour son accompagnement pédagogique
+    \item \textbf{Safran} pour le contexte industriel et les données matériaux
+    \item Nos familles et amis pour leur soutien
+\end{itemize}
+
+Merci à vous d'avoir suivi notre présentation.~>>
+\end{orateurDbox}
+
+\begin{orateurDbox}[ORATEUR D -- Slide 33 : Questions]
+<<~Nous sommes maintenant à votre disposition pour \textbf{répondre à vos questions}.
+
+\textbf{[Rester debout, sourire, prêt à échanger]}~>>
+\end{orateurDbox}
+
+%═══════════════════════════════════════════════════════════════════════════════
+\section*{BACKUP : Réponses aux Questions Anticipées}
+\addcontentsline{toc}{section}{BACKUP : Questions Anticipées}
+%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{tcolorbox}[colback=codecolor!5, colframe=codecolor, title={\textbf{Question : Pourquoi une méthode spectrale plutôt que les éléments finis ?}}]
+\textbf{Réponse suggérée} :
+
+La méthode spectrale offre plusieurs avantages dans notre contexte :
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Pas de maillage} : évite les problèmes de convergence liés à la taille des éléments
+    \item \textbf{Rapidité} : résolution quasi-instantanée pour les études paramétriques
+    \item \textbf{Précision analytique} : les erreurs sont uniquement liées au nombre de modes
+    \item \textbf{Complémentarité} : peut être utilisé en pré-dimensionnement avant une analyse FEM détaillée
+\end{itemize}
+
+Les éléments finis restent nécessaires pour les géométries complexes et les non-linéarités.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=codecolor!5, colframe=codecolor, title={\textbf{Question : Comment gérez-vous l'antisymétrie de $L_{13}$ et $L_{31}$ ?}}]
+\textbf{Réponse suggérée} :
+
+L'antisymétrie $L_{13} = -L_{31}$ provient directement de l'équation d'équilibre dans la direction $x_3$. Dans le code, nous avons implémenté :
+
+\texttt{M[2,0] = -K13\_coeff * tau}
+
+où le signe négatif est explicite. Cette propriété a été vérifiée par des tests unitaires spécifiques qui vérifient que $\Gamma_{13} + \Gamma_{31} = 0$.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=codecolor!5, colframe=codecolor, title={\textbf{Question : Comment validez-vous vos résultats sans données expérimentales ?}}]
+\textbf{Réponse suggérée} :
+
+Notre validation repose sur plusieurs piliers :
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Données ONERA/Safran} : propriétés matériaux issues de publications scientifiques validées
+    \item \textbf{Plages de référence FEM} : nos contraintes sont dans les ordres de grandeur publiés (400-800 MPa)
+    \item \textbf{Consistency checks} : vérification des équilibres, symétries, conditions aux limites
+    \item \textbf{Cas limites} : comportement correct quand $\Delta T \to 0$ ou épaisseurs extrêmes
+\end{itemize}
+
+Une validation expérimentale complète nécessiterait des essais coûteux sur banc thermomécanique.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=codecolor!5, colframe=codecolor, title={\textbf{Question : Quelle est la précision numérique de votre solveur ?}}]
+\textbf{Réponse suggérée} :
+
+Nous atteignons une précision de l'ordre de $10^{-6}$ à $10^{-8}$ sur les coefficients grâce à :
+\begin{itemize}[leftmargin=*]
+    \item La régularisation SVD qui filtre les modes numériquement instables
+    \item Le préconditionnement par scaling qui ramène le conditionnement de $10^{30}$ à $10^{6}$
+    \item La normalisation par $C_{REF} = 200$ GPa qui évite les débordements
+\end{itemize}
+
+Le résidu du système linéaire après résolution est typiquement $< 10^{-10}$.
+\end{tcolorbox}
+
+\vspace{1cm}
+\begin{center}
+\rule{0.8\textwidth}{0.4pt}\\[0.5cm]
+\textit{Fin du script de soutenance}\\
+\textbf{Durée totale : 40 minutes + 15 minutes de questions}
+\end{center}
+
+\end{document}

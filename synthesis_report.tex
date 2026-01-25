@@ -598,37 +598,62 @@ $\beta \downarrow$ (TBC moins conducteur) & Gradient plus concentré dans TBC & 
 \section{Stabilité Numérique}
 %==============================================================================
 
-Le système multicouche peut être \textbf{mal conditionné} avec $\text{cond}(K) > 10^{30}$. Plusieurs techniques sont utilisées :
+Le système multicouche présente un \textbf{mauvais conditionnement numérique} extrême, avec un nombre de conditionnement $\text{cond}(K)$ pouvant dépasser $10^{30}$.
 
-\subsection{Préconditionnement par Équilibrage}
+\begin{warningbox}[Problème de Conditionnement]
+Ce phénomène s'explique par la coexistence d'échelles très différentes dans la mtrice de rigidité :
+\begin{itemize}
+    \item Les modules d'Young sont de l'ordre de $10^{11}$ Pa (centaines de GPa).
+    \item Les déplacements sont de l'ordre de $10^{-6}$ m (microns).
+    \item Les termes exponentiels $e^{\tau x_3}$ peuvent varier de plusieurs ordres de grandeur.
+\end{itemize}
+Sans traitement, la précision machine ($\approx 10^{15}$) est insuffisante, et les résultats ne seraient que du "bruit numérique".
+\end{warningbox}
 
+Deux techniques sont mises en œuvre pour garantir la robustesse du solveur :
+
+\subsection{Préconditionnement par Équilibrage (Scaling)}
+
+Avant la résolution, nous procédons à une "normalisation" de la matrice pour ramener tous les coefficients à une amplitude comparable ($\approx 1$). C'est équivalent à changer les unités pour chaque équation.
+
+Le système $K_{glob} \cdot \mathbf{C} = \mathbf{F}$ est transformé en :
 \begin{equation}
-    D_r \cdot K_{glob} \cdot D_c \cdot \mathbf{y} = D_r \cdot \mathbf{F}
+    (D_r K_{glob} D_c) \cdot (D_c^{-1} \mathbf{C}) = D_r \mathbf{F}
 \end{equation}
 
-où $D_r$ (scaling lignes) et $D_c$ (scaling colonnes) sont des matrices diagonales :
+où $D_r$ et $D_c$ sont des matrices diagonales de mise à l'échelle :
 \begin{align}
-    D_r[i,i] &= \frac{1}{\max_j |K[i,j]|} \\
-    D_c[j,j] &= \frac{1}{\max_i |K_{scaled}[i,j]|}
+    D_r[i,i] &= \frac{1}{\max_j |K_{glob}[i,j]|} \quad \text{(Normalisation des lignes)} \\
+    D_c[j,j] &= \frac{1}{\max_i |(D_r K_{glob})[i,j]|} \quad \text{(Normalisation des colonnes)}
 \end{align}
+
+Cette étape réduit généralement le conditionnement de $10^{30}$ à environ $10^{15}$, ce qui est parfois suffisant mais pas toujours.
 
 \subsection{Régularisation de Tikhonov}
 
-Pour $\text{cond}(K) > 10^{10}$, on utilise la décomposition SVD :
-\begin{equation}
-    K = U \Sigma V^H
-\end{equation}
+Si le système reste mal conditionné ($\text{cond} > 10^{10}$) après équilibrage, l'inversion directe matrice est impossible. Nous utilisons alors une méthode de régularisation qui \textbf{filtre les erreurs numériques}.
 
-La solution régularisée est :
+La matrice est décomposée en valeurs singulières (SVD) : $K = U \Sigma V^H$.
+Au lieu d'inverser les valeurs singulières $\sigma_i$ (ce qui donnerait $1/\sigma_i \to \infty$ pour les petites valeurs), on applique un filtre :
+
 \begin{equation}
 \boxed{
-    \mathbf{x}_{reg} = \sum_{i=1}^{n} \frac{\sigma_i^2}{\sigma_i^2 + \lambda^2} \cdot \frac{\mathbf{u}_i^H \mathbf{b}}{\sigma_i} \cdot \mathbf{v}_i
+    \mathbf{x}_{reg} = \sum_{i=1}^{n} \underbrace{\frac{\sigma_i}{\sigma_i^2 + \lambda^2}}_{\text{Filtre}} (\mathbf{u}_i^H \mathbf{b}) \mathbf{v}_i
 }
 \end{equation}
 
-où $\lambda$ est le paramètre de régularisation estimé par GCV (Generalized Cross-Validation).
+\begin{itemize}
+    \item Si $\sigma_i \gg \lambda$ (Signal fort) : Le filtre vaut $\approx 1/\sigma_i$ (inversion normale).
+    \item Si $\sigma_i \ll \lambda$ (Bruit/Zéro) : Le filtre vaut $\approx 0$ (on ignore ces termes instables).
+\end{itemize}
 
-L'implémentation se trouve dans \texttt{core/mechanical.py}, fonction \texttt{solve\_regularized\_system()}.
+Le paramètre $\lambda$ est déterminé automatiquement par la méthode GCV (Generalized Cross-Validation).
+
+L'implémentation complète se trouve dans \texttt{core/mechanical.py}, fonction \texttt{solve\_regularized\_system()}.
+
+\begin{tcolorbox}[colback=blue!5, colframe=blue!40, title=Note d'Implémentation]
+Nous tenons à souligner que la complexité numérique de ce problème (conditionnement > $10^{30}$) dépassait nos prévisions initiales. L'identification et l'implémentation de ces techniques avancées (SVD et régularisation de Tikhonov) n'ont été rendues possibles que grâce à une recherche bibliographique approfondie et à l'assistance d'outils d'IA pour adapter ces algorithmes mathématiques complexes à notre code Python.
+\end{tcolorbox}
 
 %==============================================================================
 \section{Comparaison : Méthode Spectrale vs CLT}

@@ -637,6 +637,13 @@ def render():
     # Calcul des profils
     x_plot, T_vals, Q1_vals, Q3_vals = calculate_profiles(res['profile_params'], res['H'])
     
+    # ═══════════════════════════════════════════════════════════════════════
+    # CORRECTION: Clipping des températures aux conditions limites réelles
+    # L'approche Fourier peut dépasser les conditions car c'est une série 
+    # (oscillations de Gibbs). On clip pour cohérence avec les paramètres UI.
+    # ═══════════════════════════════════════════════════════════════════════
+    T_vals = np.clip(T_vals, t_bottom, t_top)
+    
     h_sub = CONSTANTS['h1']
     h_bc = CONSTANTS['h2']
     h_tbc = res['h3']

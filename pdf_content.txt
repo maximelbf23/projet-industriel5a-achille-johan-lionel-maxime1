@@ -1,0 +1,397 @@
+--- START OF ProjectEstaca Achille.pdf ---
+--- Page 1 ---
+Mod´ elisation thermo-m´ ecanique de plaques multicouches :
+application aux barri` eres thermiques pour les moteurs
+a´ eronautiques
+Aur´ elien Vattr´ e
+R´ esum´ e du projet
+Ce travail vise ` a mod´ eliser analytiquement le comportement thermo´ elastique d’une plaque mul-
+ticouche soumise ` a des gradients thermiques. L’approche est semi-analytique, bas´ ee sur la
+s´ eparation des variables et le d´ eveloppement en s´ eries de Fourier. Cette ´ etude s’inscrit dans le
+contexte des barri` eres thermiques utilis´ ees pour prot´ eger les pi` eces critiques des moteurs d’avion,
+les aubes de turbine.
+´Etape 1 – D´ eﬁnition g´ eom´ etrique et thermique
+• G´ eom´ etrie: plaque multicouche, compos´ ee deN couches empil´ ees selon la direction
+normale x3, chacune d’´ epaisseurhi,t e l l e sq u e∑N
+i=1 hi = H.
+• Variables : on consid` ere le domaine tridimensionnel (x1,x 2,x 3) → [0,L 1]↑[0,L 2]↑[0,H ],
+o` ux3 est la direction normale aux interfaces.
+• Conductivit´ e thermique anisotrope par couche:
+ki =
+
+
+ki
+11 00
+0 ki
+22 0
+00 ki
+33
+
+, o` uki
+11 = ki
+22 ↓= ki
+33
+• Conditions aux limites thermiques:
+T(x3 = 0) =Tbottom,T (x3 = H)= Ttop
+´Etape 2 – Repr´ esentation spectrale de la temp´ erature
+On exprime la temp´ erature en d´ eveloppant une s´ erie double de Fourier, en s´ eparant les variables
+dans le plan transverse :
+T(xω,x 3)=
+→∑
+mω,mε=1
+Tmωmε (x3)s i n(ωωxω)s i n(ωεxε)
+avec ωω = mωϑ
+Lω , ε = {1, 2}. On choisit L1 = L2 >H et on se restreint ` a une coupe en
+x2 = L2/2, ce qui permet de simpliﬁer le second sinus. Ainsi, chaque coe!cientTmωmε (x3)v ´ e r i ﬁ e
+une ´ equation di”´ erentielle ordinaire dans chaque couche. Cette m´ ethode permet de r´ eduire un
+probl` eme tridimensionnel ` a une collection de probl` emes unidimensionnels.
+1
+CL
+lin-p,
+équationEen dessous
+--- Page 2 ---
+´Etape 3 – R´ esolution de la conduction thermique dans chaque
+couche
+• ´Equation de conduction 1D pour chaque coe!cient de Fourier:
+↔ d
+dx3
+(
+ki
+33
+dTmωmε
+dx3
+)
++ ki
+ϖϖω2
+ϖTmωmε =0
+• Solution g´ en´ erale dans la couchei (exponentielle) :
+Ti
+mωmε (x3)= Aieϱix3 + Bie↑ϱix3 ,ϑ i = ωϖ
+√
+kiϖϖ
+ki
+33
+• Conditions de raccord aux interfaces:
+– Continuit´ e de la temp´ erature : [T]=0
+– Continuit´ e du ﬂux thermique : [k33 ϖ3T]=0
+– Conditions de Dirichlet aux extr´ emit´ es
+• M´ ethode: r´ esolution alg´ ebrique du syst` eme obtenu pour les 2N constantes Ai,B i
+´Etape 4 – Loi de comportement thermo-´ elastique anisotrope
+• Chaque couche i du mat´ eriau est d´ ecrite par un comportement ´ elastique lin´ eaire or-
+thotrope, repr´ esent´ e par un tenseur de rigidit´ eCi
+ijkl d´ eﬁni localement. Les principales
+composantes utiles ` a la mod´ elisation sont :
+{Ci
+1111,C i
+1122,C i
+1212,C i
+3333,. . .}
+Ces composantes traduisent les rigidit´ es directionnelles dans les plans et ` a travers l’´ epaisseur.
+• Le comportement m´ ecanique int` egre les e”ets thermo-´ elastiques : le tenseur des contraintes
+est donn´ e par :
+ϱij(x)= Cijkl (x3)( ςkl(x) ↔ εkl(x3)T(x))
+o` uT(x) est la temp´ erature locale,εkl repr´ esente le tenseur des coe!cients de dilatation
+thermique (anisotropes), etCijkl (x3) d´ epend de la couche travers´ ee.
+• La d´ eformation inﬁnit´ esimale est d´ eﬁnie classiquement par :
+ςkl = 1
+2
+(ϖuk
+ϖxl
++ ϖul
+ϖxk
+)
+Ce tenseur mesure les variations sym´ etriques du champ de d´ eplacementuk(x).
+• Les coe!cients de dilatation thermique εkl sont eux aussi anisotropes et varient d’une
+couche ` a l’autre, reﬂ´ etant la nature composite ou multi-mat´ eriaux de la plaque.
+2
+=> corder.
+Thermiqueselonap; 2
+< cordes.
+The niqueselon
+m = 1 ic;
+T = Tisy
+= kzGT
+déjautie,
+--- Page 3 ---
+Etape3 :
+Timamp()= Aexi + Bir-x on T(1= 0) = Trottomet + (x = H)= Trop
+Tmamp(s)= Ai+ Bi=
+TBottom
+Twauup(H)= A+ eXH+ Be -
+1H = T + p
+Bottom
+Se * -T
+To m  B=
+[Bin- e") =
+T -
+TBotome**
+-X-Tropg-
+XH - exi XiHSa notreenBottome
+e-Xit- ex'4
+TingmpKy)= TBottomex"H-Tropexic + Top-Trotom2XH2- xi
+e - XiH - exii e- xH- ext
+Réunion:
+-
+Il fautprendreen compleles conditionsdecontinuité
+- i= 1; 2 ; 3 Les X sont connus parles caractéristiquesdes
+matériaux .
+-
+Trouverles hautes riquationsmarquentes(Léquato, Ginconnus /A, BA2, B , 13,
+B3)
+-verifienles aver l'expressionfinalederTra, mpS ISaapparaitrelessh,sint
+-Essayerde le modélisa sur python(dessinesàpartiede l'expressionfinalede T 1skysavec te <L)Butde une la hauten- nécessaire
+pourne par depasserune certaine to
+-Dessiner températureen la en fonctiondela couchedenus
+superalliage
+Reprenonsleséquationsde continuité entre i= 12t i = 2/ i = 2 et i = 3
+* exx + Bo2-
+x x = 12 ex+ B22x2
+EAexc + Be
+--- Page 4 ---
+Pourla prochaineréunion:
+-Diminuer le taille minimale de la chramiqueà 0, 05
+-Faire de la biblisen mettantun cut-offsignehorizontale-Trouver la températureau delade laquelesle superalliagese dégradesespropriétésen particulierl
+-Faire interpolationpouravoirle doptimal-Faire une étude en faisantvarie un para mètre-
+Rajouterle paramètre+gik=
+Bkys
+-Afficheren fluxthermique/dérivéde latempératurel191=
+92 93s
+-Schéma à mais levé pourmontresla couchequeil fautrajouteren casdeTocritique- donner différencedemasse /ensemblederaubes)>
+quantifieren terme decoût.
+(massevolumiqueI Fairstableau)(intervalledeconfiance
+Nominal catastropheSuschange/cautlempeinte
+ISurchage/SetIempreinte
+-
+Evolution2B-> projetésur la 3D
+-Rajouterde la quantification-
+RajouterdeszonesgristesdanslesCausbes(zonesinterdites
+-Alle jusqu'àL'étape7
+-
+peubtaine superafliagedritrementinunto 1000 et parrapport
+àCettecontrainte quelsdoiventêtre lescoûtsasociéscimehauteur
+decéramiqueimportantepouranner cettecontrainte.
+-
+fixer et teuer hepourquele superalliagen'atteignejamais1000
+-bien insistesur le coûten plusdom le scenariscatastrophepourrespecterle
+conditionsde température.
+-revoir les formulesentre les 2 programmesnotammentau niveau du p
+-
+revoir la partiemécaniqueessayerderépondreaun étap6-7-8
+--- Page 5 ---
+´Etape 5 – S´ eparation de variables sur les d´ eplacements et ´ equilibre
+m´ ecanique
+• On suppose une s´ eparation de variables sur les champs de d´ eplacement :
+uω(xω,x 3)= Uω(x3) cos(ωωxω)s i n (ωεxε)
+u3(xω,x 3)= U3(x3)s i n (ωωxω)s i n (ωεxε)
+• Les d´ eriv´ ees spatiales s’´ ecrivent alors :
+εx1 uω →↑ ω1 sin(ω1x1)s i n (ω2x2) Uω(x3)
+εx2 uω → ω2 cos(ω1x1) cos(ω2x2) Uω(x3)
+εx3 u{ω,3} → d´ eriv´ ees normales :ε3U{ω,3}(x3)
+• En injectant dans l’´ equilibre localεjϑij = 0, on obtient :
+↑
+(
+Cωωωωω2
+ω + Cωεωε ω2
+ε
+)
+Uω + Cω3ω3
+d2Uω
+dx2
+3
+↑ (Cωωεε + Cωεωε )ωωωεUε +( Cωω33 + Cω3ω3)ωω
+dU3
+dx3
+=( Cωωωωϖωω + Cωεεε ϖεε )ωωT
+↑ (Cϑϑ33 + Cϑ3ϑ3)ωϑUϑ,3 ↑ Cϑ3ϑ3ω2
+ϑU3 + C3333
+d2U3
+dx2
+3
+=( Cϑϑ33ϖϑϑ + C3333ϖ33) dT
+dx3
+´Etape 6 – Ansatz exponentiel pour les champs de d´ eplacement
+Uω(x3)= Aωeϖx3 ,U 3(x3)= A3eϖx3
+avec ϱ l’ensemble des valeurs propres extraites du syst` eme di!´ erentiel. Cela aboutit ` a un
+syst` eme quadratique homog` ene enϱ, dont les solutions sont les valeurs propresϱ (croissantes ou
+d´ ecroissantes). Le probl` eme aux valeurs propres quadratique, sans la solution particuli` ere due
+` a la temp´ eratureT(x3), s’´ ecrit
+(
+Cωωωωω2
+ω + Cωεωε ω2
+ε ↑ Cω3ω3ϱ2)
+Aω +( Cωεεε + Cωεωε ) ωωωεAε ↑ (Cωω33 + Cω3ω3) ωωϱA3 =0 ω
+↑ (Cϑϑ33 + Cϑ3ϑ3) ωϑϱAϑ +
+(
+C3333ϱ2 ↑ Cϑ3ϑ3ω2
+ϑ
+)
+A3 =0
+Ce syst` eme repr´ esente trois ´ equations coupl´ ees. En r´ e´ ecriture matricielle, il s’exprime sous
+la forme d’un syst` eme lin´ eaire homog` ene :
+M(ϱ) · A = 0
+avec A =[ Aω,A 3]t et une matrice caract´ eristiqueM(ϱ) d´ eﬁnie dans chaque couche comme :
+M(ϱ)=
+
+
+ϱ2C1313 ↑ ω2
+1C1111 ↑ ω2
+2C1212 ↑ω1ω2(C1222 + C1212) ϱω1(C1133 + C1313)
+↑ω1ω2(C2211 + C2121) ϱ2C2323 ↑ ω2
+2C2222 ↑ ω2
+1C2121 ϱω2(C2233 + C2323)
+↑ϱω1C1133 ↑ϱω2C2233 ϱ2C3333 ↑ ω2
+1C1313 ↑ ω2
+2C2323
+
+
+Les valeurs propresϱr sont les racines non-triviales du polynˆ ome caract´ eristique d´ eﬁni par :
+det(M(ϱ)) = 0
+Les ϱr d´ eﬁnissent les modes d’att´ enuation ou de croissance des champs dans la direction trans-
+verse x3. Le champ de d´ eplacement est alors obtenu par superposition des solutions ´ el´ ementaires
+d´ ecroissantes :
+Uω(x3)=
+3∑
+r=1
+Ar
+ωeϖrx3 ,U 3(x3)=
+3∑
+r=1
+Ar
+3eϖrx3
+Les coe”cients d’amplitude{Ar
+ω,A r
+3} sont ensuite d´ etermin´ es ` a partir des conditions aux
+interfaces entre les couches, ainsi que des conditions aux limites impos´ ees ` a la structure.
+3
+zepression
+a2
+/
+div(5)= y
+- -> donne3équationpourchaquecouchebit souchesdoncgéquations- doncC. L
+W
+SystèmeImpletSéquationsà
+ginconnus
+--- Page 6 ---
+´Etape 7 – Conditions aux interfaces et aux bords
+Les expressions analytiques des champs de d´ eplacement dans chaque couchei, obtenues sous
+forme de combinaisons exponentielles
+Ui
+k(x3)=
+3∑
+r=1
+Ai,r
+k eϖi
+rx3
+doivent satisfaire les conditions de compatibilit´ e m´ ecanique aux interfaces et les conditions aux
+limites externes.
+Conditions aux interfaces internes(x3 = xi
+3 entre les couchesi et i + 1) :
+[Uω]=[ U3]=0
+[Cω3ω3 (ε3Uω + ωωU3)] = 0ω
+[↑Cϑϑ33ωϑUϑ + C3333ε3U3]=[ Cϑϑ33ϖϑϑ + C3333ϖ33] T(x3 = xi
+3)
+Conditions aux extr´ emit´ es(x3 =0e t x3 = H):
+Cω3ω3 (ε3Uω + ωωU3)=0 ω
+↑ Cϑϑ33ωϑUϑ + C3333ε3U3 = tbottom/top +( Cϑϑ33ϖϑϑ + C3333ϖ33) T(x3 = {0,H })
+avec
+ϑ33(x3 = 0) =tbottom,ϑ 33(x3 = H)= ttop
+´Etape 8 – Assemblage et r´ esolution
+L’ensemble des ´ equations (´ equilibre dans chaque couche, conditions d’interface, conditions aux
+bords) conduit ` a un syst` eme global d’´ equations :
+• 3 ↓ N ´ equations d’´ equilibre interne (par couche),
+• 6 ↓ (N ↑ 1) conditions aux interfaces (continuit´ e des d´ eplacements et tractions),
+• 6 conditions aux extr´ emit´ es (haut et bas de la plaque),
+• 3 ↓ 3 ↓ N amplitudes inconnues {Ai,r
+ω ,A i,r
+3 }.
+Le syst` eme peut ˆ etre assembl´ e sous la forme :
+Mglobal · Aglobal = Fthermique
+o` u :
+• Aglobal ↔ R3→3→N contient toutes les amplitudes inconnues,
+• Mglobal est la matrice d’assemblage (bloc par couche et interface),
+• Fthermique repr´ esente le chargement dˆ u ` a la temp´ eratureT(x3).
+Proc´ edure de r´ esolution:
+1. Calcul des racines caract´ eristiquesϱi
+r pour chaque couche,
+2. Assemblage des expressions de d´ eplacement et contraintes dans chaque couche,
+3. Application des conditions d’interface et de bord,
+4. R´ esolution du syst` eme lin´ eaire pour les amplitudesAi,r
+k ,
+5. Reconstruction des champsui(x)e t ϑij(x) dans tout le domaine.
+4
+-> 27 inconnus
+--- Page 7 ---
+Etape6 :
+3Vi=
+[1, 2; 33
+~. racines [1; 2; 3} donnéespardet M(t)= 0
+32 : 51; 2; 33= 3D 27 A lamplitudes)inconnues
+i : nombre de couches
+Systèmefermé: 27 équation
+4) div 5 = y
+~
+miteur- Ybequationsauches- géquationdéquilibre
+2) interfaceinternes enEh; ha
+2)as continuitéder déplacements: [D(hp)= 0
+⊥séquations
+2) b) continuité de la traction : ITD(hp⊥séquations
+Total : 2x(3+ 31 équationsde continuité~
+- équations
+332 eurfacesentreet
+En y = H : En appliquela contraintede Newman
+tractionappliquéeen H
+= (3= H) =
+* E00H
+->
+5⊥séquation: - = (2 = 3)& s(z= H)= 0
+S22y(y= H) = 0
+533(z= 1)= +App
+Idem pour3= 0 : 3équations
+Total: Giquation
+&léquilibre)+ 12 lequationsinterfacesinterne)+ 6 léquationexternes
+Équilibre: div S formulatforte laverlesmatricesdétailléeson
+appelleca formulationfaible
+Eq# 1 : X = 1
+(B= 2)
+*
+-
+128 + Gre (Vp+
++Galles=>
+KjpXpplis+ 2in zi)SpT( = 2)
+Eq#2: aPour2 = 2 (paneiten invenant les1- > 2)(B= 1)
+2
+Eq#3: 2 (20833+ 30s)Syr, 3
+0 = 1
+--- Page 8 ---
+On continueave L'équation1 : XkEà noteC iciomprendh = c = 1
+On remplacelesUpil(31=&Aire [233
+->
+Ajie T o+ Aid s
+Sinconnues(Rappelto, t ,Es(0)
+i = Xi superalliage -
+-
+->
+S donneet en X Conseillerde prenders52z= en
+↓matérianétant onthotropeaver en votationdeVigtC44= 255= C66-
+&
+--- Page 9 ---
+-Danslinterface, intègresune comparaisonde cas i
+( Aurélienestcense
+# assland=sompaitorc mandonnerune feuilleaver les(2; T) cartographiéeeu l'aube
+-
+Faire pourl'équation< = 1 (démarcheexpliquée)
+-Donn rapportexpliquerle codet lesdifférentesétapesdecalair
+-
+on prendle T à partieréelle négative- Notation deVoigtc'estque pourles Lijke- > (15
+-
+Gonderles Ajputôtquele produit(xVpr
+--- END OF ProjectEstaca Achille.pdf ---
+
+--- START OF 02_Projet_25-26_5A-IDSA_MAT_AVattré.pdf ---
+--- Page 1 ---
+                                                                Année académique 2025-2026 
+Proposition de Projet d’Ingénierie           ☐ Projet 3A                                            ☐  Projet 4A                                       ☒ Projet 5A                                         
+Intitulé du projet :           ☒ Nouveau Sujet                    ☐ Continuité 2023-2024 Évaluation thermomécanique des zones critiques d’endommagement dans les aubes de turbines multicouches nouvelle génération  Description sommaire du projet : Les aubes de turbines pour moteurs d’avions civils et militaires sont soumises à des conditions extrêmes de température, de gradient thermique et de contraintes mécaniques cycliques. Pour améliorer leur durabilité, des architectures multicouches sont désormais utilisées, combinant un substrat métallique (alliage de titane ou de nickel) et des revêtements céramiques ou composites jouant le rôle de barrières thermiques. Ce projet vise à analyser la réponse thermomécanique de telles architectures à partir d’un modèle tridimensionnel simplifié. Il s’agira de prédire les zones critiques d’endommagement situées à l’interface entre les couches fonctionnelles, où les gradients de propriétés mécaniques et thermiques peuvent induire de fortes concentrations de contraintes. Pour cela, un modèle physique sera développé en s’appuyant sur des solutions spectrales sous forme de séries de Fourier doubles, couplées à une implémentation numérique sous Python ou Matlab, afin de reproduire finement le comportement thermomécanique local des matériaux dans des configurations réalistes. L’étude intégrera les effets de l’anisotropie élastique, des contrastes thermiques, de l’épaisseur des couches et de la position des interfaces internes. L’objectif est de fournir une carte de sensibilité aux chargements thermiques et mécaniques, capable i) d’identifier les configurations les plus vulnérables aux fissurations, et ii) de guider la conception de futures aubes de turbine plus robustes.  Attendus envisagés : Le projet aboutira à une modélisation thermomécanique complète d’une aube multicouche soumise à des chargements représentatifs du fonctionnement moteur, avec visualisation des champs de contraintes, de température et d’endommagement. L’objectif est de localiser les zones critiques (interfaces, couches externes) et d’en extraire des indicateurs de sensibilité pour l’optimisation des futures de turbine. Ce travail constituera également : - Une immersion dans un projet d’ingénierie appliquée à forte valeur ajoutée industrielle. - Un exercice d’analyse avancée mêlant modélisation, mécanique des matériaux, physique des interfaces, et architecture de composants stratifiés. - Une initiation au design et à l’optimisation de matériaux architecturés, conçus pour résister à des conditions extrêmes de température et de contraintes mécaniques, dépassant les seuils actuels dans l’industrie aéronautique. Les résultats pourront alimenter une base de réflexion pour les futures générations d’aubes de turbines plus durables, performantes et sûres. 
+L’ENCADREMENT NOM Prénom : Vattré Aurélien (aurelien.vattre@onera.fr) REMPLIR PAR L’ESTACA UNIQUEMENT le cas échéant Le tuteur ESTACA : Daniel Gaffié E-mail : daniel.gaffie@estaca.fr……………Téléphone :  
+--- END OF 02_Projet_25-26_5A-IDSA_MAT_AVattré.pdf ---
+

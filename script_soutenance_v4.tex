@@ -1,0 +1,516 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\setlength{\headheight}{14pt}
+
+\definecolor{johan}{RGB}{59, 130, 246}
+\definecolor{achille}{RGB}{16, 185, 129}
+\definecolor{lionel}{RGB}{249, 115, 22}
+\definecolor{maxime}{RGB}{139, 92, 246}
+\definecolor{codecolor}{RGB}{30, 41, 59}
+
+\newtcolorbox{johanbox}[1][]{colback=johan!5, colframe=johan, fonttitle=\bfseries\large, title={#1}, breakable}
+\newtcolorbox{achillebox}[1][]{colback=achille!5, colframe=achille, fonttitle=\bfseries\large, title={#1}, breakable}
+\newtcolorbox{lionelbox}[1][]{colback=lionel!5, colframe=lionel, fonttitle=\bfseries\large, title={#1}, breakable}
+\newtcolorbox{maximebox}[1][]{colback=maxime!5, colframe=maxime, fonttitle=\bfseries\large, title={#1}, breakable}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Script V4 -- 10 min/orateur}
+\lhead{TBC Multicouches}
+\rfoot{Page \thepage}
+
+\title{\textbf{SCRIPT DE SOUTENANCE V4}\\[0.3cm]
+\large Version Complete -- 10 minutes par orateur\\[0.5cm]
+Evaluation Thermomecanique des Aubes TBC}
+\author{Johan GUITTON $\cdot$ Achille VOISIN $\cdot$ Lionel DAURIAC $\cdot$ Maxime LEBOEUF}
+\date{26 janvier 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{center}
+\begin{tcolorbox}[colback=codecolor!10, colframe=codecolor, width=0.95\textwidth]
+\centering
+\textbf{REPARTITION EQUILIBREE -- 40 MINUTES TOTAL}\\[0.3cm]
+\begin{tabular}{|l|c|l|c|}
+\hline
+\textbf{Orateur} & \textbf{Slides} & \textbf{Contenu} & \textbf{Duree} \\
+\hline
+\textcolor{johan}{Johan} & 1--4, 16--17 & Intro + Matrice $\Gamma(\tau)$ & 10 min \\
+\textcolor{achille}{Achille} & 5--8, 18--19 & TBC/Objectifs + Assemblage 9x9 & 10 min \\
+\textcolor{lionel}{Lionel} & 9--15 & Methodologie + Spectrale + Hooke & 10 min \\
+\textcolor{maxime}{Maxime} & 20--32 & Implementation + Resultats & 10 min \\
+\hline
+\end{tabular}
+\end{tcolorbox}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section{JOHAN -- 10 MINUTES (Slides 1-4 puis 16-17)}
+%==============================================================================
+
+\begin{johanbox}[Slide 1 : Titre -- 1 minute]
+Bonjour a tous et merci d'etre presents pour notre soutenance de projet industriel de cinquieme annee.
+
+Je me presente, je suis Johan Guitton, et je suis accompagne de mes trois collegues : Achille Voisin, Lionel Dauriac et Maxime Leboeuf. Ensemble, nous allons vous presenter notre projet intitule : Evaluation Thermomecanique des Zones Critiques d'Endommagement dans les Aubes de Turbines Multicouches Nouvelle Generation.
+
+Ce projet a ete realise sous la supervision scientifique de l'ONERA, avec Monsieur Aurelien Vattre comme encadrant, et de l'ESTACA, avec Monsieur Daniel Gaffie pour l'encadrement pedagogique. Nous avons egalement beneficie du soutien de Safran pour les donnees materiaux et le contexte industriel.
+
+L'objectif principal de notre travail etait de developper une methode semi-analytique, appelee methode spectrale, implementee en Python avec une interface utilisateur Streamlit, pour evaluer les zones d'endommagement dans les systemes de barrieres thermiques.
+\end{johanbox}
+
+\begin{johanbox}[Slide 2 : Structure de la Presentation -- 1 minute]
+Voici comment nous avons organise notre presentation, en quatre parties distinctes, reparties entre les quatre membres de l'equipe.
+
+Premierement, je vais vous presenter le contexte industriel et les objectifs de notre projet. Nous verrons pourquoi les turbines haute pression sont des composants critiques et quels sont les defis poses par les systemes de barrieres thermiques.
+
+Deuxiemement, Achille prendra la parole pour detailler les mecanismes de defaillance des TBC et les objectifs specifiques que nous nous sommes fixes. Il vous presentera egalement la partie technique concernant l'assemblage du systeme d'equations.
+
+Troisiemement, Lionel vous exposera la methodologie complete, depuis la decomposition spectrale jusqu'a la loi de Hooke thermo-elastique, en passant par les solutions thermiques par couche.
+
+Enfin, Maxime conclura avec l'implementation logicielle, les resultats obtenus, la validation par rapport aux donnees de reference ONERA, et les perspectives d'amelioration.
+
+Cette organisation nous permet de repartir equitablement la difficulte technique entre les quatre presentateurs.
+\end{johanbox}
+
+\begin{johanbox}[Slide 3 : Turbines Haute Pression -- 2 minutes]
+Commencons par le contexte industriel. Les turbines haute pression constituent le coeur des moteurs aeronautiques modernes. Leur role est de convertir l'energie des gaz de combustion en travail mecanique pour entrainer le compresseur et les accessoires.
+
+Ces composants operent dans un environnement extremement severe. Les temperatures des gaz a l'entree de la turbine haute pression depassent generalement mille cinq cents degres Celsius, soit bien au-dela de la temperature de fusion des superalliages utilises pour fabriquer les aubes.
+
+Les gradients thermiques sont egalement tres importants. On peut observer des variations de temperature de l'ordre de deux cents degres Celsius sur seulement quelques millimetres d'epaisseur. Ces gradients generent des contraintes thermoelastiques considerables.
+
+A cela s'ajoutent les contraintes mecaniques liees a la force centrifuge. Une aube de turbine tournant a plus de dix mille tours par minute subit des accelerations centrifuges equivalentes a plusieurs milliers de fois la gravite terrestre.
+
+Le defi pour les motoristes est d'augmenter continuellement les temperatures de fonctionnement. Chaque gain de dix degres Celsius se traduit par une amelioration de un a deux pourcent du rendement thermodynamique du moteur. Cela represente des economies de carburant significatives et une reduction des emissions de CO2.
+
+C'est dans ce contexte que les systemes de barrieres thermiques, ou TBC pour Thermal Barrier Coating, ont ete developpes. Ils permettent de proteger le substrat metallique des temperatures extremes.
+\end{johanbox}
+
+\begin{johanbox}[Slide 4 : Architecture TBC Multicouche -- 2 minutes]
+Examinons maintenant l'architecture d'un systeme TBC typique. Il s'agit d'une structure multicouche composee de trois elements principaux.
+
+La couche superieure, en contact avec les gaz chauds, est la ceramique isolante. Elle est generalement constituee de zircone stabilisee a l'yttrium, appelee YSZ, avec une teneur en yttrium d'environ sept pourcent. Son epaisseur varie typiquement entre cinquante et cinq cents micrometres. Cette couche assure l'isolation thermique principale grace a sa tres faible conductivite thermique, de l'ordre de un virgule cinq watt par metre kelvin. Elle peut ainsi abaisser la temperature vue par le substrat de cent a deux cents degres.
+
+La couche intermediaire est le bond coat, ou couche d'accroche. C'est un alliage de type MCrAlY, c'est-a-dire a base de nickel ou cobalt avec du chrome, de l'aluminium et de l'yttrium. Son epaisseur est d'environ dix micrometres. Son role est double : assurer l'adhesion entre la ceramique et le substrat, et proteger le substrat contre l'oxydation a haute temperature en formant une couche d'alumine protectrice.
+
+Enfin, le substrat constitue la base structurelle de l'aube. Il est fabrique en superalliage base nickel, typiquement l'Inconel 718, avec une epaisseur d'environ cinq cents micrometres dans notre modele. Ce materiau offre une excellente resistance mecanique a haute temperature.
+
+Le point crucial a retenir est le contraste tres important entre les proprietes mecaniques de ces trois couches. Par exemple, le module de Young varie de deux cent soixante gigapascals pour le substrat a seulement cinquante gigapascals pour la ceramique. Ce contraste est la source principale des contraintes aux interfaces.
+\end{johanbox}
+
+\textit{[Transition vers les slides techniques]}
+
+Je vais maintenant vous presenter la partie technique de mes slides, concernant la matrice dynamique et l'equation caracteristique.
+
+\begin{johanbox}[Slide 16 : Matrice Dynamique $\Gamma(\tau)$ -- 2 minutes 30]
+Le coeur mathematique de notre approche est la matrice dynamique Gamma de tau. Cette matrice trois par trois encode completement le comportement mecanique du systeme dans le domaine spectral.
+
+La matrice Gamma est construite a partir de neuf operateurs differentiels notes L indice jk, ou j et k varient de un a trois. Ces operateurs contiennent les constantes elastiques du materiau et dependent du parametre spectral tau.
+
+La structure de la matrice est la suivante. Les elements diagonaux L onze, L vingt-deux et L trente-trois representent la resistance a la deformation dans chaque direction. Ils sont toujours positifs et dominent le comportement.
+
+Les elements hors diagonale representent le couplage entre les differentes directions. Un point critique de notre implementation est la propriete d'antisymetrie de certains termes. Specifiquement, L treize est egal a moins L trente-et-un, et L vingt-trois est egal a moins L trente-deux.
+
+Cette antisymetrie provient directement des equations d'equilibre en direction x trois. Elle est essentielle pour obtenir des resultats physiquement corrects. Dans notre code, cela se traduit par l'instruction explicite M indice deux virgule zero egal a moins K treize fois tau.
+
+L'equation caracteristique de notre systeme est obtenue en annulant le determinant de la matrice Gamma. Le determinant de Gamma de tau egal zero nous donne les valeurs propres du probleme.
+
+Cette equation caracteristique est un polynome d'ordre six en tau. Cependant, grace a la symetrie du probleme, seules les puissances paires de tau apparaissent, ce qui nous permet une simplification importante que je vais vous presenter maintenant.
+\end{johanbox}
+
+\begin{johanbox}[Slide 17 : Resolution Equation Caracteristique -- 1 minute 30]
+La resolution de l'equation caracteristique determinant de Gamma egal zero donne un polynome d'ordre six en tau. Cependant, ce polynome ne contient que des puissances paires : tau a la puissance six, tau a la puissance quatre, tau au carre, et un terme constant.
+
+L'astuce mathematique consiste a effectuer le changement de variable X egal tau au carre. Le polynome d'ordre six se transforme alors en un polynome cubique en X : c six X cube plus c quatre X carre plus c deux X plus c zero egal zero.
+
+Ce polynome cubique peut etre resolu analytiquement par les formules de Cardan, ou numeriquement par les methodes standards. Nous obtenons ainsi trois racines X un, X deux et X trois, dont nous extrayons les racines carrees pour obtenir six valeurs de tau.
+
+La derniere etape est la selection physique des racines. Parmi les six valeurs de tau, nous ne conservons que celles dont la partie reelle est negative. Cette condition, appelee condition de radiation, garantit que les perturbations s'attenuent lorsqu'on s'enfonce dans le materiau, ce qui est physiquement correct.
+
+Dans notre implementation, nous selectionnons donc trois racines tau un, tau deux et tau trois, qui serviront a construire la solution generale du probleme.
+
+Je laisse maintenant la parole a Achille pour la suite de la presentation.
+\end{johanbox}
+
+%==============================================================================
+\section{ACHILLE -- 10 MINUTES (Slides 5-8 puis 18-19)}
+%==============================================================================
+
+\begin{achillebox}[Slide 5 : Mecanismes de Defaillance -- 2 minutes]
+Merci Johan. Je vais maintenant vous presenter les mecanismes de defaillance des systemes TBC, qui constituent la problematique centrale de notre projet.
+
+Les barrieres thermiques sont soumises a des sollicitations extremes qui conduisent a trois modes de degradation principaux.
+
+Le premier mecanisme est la delamination, c'est-a-dire la perte d'adhesion a l'interface entre la ceramique et le bond coat. Ce phenomene est principalement cause par les contraintes d'arrachement, notees sigma trente-trois, qui s'exercent perpendiculairement aux interfaces. Lorsque ces contraintes depassent la resistance de l'interface, la ceramique se decolle progressivement.
+
+Le deuxieme mecanisme est l'ecaillage, ou spalling en anglais. Il s'agit de la perte de morceaux entiers de revetement ceramique. Ce phenomene est particulierement dangereux car il expose brutalement le substrat aux gaz chauds, reduisant drastiquement la protection thermique.
+
+Le troisieme mecanisme est la fissuration. Des fissures peuvent se propager a travers l'epaisseur de la ceramique, favorisees par les concentrations de contraintes aux interfaces et les cycles thermiques repetes.
+
+Ces phenomenes de degradation sont la cause principale des defaillances prematurees des systemes TBC. Ils entrainent des couts de maintenance tres eleves et peuvent compromettre la securite du moteur. C'est pourquoi il est essentiel de disposer d'outils predictifs capables d'identifier les zones critiques avant que les dommages ne se produisent.
+
+Notre projet vise precisement a developper un tel outil de prediction.
+\end{achillebox}
+
+\begin{achillebox}[Slide 6 : Objectifs du Projet -- 2 minutes]
+Face a ces problematiques, nous nous sommes fixes quatre objectifs principaux pour notre projet.
+
+Le premier objectif est de modeliser la reponse thermomecanique d'une architecture multicouche tridimensionnelle. Nous avons developpe une formulation semi-analytique rigoureuse, basee sur la methode spectrale, qui permet de calculer les champs de temperature et de contraintes dans l'ensemble du systeme.
+
+Le deuxieme objectif est de predire les zones critiques d'endommagement. Notre outil identifie automatiquement les regions ou les contraintes depassent les seuils critiques des materiaux, permettant ainsi d'anticiper les risques de delamination ou de fissuration.
+
+Le troisieme objectif est de quantifier l'influence des parametres cles sur le comportement du systeme. Nous avons realise des etudes parametriques pour evaluer l'effet de l'epaisseur de ceramique, de l'anisotropie thermique, de la longueur d'onde des perturbations, et d'autres facteurs.
+
+Le quatrieme objectif est de fournir des cartes de sensibilite pour guider la conception. Ces cartes permettent aux ingenieurs de visualiser rapidement les zones de l'espace des parametres a eviter, et celles qui offrent les meilleures performances.
+
+L'ensemble de ces objectifs vise a proposer un outil d'aide a la conception qui soit a la fois rapide, precis et facile a utiliser, pour optimiser les futures generations de barrieres thermiques.
+\end{achillebox}
+
+\begin{achillebox}[Slide 7 : Partenaires du Projet -- 1 minute 30]
+Notre projet a ete realise en collaboration etroite avec trois partenaires majeurs du secteur aeronautique.
+
+L'ONERA, l'Office National d'Etudes et de Recherches Aerospatiales, a apporte son expertise scientifique de pointe en mecanique des materiaux et en modelisation. Monsieur Aurelien Vattre, chercheur au departement materiaux, nous a supervises tout au long du projet. Il nous a fourni les references bibliographiques, valide nos formulations mathematiques, et guide notre implementation numerique.
+
+Safran, leader mondial de la propulsion aeronautique, a fourni le contexte industriel et les donnees materiaux. Les proprietes mecaniques et thermiques utilisees dans notre modele proviennent de la base de donnees Safran, ce qui garantit la pertinence de nos resultats pour des applications reelles.
+
+L'ESTACA, notre ecole d'ingenieurs, a assure l'encadrement pedagogique du projet. Monsieur Daniel Gaffie a suivi notre progression, organise les revues intermediaires, et nous a aides a structurer notre travail et notre rapport.
+
+Cette collaboration tripartite nous a permis de beneficier a la fois de l'excellence academique de l'ONERA, de la realite industrielle de Safran, et de l'accompagnement pedagogique de l'ESTACA.
+\end{achillebox}
+
+\begin{achillebox}[Slide 8 : Planning du Projet -- 1 minute 30]
+Notre projet s'est deroule sur une periode de six a huit mois, decomposee en quatre phases principales.
+
+La premiere phase, d'une duree de deux mois, a ete consacree a la bibliographie et a l'etude theorique. Nous avons etudie en profondeur la methode spectrale, compris les equations d'equilibre thermomecanique, et analyse les travaux anterieurs sur les barrieres thermiques.
+
+La deuxieme phase, egalement de deux mois, a ete dediee au developpement du module de calcul Python. Nous avons implemente les solveurs thermique et mecanique, mis au point les algorithmes de resolution, et realise les premiers tests unitaires.
+
+La troisieme phase a dure environ deux mois et s'est concentree sur le developpement de l'interface utilisateur Streamlit. Nous avons cree le tableau de bord interactif, integre les visualisations trois dimensions, et developpe les fonctionnalites d'export.
+
+La quatrieme et derniere phase, d'une duree de deux mois, a ete consacree a la validation des resultats et a la redaction de la documentation. Nous avons compare nos resultats aux references ONERA, corrige les eventuelles erreurs, et redige le rapport de synthese.
+
+Je vais maintenant passer aux aspects techniques concernant l'assemblage du systeme d'equations.
+\end{achillebox}
+
+\begin{achillebox}[Slide 18 : Assemblage 9x9 avec Sollicitation Thermique -- 2 minutes]
+Nous arrivons maintenant a l'assemblage du systeme lineaire global. Pour une seule couche, nous devons determiner neuf amplitudes inconnues, correspondant aux trois composantes de deplacement pour chacune des trois valeurs propres selectionnees.
+
+Le systeme s'ecrit sous forme matricielle : la matrice K dynamique multipliee par le vecteur des amplitudes A est egale au vecteur de forcement thermique F thermique.
+
+La matrice K dynamique a une structure bloc-diagonale tres particuliere. Elle est composee de trois blocs trois par trois disposes sur la diagonale. Chaque bloc correspond a la matrice Gamma evaluee en une valeur propre : Gamma de tau un, Gamma de tau deux, et Gamma de tau trois.
+
+Cette structure bloc-diagonale reflete le decouplage des modes propres. Chaque mode evolue independamment des autres, ce qui simplifie considerablement la resolution.
+
+Le vecteur de forcement thermique F th contient les termes sources lies a la dilatation thermique. Ces termes, notes Q alpha, resultent du couplage entre le gradient de temperature et les coefficients de dilatation thermique des materiaux. Ils representent les contraintes thermiques qui seraient generees si le materiau etait empeche de se dilater librement.
+
+La resolution du systeme se fait par inversion matricielle standard. Nous utilisons des techniques de decomposition LU ou de moindres carres pour calculer les neuf amplitudes.
+\end{achillebox}
+
+\begin{achillebox}[Slide 19 : Assemblage Multicouche et Reduction -- 2 minutes]
+Passons maintenant a l'assemblage pour un systeme multicouche. Notre modele comporte N couches, et nous devons assembler les equations de toutes ces couches en un systeme global.
+
+Pour chaque couche, nous avons trois types de conditions a satisfaire.
+
+Les conditions aux limites sur les surfaces libres imposent que la contrainte normale soit nulle : sigma multiplie par le vecteur normal n est egal a zero. Cela represente six equations pour les surfaces superieure et inferieure.
+
+Les conditions de continuite aux interfaces imposent que les deplacements et les contraintes soient continus de part et d'autre de chaque interface. Pour N couches, il y a N moins un interfaces, soit six fois N moins un equations de continuite.
+
+Les equations d'equilibre volumique, c'est-a-dire divergence de sigma egale zero, doivent etre satisfaites en tout point de chaque couche.
+
+Pour trois couches, le decompte theorique donne vingt-sept equations. Cependant, notre approche spectrale reduit ce nombre a dix-huit equations seulement.
+
+Cette reduction de neuf equations provient du fait que les equations d'equilibre volumique sont automatiquement satisfaites par la forme modale de la solution. En utilisant les valeurs propres et vecteurs propres de la matrice Gamma, nous garantissons que l'equilibre est verifie en tout point, sans avoir a l'imposer explicitement.
+
+Ce gain de neuf equations par rapport a l'approche classique constitue un avantage majeur de la methode spectrale en termes de stabilite numerique et de rapidite de calcul.
+
+Je laisse maintenant la parole a Lionel pour la presentation de la methodologie detaillee.
+\end{achillebox}
+
+%==============================================================================
+\section{LIONEL -- 10 MINUTES (Slides 9-15)}
+%==============================================================================
+
+\begin{lionelbox}[Slide 9 : Methodologie Generale -- 1 minute 30]
+Merci Achille. Je vais vous presenter la methodologie complete de notre approche semi-analytique.
+
+Notre chaine de calcul suit un flux logique en cinq etapes principales.
+
+Premierement, les entrees : nous definissons les parametres geometriques, notamment le parametre alpha qui represente le ratio d'epaisseur de ceramique, le parametre Lw qui est la longueur d'onde de la perturbation thermique, et le parametre beta qui caracterise l'anisotropie thermique. Nous specif ions egalement les proprietes materiaux de chaque couche.
+
+Deuxiemement, le module thermique : nous resolvons l'equation de la chaleur par decomposition en series de Fourier. Cela nous donne le profil de temperature a travers l'epaisseur.
+
+Troisiemement, le module mecanique : nous construisons la matrice Gamma, calculons les valeurs propres, et assemblons le systeme d'equations pour obtenir les champs de contraintes.
+
+Quatriemement, le module de dommage : nous appliquons les criteres d'endommagement, notamment l'indicateur D et le critere de Tsai-Wu, pour identifier les zones critiques.
+
+Cinquiemement, les sorties : nous generons les profils de contraintes, les visualisations trois dimensions, et les recommandations de conception.
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 10 : Livrables du Projet -- 1 minute 30]
+Notre projet a produit trois livrables principaux.
+
+Le premier livrable est le module de calcul Python, represente par environ trois mille lignes de code reparties dans cinq modules du repertoire core. Le module mechanical underscore pdf point py contient le solveur spectral avec plus de mille lignes. Le module mechanical point py gere l'assemblage multicouche. Le module damage underscore analysis point py implementent les criteres d'endommagement. Le module calculation point py resout le probleme thermique. Enfin, le module constants point py centralise toutes les proprietes materiaux.
+
+Le deuxieme livrable est l'interface utilisateur Streamlit. Elle propose huit onglets specialises couvrant differents aspects de l'analyse. Le tableau de bord principal affiche les indicateurs cles de performance en temps reel. Des visualisations trois dimensions interactives permettent d'explorer les champs de temperature et de contraintes.
+
+Le troisieme livrable est la documentation technique complete. Elle comprend le rapport de synthese que vous avez sous les yeux, une documentation de tracabilite entre les equations theoriques et leur implementation dans le code, ainsi que les resultats des tests de validation.
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 11 : Principe de la Methode Spectrale -- 2 minutes]
+La methode spectrale repose sur un principe mathematique fondamental : la decomposition des champs physiques en series de Fourier.
+
+L'idee est de representer toute fonction spatiale comme une somme de fonctions sinusoidales. Par exemple, le champ de temperature s'ecrit comme une somme double sur les indices m et n des amplitudes T mn multipliees par sinus de delta x.
+
+Cette decomposition presente plusieurs avantages majeurs par rapport aux methodes d'elements finis classiques.
+
+Premierement, l'approche est semi-analytique. Nous n'avons pas besoin de discretiser l'espace en elements de maillage. La solution est exprimee sous forme analytique dans les directions x un et x deux, et seule la direction x trois de profondeur necessite un traitement numerique.
+
+Deuxiemement, la methode est tres rapide. Une fois les valeurs propres calculees, la resolution est quasi-instantanee. Cela permet de realiser des etudes parametriques avec des centaines de configurations en quelques secondes.
+
+Troisiemement, la precision est excellente. Les erreurs numeriques sont minimales car nous travaillons avec des expressions analytiques. Il n'y a pas de problemes de convergence de maillage comme en elements finis.
+
+En contrepartie, la methode spectrale suppose une geometrie plane stratifiee et des chargements periodiques. Ces hypotheses sont bien adaptees a notre probleme de barriere thermique sur aube de turbine.
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 12 : Representation Spectrale de la Temperature -- 1 minute 30]
+Appliquons maintenant la decomposition spectrale au champ de temperature.
+
+Le champ de temperature en trois dimensions s'ecrit comme une somme sur les modes m et n. Pour chaque mode, l'amplitude T mn depend uniquement de la coordonnee x trois, c'est-a-dire de la profondeur. Cette amplitude est multipliee par les fonctions sinus de delta un fois x un et sinus de delta deux fois x deux.
+
+Le nombre d'onde delta est defini comme pi divise par la longueur d'onde Lw. Ce parametre caracterise l'echelle spatiale des perturbations thermiques laterales. Une petite longueur d'onde correspond a des gradients thermiques plus intenses.
+
+Le point cle de cette representation est la simplification dimensionnelle. Le probleme tridimensionnel initial se ramene a une famille de problemes unidimensionnels. Pour chaque mode spectral, nous devons seulement resoudre une equation differentielle ordinaire en x trois.
+
+Cette reduction de dimension est la source de l'efficacite de la methode spectrale. Au lieu de resoudre des equations aux derivees partielles en trois dimensions, nous resolvons des equations ordinaires beaucoup plus simples.
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 13 : Solution Thermique par Couche -- 1 minute 30]
+Dans chaque couche i du multicouche, l'equation de la chaleur en regime permanent a une solution analytique de forme exponentielle.
+
+La temperature dans la couche i s'ecrit comme la somme de deux termes : A puissance i multiplie par exponentielle de lambda puissance i fois x trois, plus B puissance i multiplie par exponentielle de moins lambda puissance i fois x trois.
+
+L'exposant lambda depend des proprietes thermiques de la couche. Il est egal au nombre d'onde delta eta multiplie par la racine carree du rapport des conductivites k eta eta sur k trente-trois. Ce rapport traduit l'anisotropie thermique du materiau.
+
+Les coefficients A et B sont les inconnues du probleme thermique. Pour N couches, nous avons deux N inconnues a determiner.
+
+Ces inconnues sont calculees en imposant les conditions de continuite aux interfaces : la temperature et le flux thermique doivent etre continus de part et d'autre de chaque interface.
+
+La resolution donne le profil de temperature complet a travers l'epaisseur du multicouche. Ce profil servira ensuite de donnee d'entree pour le calcul mecanique.
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 14 : Loi de Hooke Thermo-Elastique -- 2 minutes]
+La formulation mecanique de notre probleme repose sur la loi de Hooke thermo-elastique.
+
+Cette loi relie le tenseur des contraintes sigma au tenseur des deformations epsilon par l'intermediaire du tenseur de rigidite C. La particularite de la formulation thermo-elastique est que nous soustrayons la deformation thermique alpha fois delta T avant d'appliquer la loi de Hooke.
+
+Le tenseur de rigidite C contient les constantes elastiques de chaque materiau. Pour les materiaux orthotropes comme ceux de notre modele, ce tenseur possede neuf constantes independantes.
+
+Voici les principales proprietes utilisees dans notre modele, issues des bases de donnees ONERA et Safran.
+
+Pour le substrat en Inconel, le module C onze vaut deux cent soixante gigapascals et le coefficient de dilatation thermique est de treize microdeformations par kelvin.
+
+Pour le bond coat en MCrAlY, le module C onze vaut cent quatre-vingts gigapascals et le coefficient de dilatation est de quatorze microdeformations par kelvin.
+
+Pour la ceramique en YSZ, le module C onze vaut seulement cinquante gigapascals et le coefficient de dilatation est de dix microdeformations par kelvin.
+
+Le contraste entre ces proprietes, avec un rapport de plus de cinq entre le substrat et la ceramique pour le module de Young, est la source principale des contraintes aux interfaces. Ce contraste genere des incompatibilites de deformation qui se traduisent par des concentrations de contraintes.
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 15 : Ansatz de Deplacement Modal -- 1 minute 30]
+Pour resoudre les equations d'equilibre mecanique, nous supposons une forme particuliere pour les deplacements, appelee ansatz modal.
+
+Chaque composante de deplacement u i s'ecrit comme le produit de deux termes. Le premier terme, V i de x trois, depend uniquement de la profondeur. Le second terme est une fonction trigonometrique de delta x un et delta x deux.
+
+L'amplitude V i a elle-meme une forme exponentielle : A i multiplie par exponentielle de tau fois x trois, ou tau est la valeur propre a determiner.
+
+La condition de radiation est un point fondamental. Nous imposons que la partie reelle de tau soit negative. Cette condition garantit que les perturbations mecaniques s'attenuent lorsqu'on s'enfonce dans le materiau, ce qui est physiquement correct.
+
+Sans cette condition, nous pourrions avoir des solutions qui divergent en profondeur, ce qui n'a pas de sens physique.
+
+En resume, l'ansatz modal nous permet de transformer les equations aux derivees partielles en un probleme aux valeurs propres. La recherche des valeurs tau telles que le systeme admette des solutions non triviales conduit a l'equation caracteristique que Johan a presentee.
+
+Je laisse maintenant la parole a Maxime pour l'implementation et les resultats.
+\end{lionelbox}
+
+%==============================================================================
+\section{MAXIME -- 10 MINUTES (Slides 20-32)}
+%==============================================================================
+
+\begin{maximebox}[Slide 20 : Criteres d'Endommagement -- 1 minute]
+Merci Lionel. Je vais maintenant vous presenter l'implementation logicielle et les resultats obtenus.
+
+Commencons par les criteres d'endommagement que nous avons implementes.
+
+L'indicateur de dommage D est defini comme le maximum du rapport entre la valeur absolue de chaque composante de contrainte et sa valeur critique. D egal maximum de sigma ij sur sigma critique ij.
+
+L'interpretation est simple : si D est inferieur a zerovirgulecinq, la zone est sure. Si D est compris entre zerovirgulecinq et zerovirgulehuit, nous sommes en zone de prudence. Si D depasse zerovirgulehuit, la zone est critique et le risque de rupture est eleve.
+
+Nous avons egalement implemente le critere de Tsai-Wu pour les materiaux anisotropes, qui prend en compte les interactions entre les differentes composantes de contrainte.
+\end{maximebox}
+
+\begin{maximebox}[Slide 21 : Stabilite Numerique -- 1 minute]
+Un defi majeur de notre implementation est la stabilite numerique. Le conditionnement des matrices peut atteindre des valeurs astronomiques, superieures a dix puissance trente.
+
+Pour surmonter ce probleme, nous avons mis en place trois techniques.
+
+Premierement, le preconditionnement ou scaling. Nous multiplions la matrice K par des matrices diagonales pour equilibrer les ordres de grandeur : K prime egal D r fois K fois D c.
+
+Deuxiemement, la regularisation de Tikhonov basee sur la decomposition en valeurs singulieres. Les valeurs singulieres trop petites, inferieures a un seuil epsilon, sont filtrees pour eviter les divisions par zero.
+
+Troisiemement, la normalisation globale. Toutes les rigidites sont divisees par une rigidite de reference C ref egale a deux cents gigapascals.
+
+Ces techniques nous permettent d'atteindre une precision de dix puissance moins huit sur les resultats.
+\end{maximebox}
+
+\begin{maximebox}[Slide 22 : Architecture Logicielle -- 1 minute]
+Voici l'architecture de notre code Python.
+
+Le repertoire core contient cinq modules principaux.
+
+Le module mechanical underscore pdf point py est le solveur spectral principal avec plus de mille lignes de code. Il implemente les operateurs L jk, la matrice Gamma, et la resolution du polynome caracteristique.
+
+Le module mechanical point py gere l'assemblage multicouche avec environ mille cinq cents lignes.
+
+Le module damage underscore analysis point py implemente les criteres d'endommagement avec environ trois cent soixante-dix lignes.
+
+Le module calculation point py contient le solveur thermique avec environ deux cent soixante-dix lignes.
+
+Le module constants point py centralise les donnees materiaux.
+
+Au total, notre base de code represente environ trois mille lignes de Python structure et documente.
+\end{maximebox}
+
+\begin{maximebox}[Slide 23 : Dashboard Streamlit -- 1 minute]
+Notre interface utilisateur Streamlit offre une experience interactive complete.
+
+Le tableau de bord principal affiche six cartes KPI en temps reel : temperature a l'interface, epaisseur TBC, indicateur D, temps de reponse, connectivite, et sante du systeme.
+
+Une jauge de risque permet de visualiser immediatement le niveau de danger. Un radar multi-criteres synthetise les differentes metriques de performance.
+
+Les visualisations trois dimensions Plotly permettent d'explorer interactivement les champs de temperature et de contraintes par rotation et zoom.
+
+Un badge Conforme ONERA s'affiche automatiquement lorsque les resultats sont dans les plages de reference validees.
+\end{maximebox}
+
+\begin{maximebox}[Slide 24 : Resultats Thermiques -- 45 secondes]
+Examinons les resultats thermiques obtenus.
+
+Le profil de temperature en fonction de la profondeur montre des gradients tres differents selon les couches.
+
+Dans le substrat, le gradient est faible, environ vingt degres par millimetre. Dans la ceramique, le gradient est extreme, environ quatre cents degres par millimetre.
+
+La temperature a l'interface bond coat ceramique atteint environ mille cinquante degres, soit une marge de cinquante degres par rapport au seuil critique de mille cent degres.
+\end{maximebox}
+
+\begin{maximebox}[Slide 25 : Resultats Mecaniques -- 1 minute]
+Les resultats mecaniques montrent les profils de contraintes en fonction de la profondeur.
+
+La contrainte d'arrachement sigma trente-trois presente un pic d'environ deux cents megapascals a l'interface bond coat ceramique. Ce pic depasse le seuil critique de cent cinquante megapascals, ce qui indique un risque de delamination.
+
+La contrainte de cisaillement sigma treize atteint un pic d'environ deux cent cinquante megapascals a la meme interface.
+
+Ces resultats confirment que l'interface bond coat ceramique est la zone la plus critique du systeme, conformement aux observations experimentales.
+\end{maximebox}
+
+\begin{maximebox}[Slide 26 : Etudes Parametriques -- 45 secondes]
+Nous avons realise des etudes de sensibilite pour identifier les leviers de conception.
+
+L'epaisseur de ceramique alpha a un effet benefique : quand alpha augmente, l'indicateur D diminue. Un TBC plus epais offre une meilleure protection.
+
+La longueur d'onde Lw a un effet critique : quand Lw diminue, D augmente. Des perturbations a courte longueur d'onde generent des gradients plus severes.
+
+Notre recommandation : alpha superieur ou egal a zerovirgule deux pour les applications haute pression.
+\end{maximebox}
+
+\begin{maximebox}[Slide 27 : Validation ONERA -- 45 secondes]
+Nos resultats ont ete valides par comparaison aux donnees de reference ONERA et Safran.
+
+Les ecarts sur les modules elastiques sont inferieurs a un pourcent. Par exemple, C onze du substrat vaut cent quarante-cinq gigapascals dans notre code contre cent quarante-quatre virgule huit gigapascals dans la reference.
+
+Les contraintes calculees sont dans la plage des resultats FEM ONERA, entre quatre cents et huit cents megapascals.
+
+Le modele est donc valide pour une utilisation en phase de pre-dimensionnement.
+\end{maximebox}
+
+\begin{maximebox}[Slide 28 : Demonstration Application -- 30 secondes]
+Le workflow utilisateur est en quatre etapes.
+
+Etape un : parametrage des entrees alpha, beta, Lw.
+
+Etape deux : calcul spectral en moins d'une seconde.
+
+Etape trois : visualisation du dashboard et des profils trois dimensions.
+
+Etape quatre : export des resultats en PDF ou CSV avec recommandations automatiques.
+\end{maximebox}
+
+\begin{maximebox}[Slide 29 : Limites du Modele -- 30 secondes]
+Notre modele presente certaines limites a mentionner.
+
+Geometrie : nous modellisons une plaque plane alors que les aubes reelles ont une courbure complexe.
+
+Thermique : le regime est stationnaire, nous ne capturons pas les cycles de demarrage arret.
+
+Mecanique : le comportement est elastique lineaire, sans fluage ni plasticite.
+
+Ces hypotheses restent valides pour des temperatures inferieures a mille cent degres et des contraintes inferieures a cinq cents megapascals.
+\end{maximebox}
+
+\begin{maximebox}[Slide 30 : Perspectives -- 30 secondes]
+Plusieurs pistes d'evolution sont envisageables.
+
+Extension geometrique vers des geometries cylindriques et complexes.
+
+Prise en compte de la fatigue thermique et du cyclage pour estimer la duree de vie.
+
+Integration de modeles de machine learning comme surrogate pour l'optimisation rapide.
+
+Extension de la base de donnees materiaux vers les composites a matrice ceramique CMC.
+\end{maximebox}
+
+\begin{maximebox}[Slide 31 : Conclusion -- 45 secondes]
+En conclusion, notre projet a atteint ses quatre objectifs.
+
+Les objectifs de modelisation et prediction des zones critiques sont atteints grace a la methode spectrale.
+
+L'outil est valide : le code Python Streamlit est operationnel et les resultats sont conformes aux references ONERA.
+
+La tracabilite entre theorie et code est assuree par une documentation complete.
+
+Le potentiel industriel est demontre : l'outil permet une aide a la conception rapide et une optimisation efficace.
+\end{maximebox}
+
+\begin{maximebox}[Slide 32 : Remerciements -- 30 secondes]
+Nous tenons a remercier chaleureusement nos encadrants.
+
+Monsieur Aurelien Vattre de l'ONERA pour sa supervision scientifique rigoureuse.
+
+Monsieur Daniel Gaffie de l'ESTACA pour son accompagnement pedagogique.
+
+Et toutes les personnes qui ont contribue a ce projet.
+
+L'equipe : Johan Guitton, Achille Voisin, Lionel Dauriac, et moi-meme Maxime Leboeuf.
+
+Merci de votre attention. Nous sommes maintenant disponibles pour repondre a vos questions.
+\end{maximebox}
+
+\end{document}

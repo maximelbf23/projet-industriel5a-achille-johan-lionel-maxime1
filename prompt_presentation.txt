@@ -1,0 +1,654 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROMPT COMPLET POUR GÉNÉRER UNE PRÉSENTATION POWERPOINT DE SOUTENANCE
+# Projet Industriel 5A-IDSA : Modélisation Thermomécanique des Systèmes TBC
+# ═══════════════════════════════════════════════════════════════════════════════
+# 
+# INSTRUCTIONS: Envoie ce prompt à une IA de génération de présentations 
+# (Gamma, SlidesAI, ChatGPT, Claude) pour obtenir ~50-60 slides au total
+# Durée visée: 40 minutes de présentation (4 × 10 min) + 15 min questions
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+## CONTEXTE GÉNÉRAL
+
+Je souhaite que tu crées une **présentation PowerPoint professionnelle et détaillée** pour notre soutenance de projet industriel de 5ème année (ESTACA/IDSA - Master équivalent). 
+
+**Équipe :** 4 étudiants, chacun présente environ **10 minutes** (soit ~40 min au total + questions)
+**Encadrement :** ONERA (Aurélien Vattré) / ESTACA (Daniel Gaffié)
+**Partenaires industriels :** Safran
+
+La présentation doit être suffisamment détaillée pour remplir 10 min par personne, soit environ **12-15 slides par intervenant** avec du contenu dense et des visuels explicatifs.
+
+---
+
+## TITRE DU PROJET
+
+**"Évaluation Thermomécanique des Zones Critiques d'Endommagement dans les Aubes de Turbines Multicouches Nouvelle Génération"**
+
+Sous-titre : Méthode Spectrale et Implémentation Python/Streamlit
+
+---
+
+## DESCRIPTION COMPLÈTE DU PROJET
+
+### Contexte Industriel
+
+Les aubes de turbines haute pression sont parmi les composants les plus critiques des moteurs aéronautiques modernes. Elles sont soumises à des conditions extrêmes :
+- **Températures** : >1500°C (gaz de combustion)
+- **Gradients thermiques** : jusqu'à 200°C sur quelques millimètres
+- **Contraintes mécaniques** : charges centrifuges + fatigue cyclique
+- **Environnement corrosif** : oxydation haute température
+
+Pour protéger le superalliage de base, on utilise des **systèmes TBC (Thermal Barrier Coating)** multicouches :
+1. **Substrat** : Superalliage base Nickel (Inconel 718) - ~500 µm
+2. **Bond Coat** : Couche d'accroche MCrAlY (NiCoCrAlY) - ~10 µm  
+3. **Céramique TBC** : Zircone stabilisée Yttrium (YSZ 7% Y₂O₃-ZrO₂) - ~50-500 µm
+
+**Problématiques d'endommagement :**
+- Délamination aux interfaces (décohésion couche céramique/substrat)
+- Écaillage (perte de morceaux de revêtement)
+- Fissuration par concentration de contraintes
+- Ces phénomènes sont la cause principale de défaillance des systèmes TBC
+
+### Objectif Principal
+
+Développer un **outil de simulation numérique semi-analytique** permettant :
+1. Modéliser la réponse thermomécanique d'architectures multicouches 3D
+2. Prédire les zones critiques d'endommagement aux interfaces
+3. Quantifier les effets de l'anisotropie élastique, contrastes thermiques, épaisseurs
+4. Fournir des cartes de sensibilité pour guider la conception
+
+### Livrables du Projet
+
+1. **Module de calcul Python** : ~3000 lignes de code dans le répertoire `core/`
+   - `mechanical_pdf.py` : Solveur spectral conforme méthodologie PDF (1031 lignes)
+   - `mechanical.py` : Assemblage multicouche complet (1507 lignes)
+   - `damage_analysis.py` : Critères d'endommagement (367 lignes)
+   - `calculation.py` : Solveur thermique multi-modes (269 lignes)
+   - `constants.py` : Propriétés matériaux ONERA/Safran
+
+2. **Interface Streamlit Interactive** : 8 onglets dans `tabs/`
+   - Dashboard panoramique avec KPIs, jauges, radar multi-critères
+   - Visualisations 3D (Plotly) des champs de température et contraintes
+   - Onglets : Analyse détaillée, Étude paramétrique, Théorie interactive, etc.
+
+3. **Documentation technique** : Rapport de synthèse LaTeX (784 lignes)
+
+---
+
+## MÉTHODOLOGIE TECHNIQUE DÉTAILLÉE
+
+### Approche Semi-Analytique : Méthode Spectrale
+
+La méthode spectrale consiste à décomposer les champs en séries de Fourier et résoudre les équations d'équilibre dans l'espace spectral.
+
+**Étape 1-2 : Représentation Spectrale de la Température**
+```
+T(x₁, x₂, x₃) = Σ T_mn(x₃) × sin(δ₁x₁) × sin(δ₂x₂)
+```
+où δ₁ = δ₂ = π/Lw (nombres d'onde spectraux)
+
+**Étape 3 : Solution Thermique par Couche**
+```
+T(i)(x₃) = A(i) × exp(λ(i)x₃) + B(i) × exp(-λ(i)x₃)
+```
+avec λ(i) = δη × √(kη/k₃₃) (exposant thermique)
+
+**Étape 4 : Loi de Comportement Thermo-Élastique**
+```
+σᵢⱼ = Cᵢⱼₖₗ × (εₖₗ - αₖₗ × T)
+```
+Notation Voigt : C₁₁₁₁→C11, C₁₃₁₃→C55, C₂₃₂₃→C44, C₁₂₁₂→C66
+
+**Étape 5 : Ansatz de Déplacement Modal**
+```
+u₁ = V₁(x₃) × cos(δ₁x₁) × sin(δ₂x₂)
+u₂ = V₂(x₃) × sin(δ₁x₁) × cos(δ₂x₂)
+u₃ = V₃(x₃) × sin(δ₁x₁) × sin(δ₂x₂)
+```
+avec Vᵢ(x₃) = Aᵢ × exp(τ × x₃)
+
+**Étape 6 : Matrice Dynamique Γ(τ) et Opérateurs Lⱼₖ**
+
+La matrice Γ(τ) 3×3 assemble les opérateurs L_jk :
+```
+Γ(τ) = | L₁₁   L₁₂   L₁₃ |
+       | L₂₁   L₂₂   L₂₃ |
+       | L₃₁   L₃₂   L₃₃ |
+```
+
+**Termes diagonaux :**
+- L₁₁ = C₅₅τ² - (C₁₁δ₁² + C₆₆δ₂²)
+- L₂₂ = C₄₄τ² - (C₂₂δ₂² + C₆₆δ₁²)
+- L₃₃ = C₃₃τ² - (C₅₅δ₁² + C₄₄δ₂²)
+
+**Termes croisés (ANTISYMÉTRIQUES - point critique) :**
+- L₁₃ = +(C₁₃ + C₅₅)δ₁τ
+- L₃₁ = -(C₁₃ + C₅₅)δ₁τ  ← Signe NÉGATIF !
+- L₂₃ = +(C₂₃ + C₄₄)δ₂τ
+- L₃₂ = -(C₂₃ + C₄₄)δ₂τ  ← Signe NÉGATIF !
+
+**Équation caractéristique :**
+```
+det(Γ(τ)) = 0  →  P(τ) = c₆τ⁶ + c₄τ⁴ + c₂τ² + c₀ = 0
+```
+En posant X = τ², on obtient un polynôme cubique avec 3 racines X₁, X₂, X₃.
+On sélectionne les 3 valeurs propres τᵣ avec Re(τ) < 0 (condition de radiation).
+
+**Étape 7 : Assemblage 9×9 avec Sollicitation Thermique**
+```
+K_Dyn = | Γ(τ₁)    0       0    |   (bloc-diagonale)
+        |   0    Γ(τ₂)    0    |
+        |   0      0    Γ(τ₃)  |
+
+K_Dyn · A = F_Th
+```
+où A = [A₁¹, A₂¹, A₃¹, A₁², A₂², A₃², A₁³, A₂³, A₃³]ᵀ (9 amplitudes)
+
+**Termes thermiques Qα :**
+- Q₁ = (C₁₁α₁₁ + C₁₂α₂₂)δ₁ × T
+- Q₂ = (C₂₂α₂₂ + C₁₂α₁₁)δ₂ × T
+- Q₃ = (C₁₃α₁₁ + C₂₃α₂₂ + C₃₃α₃₃) × dT/dx₃
+
+**Étape 8 : Assemblage Multicouche**
+
+Pour N couches, le système global a 6N équations et 6N inconnues.
+
+**Réduction du nombre d'équations : 27 → 18 (pour N=3 couches)**
+| Type d'équation              | Théorique | Spectral |
+|------------------------------|-----------|----------|
+| Équilibre volumique (div σ=0)| 9         | 0 (implicite!) |
+| Continuité aux interfaces    | 12        | 12       |
+| Conditions limites (σ=0)     | 6         | 6        |
+| **TOTAL**                    | **27**    | **18**   |
+
+Les 9 équations d'équilibre volumique sont IMPLICITEMENT satisfaites par l'approche modale !
+
+### Critères d'Endommagement
+
+**Indicateur de Dommage D :**
+```
+D = max(|σᵢⱼ| / σ_crit^ij)
+```
+Interprétation :
+- D < 0.5 : Zone sûre (vert)
+- 0.5 ≤ D < 0.8 : Zone de prudence (orange)
+- D ≥ 0.8 : Zone critique (rouge)
+- D ≥ 1 : Rupture probable
+
+**Critère de Tsai-Wu (matériaux anisotropes) :**
+```
+F = F₃σ₃₃ + F₃₃σ₃₃² + F₄₄σ₂₃² + F₅₅σ₁₃²
+```
+Rupture si F ≥ 1
+
+**Contraintes critiques par matériau (MPa) :**
+| Matériau    | σ_traction | σ_compression | τ_cisaillement |
+|-------------|------------|---------------|----------------|
+| Substrat Ni | 1000       | 1200          | 600            |
+| Bond Coat   | 500        | 700           | 300            |
+| Céramique   | 150        | 500           | 120            |
+
+### Stabilité Numérique
+
+Le système multicouche peut être mal conditionné (cond(K) > 10³⁰). Techniques utilisées :
+
+1. **Préconditionnement par scaling** : Matrices diagonales Dᵣ et Dᶜ
+2. **Régularisation de Tikhonov** : SVD avec filtre des valeurs singulières
+3. **Normalisation par C_REF_GLOBAL** = 200 GPa
+
+---
+
+## PROPRIÉTÉS MATÉRIAUX (Source ONERA/Safran)
+
+**Référence :** Bovet, Chiaruttini, Vattré - "Full-scale crystal plasticity modeling and data-driven learning of microstructure effects in polycrystalline turbine blades" - ONERA/Safran (2025) - Table 3
+
+| Propriété         | Substrat (Ni) | Bond Coat | Céramique (YSZ) |
+|-------------------|---------------|-----------|-----------------|
+| C₁₁ (GPa)         | 260           | 180       | 50              |
+| C₁₂ (GPa)         | 179           | 80        | 10              |
+| C₄₄ (GPa)         | 110           | 60        | 20              |
+| α (1/K)           | 12×10⁻⁶       | 14×10⁻⁶   | 10×10⁻⁶         |
+| k₃₃ (W/m·K)       | 20            | 8         | 1.5             |
+
+**Épaisseurs de référence :**
+- h₁ (substrat) = 500 µm
+- h₂ (bond coat) = 10 µm
+- h₃ (céramique) = α × h₁ (paramètre variable)
+
+---
+
+## INTERFACE STREAMLIT - DESCRIPTION DÉTAILLÉE
+
+### Dashboard Principal (tabs/dashboard_home.py - 803 lignes)
+
+**En-tête Hero animé** avec dégradés, animations CSS, logo projet
+
+**6 KPIs Cards spectaculaires :**
+1. 🌡️ T° Interface (avec code couleur critique/attention/OK)
+2. 📏 Épaisseur TBC (µm)
+3. 🔴/🟡/🟢 Indicateur D (avec niveau de risque)
+4. ⚡ Performance Thermique (%)
+5. 🔥 Gradient ΔT (°C)
+6. 🛡️ Marge de Sécurité (°C)
+
+**Jauge de Risque Global** : Gauge semi-circulaire avec zones colorées
+
+**Radar Multi-Critères** : 5 axes (Isolation, Intégrité, Masse, Durée vie, Marge)
+
+**Visualisation 3D Structure** : Surface Plotly avec champ thermique et interfaces
+
+**Recommandations Intelligentes** : Génération automatique de conseils (fonction `generate_recommendations()`)
+
+**Validation ONERA** : Comparaison avec données de référence (écart C₁₁ < 1%)
+
+### Autres Onglets (8 au total)
+- `analysis_detailed.py` : Analyse détaillée avec profils complets
+- `study_parametric.py` : Études paramétriques 2D (balayage α, β, Lw)
+- `mapping_3d.py` : Cartographie 3D des contraintes
+- `mechanical.py` : Workflow complet analyse spectrale
+- `optimization.py` : Optimisation épaisseur TBC
+- `theory_interactive.py` : Explication interactive de la théorie
+
+---
+
+## RÉSULTATS TYPIQUES
+
+| Métrique                   | Plage Typique | Seuil Critique |
+|----------------------------|---------------|----------------|
+| T° interface substrat/BC   | 800-1050°C    | 1100°C         |
+| Indicateur D               | 0.2-0.8       | ≥1 (rupture)   |
+| σ₃₃ max (arrachement)      | 50-200 MPa    | 150 MPa        |
+| σ₁₃ max (cisaillement)     | 20-80 MPa     | 120 MPa        |
+
+**Influence des paramètres :**
+- α ↑ (TBC plus épais) → D ↓ (meilleure protection)
+- Lw ↓ (perturbation courte) → D ↑ (gradients plus forts)
+- ΔT ↑ → D ↑ (forçage thermique croissant)
+- β ↓ (TBC moins conducteur) → D ↑ dans TBC
+
+---
+
+## STRUCTURE DE PRÉSENTATION DÉTAILLÉE
+
+═══════════════════════════════════════════════════════════════════════════════
+### INTERVENANT 1 (10 min, 12-15 slides)
+### THÈME : Introduction et Contexte Industriel
+═══════════════════════════════════════════════════════════════════════════════
+
+**SLIDE 1 - Titre (30 sec)**
+- Titre complet du projet
+- Noms des 4 membres de l'équipe
+- Logos : ESTACA, ONERA, Safran
+- Date de soutenance
+
+**SLIDE 2 - Sommaire Général (30 sec)**
+- Structure en 4 parties
+- Nom de chaque intervenant + sujet
+
+**SLIDE 3 - Contexte Aéronautique (1 min)**
+- Enjeux de durabilité des moteurs
+- Tendances : augmentation températures, efficacité énergétique
+- Place des turbines dans l'architecture moteur
+- Schéma simplifié d'un turboréacteur avec zone chaude en évidence
+
+**SLIDE 4 - Les Aubes de Turbines HP (1 min)**
+- Photo/schéma d'une aube de turbine
+- Conditions de fonctionnement : T > 1500°C, vitesse rotation
+- Matériaux : superalliages monocristallins
+- Refroidissement interne (canaux)
+
+**SLIDE 5 - Système TBC : Architecture Multicouche (1.5 min)**
+- Schéma en coupe des 3 couches avec épaisseurs
+- Rôle de chaque couche :
+  - Substrat : résistance mécanique
+  - Bond Coat : adhésion + protection oxydation
+  - Céramique : isolation thermique
+- Typiquement : 500 + 10 + 100 µm
+
+**SLIDE 6 - Problématiques d'Endommagement (1.5 min)**
+- Photos/schémas de :
+  - Délamination (décohésion interface)
+  - Écaillage (perte de morceaux)
+  - Fissuration (propagation cracks)
+- Statistiques : cause principale de défaillance TBC
+- Impact économique (coût maintenance, arrêts)
+
+**SLIDE 7 - Objectifs du Projet (1 min)**
+- 4 objectifs clairement énoncés :
+  1. Modéliser réponse thermomécanique 3D
+  2. Prédire zones critiques
+  3. Quantifier effets des paramètres
+  4. Fournir outil d'aide à la conception
+- Mot-clé : "outil semi-analytique"
+
+**SLIDE 8 - Partenaires du Projet (45 sec)**
+- ONERA : expertise mécanique des matériaux, supervision scientifique
+- Safran : contexte industriel, données matériaux
+- ESTACA : formation ingénieur, encadrement pédagogique
+
+**SLIDE 9 - Planning du Projet (1 min)**
+- Timeline sur 6-8 mois
+- Phases : Bibliographie, Développement, Tests, Documentation
+- Livrables intermédiaires
+- Diagramme de Gantt simplifié
+
+**SLIDE 10 - Méthodologie Générale (1 min)**
+- Vue d'ensemble de l'approche
+- Schéma flux : Entrées → Modèle thermique → Modèle mécanique → Critères D → Sortie
+- Mention de la méthode spectrale (développé partie 2)
+
+**SLIDE 11 - Livrables du Projet (45 sec)**
+- Module Python : ~3000 lignes, 5 fichiers core
+- Interface Streamlit : 8 onglets interactifs
+- Documentation : Rapport de synthèse + README
+
+**SLIDE 12 - Transition vers Partie 2 (15 sec)**
+- "Voyons maintenant la méthodologie mathématique avec [Nom Intervenant 2]"
+
+═══════════════════════════════════════════════════════════════════════════════
+### INTERVENANT 2 (10 min, 12-15 slides)
+### THÈME : Modélisation Mathématique
+═══════════════════════════════════════════════════════════════════════════════
+
+**SLIDE 13 - Introduction à la Méthode Spectrale (1 min)**
+- Principe : décomposition en séries de Fourier
+- Avantages vs méthodes numériques (EF) :
+  - Solution semi-analytique
+  - Pas de maillage
+  - Rapide et précise
+- Schéma conceptuel : signal → spectre
+
+**SLIDE 14 - Représentation Spectrale (Étapes 1-2) (1 min)**
+- Développement en séries de Fourier doubles
+- Formule : T(x₁, x₂, x₃) = Σ T_mn(x₃) × sin(δ₁x₁) × sin(δ₂x₂)
+- Nombres d'onde δ = π/Lw
+- Signification physique de Lw (longueur d'onde perturbation)
+
+**SLIDE 15 - Solution Thermique (Étape 3) (1 min)**
+- Équation de conduction dans chaque couche
+- Solution exponentielle : T(x₃) = A×exp(λx₃) + B×exp(-λx₃)
+- Exposant thermique λ fonction des conductivités
+- Système 6×6 (6 coefficients A, B pour 3 couches)
+
+**SLIDE 16 - Loi de Hooke Thermo-Élastique (Étape 4) (45 sec)**
+- Formule tensorielle : σᵢⱼ = Cᵢⱼₖₗ(εₖₗ - αₖₗT)
+- Tenseur de rigidité Cᵢⱼₖₗ
+- Coefficients de dilatation thermique αₖₗ
+- Notation Voigt (passage 81 → 36 composantes)
+
+**SLIDE 17 - Ansatz de Déplacement Modal (Étape 5) (1 min)**
+- Forme supposée des déplacements u₁, u₂, u₃
+- Fonctions trigonométriques en x₁, x₂
+- Forme exponentielle en x₃ : Vᵢ = Aᵢ×exp(τx₃)
+- τ = valeur propre à déterminer
+
+**SLIDE 18 - Matrice Dynamique Γ(τ) (Étape 6) (1.5 min)**
+- Construction de la matrice 3×3
+- 9 opérateurs Lⱼₖ
+- Formules des termes diagonaux L₁₁, L₂₂, L₃₃
+- Formules des termes croisés L₁₂
+- **Point critique** : Antisymétrie L₁₃ = -L₃₁
+
+**SLIDE 19 - Équation Caractéristique (1 min)**
+- det(Γ(τ)) = 0 → Polynôme d'ordre 6
+- Changement de variable X = τ²
+- Polynôme cubique en X : 3 racines
+- Sélection de 3 τ avec Re(τ) < 0 (condition de radiation)
+
+**SLIDE 20 - Assemblage 9×9 (Étape 7) (1 min)**
+- Matrice bloc-diagonale K_Dyn
+- 3 blocs Γ(τᵣ) sur la diagonale
+- Vecteur d'amplitudes A (9 inconnues)
+- Vecteur thermique F_th (termes Qα)
+
+**SLIDE 21 - Système Multicouche (Étape 8) (1.5 min)**
+- 6N équations pour N couches
+- Conditions aux limites : σ = 0 en surface
+- Conditions de continuité : u et σ aux interfaces
+- **Point clé** : Réduction 27 → 18 équations par approche modale
+
+**SLIDE 22 - Avantages vs Autres Méthodes (1 min)**
+- Tableau comparatif : Spectral vs CLT vs Éléments Finis
+- Précision / Temps de calcul / Complexité
+- Superposition CLT + Spectral dans le code
+
+**SLIDE 23 - Transition vers Partie 3 (15 sec)**
+
+═══════════════════════════════════════════════════════════════════════════════
+### INTERVENANT 3 (10 min, 12-15 slides)
+### THÈME : Implémentation Logicielle
+═══════════════════════════════════════════════════════════════════════════════
+
+**SLIDE 24 - Architecture du Projet (1 min)**
+- Arborescence des fichiers
+- Répertoire core/ : 5 modules Python
+- Répertoire tabs/ : 8 onglets Streamlit
+- Fichiers annexes : tests, requirements
+
+**SLIDE 25 - Choix Technologiques (45 sec)**
+- Python 3.x
+- NumPy/SciPy : calcul matriciel, algèbre linéaire
+- Streamlit : interface web interactive
+- Plotly : visualisations 3D
+- Justification des choix
+
+**SLIDE 26 - Module mechanical_pdf.py (1.5 min)**
+- 1031 lignes de code
+- Structure : Sections 2, 5, 6, 7 du PDF
+- Fonctions clés :
+  - compute_L_operators()
+  - get_Gamma_matrix()
+  - solve_characteristic_polynomial()
+  - assemble_K_dyn_9x9()
+- Documentation docstrings riche
+
+**SLIDE 27 - Module mechanical.py (1 min)**
+- 1507 lignes
+- Classe Layer : représentation d'une couche
+- Phases 1-5 : Eigenvectors, Stress, Thermal, State Vector, Assembly
+- Fonction solve_multilayer_problem()
+
+**SLIDE 28 - Module damage_analysis.py (1 min)**
+- Critères d'endommagement
+- compute_damage_indicator() : Indicateur D
+- compute_tsai_wu_criterion() : Critère anisotrope
+- Fonctions d'optimisation : optimize_tbc_thickness()
+
+**SLIDE 29 - Gestion Stabilité Numérique (1.5 min)**
+- Problème : cond(K) > 10³⁰
+- Solutions implémentées :
+  - Préconditionnement par scaling (matrices Dᵣ, Dᶜ)
+  - Régularisation Tikhonov via SVD
+  - Normalisation par C_REF_GLOBAL = 200 GPa
+- Vérification du conditionnement avant résolution
+
+**SLIDE 30 - Interface Streamlit : Conception (1 min)**
+- Design moderne avec CSS custom
+- Thème sombre professionnel
+- Responsive (adaptatif)
+- Caching Streamlit pour performances
+
+**SLIDE 31 - Dashboard Principal (1.5 min)**
+- Capture d'écran annotée
+- 6 KPIs Cards avec codes couleur
+- Jauge de risque
+- Radar multi-critères
+- Recommandations intelligentes
+
+**SLIDE 32 - Visualisations 3D Plotly (1 min)**
+- Surface du champ thermique
+- Lignes d'interfaces colorées
+- Interactivité : zoom, rotation, survol
+
+**SLIDE 33 - Tests et Validation (45 sec)**
+- pytest : tests unitaires
+- Fichiers test_mechanical.py, test_multilayer.py
+- Couverture des cas limites
+- Validation croisée avec calcul analytique
+
+**SLIDE 34 - Traçabilité Théorie ↔ Code (45 sec)**
+- Tableau de correspondance :
+  - Étape PDF → Fonction Python → Fichier
+- Exemple : Étape 6 → get_Gamma_matrix() → mechanical_pdf.py
+
+**SLIDE 35 - Transition vers Partie 4 (15 sec)**
+
+═══════════════════════════════════════════════════════════════════════════════
+### INTERVENANT 4 (10 min, 12-15 slides)
+### THÈME : Résultats, Validation et Conclusions
+═══════════════════════════════════════════════════════════════════════════════
+
+**SLIDE 36 - Propriétés Matériaux Utilisées (1 min)**
+- Tableau des propriétés (Cᵢⱼ, α, k)
+- Source : ONERA/Safran (2025)
+- Comparaison valeurs code vs référence
+- Écarts < 1% sur C₁₁
+
+**SLIDE 37 - Résultats Thermiques (1 min)**
+- Profil de température T(z) typique
+- Gradient dans chaque couche
+- Température à l'interface critique
+- Comparaison avec limite T_crit = 1100°C
+
+**SLIDE 38 - Résultats Mécaniques : Contraintes Transverses (1.5 min)**
+- Profil σ₃₃(z) : contrainte d'arrachement
+- Profils σ₁₃(z), σ₂₃(z) : cisaillements
+- Pics aux interfaces (concentration contraintes)
+- Valeurs typiques : 50-200 MPa
+
+**SLIDE 39 - Identification Zones Critiques (1 min)**
+- Interface Bond Coat / Céramique = plus critique
+- Raisons : fort contraste Cᵢⱼ, différence α
+- Schéma avec zones colorées selon niveau D
+
+**SLIDE 40 - Indicateur D : Interprétation (1.5 min)**
+- Valeurs D selon configurations
+- Code couleur zones (vert/orange/rouge)
+- Seuil D = 0.8 pour prudence
+- Seuil D = 1 pour risque rupture
+
+**SLIDE 41 - Critère de Tsai-Wu (45 sec)**
+- Application aux matériaux anisotropes
+- Résultats F pour céramique
+- Comparaison avec D
+
+**SLIDE 42 - Études Paramétriques (1.5 min)**
+- Influence α (épaisseur TBC) sur D → D diminue
+- Influence Lw (longueur onde) → D augmente si Lw↓
+- Heatmap 2D : carte de sensibilité α-β
+- Recommandation : α ≥ 0.2 pour applications HP
+
+**SLIDE 43 - Validation ONERA (1 min)**
+- Comparaison contraintes code vs plage FEM ONERA
+- Plage de référence : 400-800 MPa
+- Résultats dans la plage → Conformité
+- Badge "Conforme ONERA" dans le dashboard
+
+**SLIDE 44 - Démonstration Application (1 min)**
+- 2-3 captures d'écran clés
+- Parcours utilisateur : paramètres → résultats
+- Mention version live si applicable
+
+**SLIDE 45 - Limites du Modèle (1 min)**
+- Géométrie simplifiée (plaque plane)
+- Pas de prise en compte fluage
+- Chargement thermique stationnaire
+- Pas de cyclage thermique
+
+**SLIDE 46 - Perspectives d'Amélioration (1 min)**
+- Extension géométrie cylindrique/complexe
+- Couplage avec fatigue thermique
+- Base de données matériaux étendue
+- Machine Learning pour optimisation rapide
+
+**SLIDE 47 - Conclusion Générale (1 min)**
+- Objectifs atteints ✓
+- Outil fonctionnel et validé ✓
+- Traçabilité théorie-code ✓
+- Potentiel industriel (aide conception TBC)
+
+**SLIDE 48 - Remerciements (30 sec)**
+- ONERA (Aurélien Vattré)
+- ESTACA (Daniel Gaffié)
+- Safran
+- Équipe projet
+
+**SLIDE 49 - Questions (slide final)**
+- "Merci de votre attention"
+- "Questions ?"
+- Coordonnées/email si pertinent
+
+═══════════════════════════════════════════════════════════════════════════════
+## SLIDES DE BACKUP (pour questions techniques)
+═══════════════════════════════════════════════════════════════════════════════
+
+**BACKUP 1 - Démonstration détaillée des opérateurs Lⱼₖ**
+**BACKUP 2 - Formules complètes des termes thermiques Qα**
+**BACKUP 3 - Pseudo-code de l'algorithme de résolution**
+**BACKUP 4 - Détails régularisation Tikhonov**
+**BACKUP 5 - Comparaison numérique CLT seul vs Spectral**
+
+---
+
+## STYLE ET MISE EN PAGE
+
+### Palette de Couleurs
+- Fond principal : Bleu foncé (#0f172a) ou blanc
+- Accent primaire : Bleu (#3b82f6)
+- Accent secondaire : Cyan (#22d3ee)
+- Warning : Orange (#f59e0b)
+- Danger : Rouge (#ef4444)
+- Success : Vert (#10b981)
+
+### Typographie
+- Titres : Sans-serif bold (Calibri, Arial, Inter)
+- Corps : Sans-serif regular
+- Code/formules : Monospace
+
+### Éléments Visuels à Intégrer
+- [ ] Schéma coupe TBC 3 couches avec températures
+- [ ] Diagramme modes de rupture (I, II, III)
+- [ ] Matrice Γ(τ) visuelle
+- [ ] Architecture logicielle en blocs
+- [ ] Captures d'écran dashboard (jauge, radar, 3D)
+- [ ] Graphiques profils T(z) et σ(z)
+- [ ] Heatmap sensibilité α-β
+- [ ] Timeline projet
+- [ ] Tableau propriétés matériaux
+
+### Animations (légères)
+- Apparition progressive des bullet points
+- Transitions fluides entre slides
+- Pas de transitions flashy (professionnel)
+
+### Footer/Header
+- Logo ESTACA + ONERA + Safran en bas
+- Numéro de slide
+- Nom de la partie/intervenant
+
+---
+
+## TIMING DÉTAILLÉ
+
+| Intervenant | Thème                        | Slides    | Durée |
+|-------------|------------------------------|-----------|-------|
+| 1           | Introduction & Contexte      | 1-12      | 10 min|
+| 2           | Modélisation Mathématique    | 13-23     | 10 min|
+| 3           | Implémentation Logicielle    | 24-35     | 10 min|
+| 4           | Résultats & Conclusions      | 36-49     | 10 min|
+| -           | **TOTAL**                    | ~50 slides| 40 min|
+| -           | Questions                    | -         | 15 min|
+
+---
+
+## INSTRUCTIONS FINALES
+
+1. Génère environ 50 slides avec le contenu ci-dessus
+2. Chaque slide doit avoir : titre clair, 3-5 bullet points, indication visuel suggéré
+3. Utilise le style professionnel décrit
+4. Assure-toi que chaque partie peut tenir en 10 minutes
+5. Inclus les formules mathématiques aux endroits appropriés (LaTeX si possible)
+6. Prévois les slides de backup pour questions techniques
+
+Bonne génération !

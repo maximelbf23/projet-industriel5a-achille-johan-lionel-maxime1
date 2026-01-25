@@ -69,6 +69,7 @@ en utilisant la structure modale de la solution.
 ================================================================================
 """
 
+import warnings                                                 # Pour gérer les warnings numériques
 import numpy as np                                              # Bibliothèque NumPy pour calcul matriciel
 from typing import Dict, List, Tuple, Optional                  # Types pour annotations (documentation)
 from .constants import MECHANICAL_PROPS, GPa_TO_PA              # Import des propriétés mécaniques par défaut
@@ -523,15 +524,23 @@ def solve_characteristic_polynomial(delta1: float, delta2: float,
     # On évalue det(Γ(√X)) en X = 0, 1, 2 puis on résout pour les coefficients
     
     def get_det_at_X(X_val):
-        """Évalue det(Γ(τ)) pour τ = √X."""
+        """Évalue det(Γ(τ)) pour τ = √X.
+        
+        Note: Pour X=0, τ=0 et déterminer peut générer des warnings
+        numériques (divisions par zéro) qui sont bénins car c₀ = det(Γ(0))
+        est bien défini analytiquement.
+        """
         tau_val = np.sqrt(complex(X_val))          # τ = √X (complexe si X < 0)
         Gamma = get_Gamma_matrix(tau_val, delta1, delta2, props)
         return np.linalg.det(Gamma)                # Déterminant 3×3
     
     # Évaluations du polynôme P(X) = c₆X³ + c₄X² + c₂X + c₀
-    P_0 = get_det_at_X(0)    # P(0) = c₀
-    P_1 = get_det_at_X(1)    # P(1) = c₆ + c₄ + c₂ + c₀
-    P_2 = get_det_at_X(2)    # P(2) = 8c₆ + 4c₄ + 2c₂ + c₀
+    # Suppression des warnings numériques bénins lors de l'évaluation à X=0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        P_0 = get_det_at_X(0)    # P(0) = c₀ (peut générer warning bénin)
+        P_1 = get_det_at_X(1)    # P(1) = c₆ + c₄ + c₂ + c₀
+        P_2 = get_det_at_X(2)    # P(2) = 8c₆ + 4c₄ + 2c₂ + c₀
     
     # Résolution du système pour c₀, c₂, c₄:
     c0 = P_0                         # Directement depuis P(0)
@@ -928,7 +937,7 @@ def solve_layer_pdf_method(h_layer: float, lw: float,
     }
 
 
-def compute_stress_from_displacement(result: Dict, x3: float) -> np.ndarray:
+def compute_stress_from_displacement(result: Dict, x3: float, in_pascal: bool = False) -> np.ndarray:
     """
     Calcule les contraintes à partir du champ de déplacement.
     
@@ -960,9 +969,12 @@ def compute_stress_from_displacement(result: Dict, x3: float) -> np.ndarray:
     Args:
         result: Dict retourné par solve_layer_pdf_method
         x3: Position dans l'épaisseur (m)
+        in_pascal: Si True, retourne les contraintes en Pa (défaut: False → GPa)
     
     Returns:
-        sigma: Vecteur [σ₁₃, σ₂₃, σ₃₃] des contraintes (en GPa)
+        sigma: Vecteur [σ₁₃, σ₂₃, σ₃₃] des contraintes
+               - En GPa si in_pascal=False (défaut)
+               - En Pa si in_pascal=True
     """
     # =========================================================================
     # Extraction des données depuis le dict result
@@ -1006,6 +1018,13 @@ def compute_stress_from_displacement(result: Dict, x3: float) -> np.ndarray:
     #           └── Couplage Poisson x₁ → x₃
     
     # =========================================================================
-    # Retour du vecteur des contraintes
+    # Retour du vecteur des contraintes (avec conversion optionnelle)
     # =========================================================================
-    return np.array([sigma_13, sigma_23, sigma_33], dtype=complex)
+    sigma = np.array([sigma_13, sigma_23, sigma_33], dtype=complex)
+    
+    # Conversion GPa → Pa si demandé (les C_ij sont en GPa dans constants.py)
+    if in_pascal:
+        sigma = sigma * GPa_TO_PA  # Multiplication par 1e9
+    
+    return sigma
+

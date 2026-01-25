@@ -1,0 +1,437 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+\setlength{\headheight}{14pt}
+
+% Couleurs pour les 4 orateurs
+\definecolor{johan}{RGB}{59, 130, 246}
+\definecolor{achille}{RGB}{16, 185, 129}
+\definecolor{lionel}{RGB}{249, 115, 22}
+\definecolor{maxime}{RGB}{139, 92, 246}
+\definecolor{codecolor}{RGB}{30, 41, 59}
+
+\newtcolorbox{johanbox}[1][]{colback=johan!5, colframe=johan, fonttitle=\bfseries\large, title={#1}, breakable}
+\newtcolorbox{achillebox}[1][]{colback=achille!5, colframe=achille, fonttitle=\bfseries\large, title={#1}, breakable}
+\newtcolorbox{lionelbox}[1][]{colback=lionel!5, colframe=lionel, fonttitle=\bfseries\large, title={#1}, breakable}
+\newtcolorbox{maximebox}[1][]{colback=maxime!5, colframe=maxime, fonttitle=\bfseries\large, title={#1}, breakable}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Projet 5A-IDSA -- Script V3}
+\lhead{TBC Multicouches}
+\rfoot{Page \thepage}
+
+\title{\textbf{SCRIPT DE SOUTENANCE V3}\\[0.3cm]
+\large Distribution Homogene de la Difficulte\\[0.5cm]
+Evaluation Thermomecanique des Aubes TBC}
+\author{Johan GUITTON $\cdot$ Achille VOISIN $\cdot$ Lionel DAURIAC $\cdot$ Maxime LEBOEUF}
+\date{26 janvier 2026}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{center}
+\begin{tcolorbox}[colback=codecolor!10, colframe=codecolor, width=0.95\textwidth]
+\centering
+\textbf{REPARTITION EQUILIBREE -- 32 SLIDES (10 min chacun)}\\[0.3cm]
+\begin{tabular}{|l|c|l|c|}
+\hline
+\textbf{Orateur} & \textbf{Slides} & \textbf{Contenu} & \textbf{Difficulte} \\
+\hline
+\textcolor{johan}{Johan} & 1--4, 16--17 & Intro + Matrice $\Gamma(\tau)$ & Facile + Eleve \\
+\textcolor{achille}{Achille} & 5--8, 18--19 & TBC/Objectifs + Assemblage 9x9 & Moyen + Eleve \\
+\textcolor{lionel}{Lionel} & 9--15 & Methodologie + Spectrale + Hooke & Moyen + Eleve \\
+\textcolor{maxime}{Maxime} & 20--32 & Implementation + Resultats & Moyen \\
+\hline
+\end{tabular}
+\end{tcolorbox}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section{JOHAN -- Slides 1-4 puis 16-17 (10 min)}
+%==============================================================================
+
+\begin{johanbox}[Slide 1 : Titre (30s)]
+<<~Bonjour, je suis Johan Guitton. Avec Achille, Lionel et Maxime, nous presentons notre projet : \textbf{Evaluation Thermomecanique des Zones Critiques d'Endommagement dans les Aubes TBC}.
+
+Methode spectrale implementee en Python/Streamlit, encadrement ONERA (Aurelien Vattre) et ESTACA (Daniel Gaffie).~>>
+\end{johanbox}
+
+\begin{johanbox}[Slide 2 : Structure Presentation (30s)]
+<<~4 parties : (1) Contexte et Objectifs, (2) Modelisation Mathematique, (3) Implementation Logicielle, (4) Resultats et Validation.
+
+Nous avons reparti les themes pour que chacun presente a la fois du contexte ET du contenu technique.~>>
+\end{johanbox}
+
+\begin{johanbox}[Slide 3 : Turbines Haute Pression (1min30)]
+<<~Les turbines HP fonctionnent dans un environnement extreme :
+\begin{itemize}
+    \item Temperatures gaz $>$ 1500\textdegree C
+    \item Gradients jusqu'a 200\textdegree C sur quelques mm
+    \item Force centrifuge + fatigue cyclique
+\end{itemize}
+Le defi : augmenter les temperatures pour ameliorer l'efficacite energetique.~>>
+\end{johanbox}
+
+\begin{johanbox}[Slide 4 : Architecture TBC (1min30)]
+<<~Systeme multicouche TBC :
+\begin{itemize}
+    \item \textbf{Ceramique YSZ} (50--500 $\mu$m) : isolation thermique principale
+    \item \textbf{Bond Coat MCrAlY} ($\sim$10 $\mu$m) : adhesion et protection oxydation
+    \item \textbf{Substrat Inconel 718} ($\sim$500 $\mu$m) : resistance mecanique
+\end{itemize}
+Contraste de proprietes = source des contraintes aux interfaces.~>>
+\end{johanbox}
+
+\textit{[Johan enchaine directement sur les slides techniques 16-17]}
+
+\begin{johanbox}[Slide 16 : Matrice Dynamique $\Gamma(\tau)$ (2min) -- TECHNIQUE]
+<<~Le coeur de notre methode est la \textbf{matrice dynamique} $\Gamma(\tau)$.
+
+\[
+\Gamma(\tau) = \begin{pmatrix}
+L_{11} & L_{12} & L_{13} \\
+L_{21} & L_{22} & L_{23} \\
+-L_{31} & -L_{32} & L_{33}
+\end{pmatrix}
+\]
+
+\textbf{Point critique} : antisymetrie $L_{13} = -L_{31}$.
+
+Cette propriete provient de l'equilibre en $x_3$ et est essentielle pour la physique correcte.
+
+L'equation caracteristique : $\det(\Gamma(\tau)) = 0$.~>>
+\end{johanbox}
+
+\begin{johanbox}[Slide 17 : Resolution Equation Caracteristique (2min)]
+<<~$\det(\Gamma(\tau)) = 0$ donne un polynome d'ordre 6.
+
+\textbf{Astuce} : $X = \tau^2$ reduit a un polynome cubique.
+
+$c_6 X^3 + c_4 X^2 + c_2 X + c_0 = 0 \Rightarrow$ 3 racines
+
+\textbf{Selection physique} : $\text{Re}(\tau) < 0$ (condition de radiation).
+
+Seules les ondes evanescentes sont conservees.
+
+Je passe maintenant la parole a Achille.~>>
+\end{johanbox}
+
+%==============================================================================
+\section{ACHILLE -- Slides 5-8 puis 18-19 (10 min)}
+%==============================================================================
+
+\begin{achillebox}[Slide 5 : Mecanismes de Defaillance (1min30)]
+<<~Merci Johan. Les systemes TBC presentent des modes de defaillance critiques :
+
+\textbf{Delamination} : perte d'adhesion interface ceramique/bond coat (contrainte $\sigma_{33}$).
+
+\textbf{Ecaillage} : perte de morceaux de revetement.
+
+\textbf{Fissuration} : propagation par concentration de contraintes.
+
+Impact : cause principale de defaillance et couts de maintenance eleves.~>>
+\end{achillebox}
+
+\begin{achillebox}[Slide 6 : Objectifs du Projet (1min)]
+<<~4 objectifs :
+\begin{enumerate}
+    \item \textbf{Modeliser} la reponse thermomecanique 3D
+    \item \textbf{Predire} les zones critiques aux interfaces
+    \item \textbf{Quantifier} les effets des parametres cles
+    \item \textbf{Fournir} des cartes de sensibilite pour la conception
+\end{enumerate}~>>
+\end{achillebox}
+
+\begin{achillebox}[Slide 7 : Partenaires (45s)]
+<<~Partenaires :
+\begin{itemize}
+    \item \textbf{ONERA} : expertise mecanique, supervision Aurelien Vattre
+    \item \textbf{Safran} : contexte industriel, donnees materiaux
+    \item \textbf{ESTACA} : encadrement pedagogique, Daniel Gaffie
+\end{itemize}~>>
+\end{achillebox}
+
+\begin{achillebox}[Slide 8 : Planning du Projet (45s)]
+<<~Projet sur 6-8 mois :
+\begin{itemize}
+    \item Phase 1 (Mois 1-2) : Bibliographie, etude methode spectrale
+    \item Phase 2 (Mois 2-4) : Implementation Python solveurs
+    \item Phase 3 (Mois 4-6) : Interface Streamlit, Plotly 3D
+    \item Phase 4 (Mois 6-8) : Tests croises, rapport
+\end{itemize}~>>
+\end{achillebox}
+
+\textit{[Achille enchaine sur les slides techniques 18-19]}
+
+\begin{achillebox}[Slide 18 : Assemblage 9x9 (2min) -- TECHNIQUE]
+<<~On assemble un systeme lineaire global $9 \times 9$ :
+
+\[
+[K_{Dyn}] \cdot \{A\} = \{F_{Th}\}
+\]
+
+$K_{Dyn}$ est \textbf{bloc-diagonale} : 3 blocs $\Gamma(\tau_r)$.
+
+$F_{Th}$ contient les termes sources thermiques $Q_\alpha$.
+
+Resolution par inversion matricielle pour les 9 amplitudes.~>>
+\end{achillebox}
+
+\begin{achillebox}[Slide 19 : Assemblage Multicouche (2min)]
+<<~Pour N couches, systeme global avec :
+\begin{itemize}
+    \item Conditions limites : surface libre ($\sigma \cdot n = 0$)
+    \item Conditions continuite : $u$ et $\sigma$ aux interfaces
+\end{itemize}
+
+\textbf{Reduction} : 27 equations theoriques $\rightarrow$ \textbf{18 equations} spectrales.
+
+Gain de 9 equations car l'equilibre volumique est implicitement satisfait.
+
+Je laisse la parole a Lionel.~>>
+\end{achillebox}
+
+%==============================================================================
+\section{LIONEL -- Slides 9-15 (10 min)}
+%==============================================================================
+
+\begin{lionelbox}[Slide 9 : Methodologie Generale (1min)]
+<<~Merci Achille. Voici le flux de calcul semi-analytique :
+
+\textbf{Entrees} $\rightarrow$ \textbf{Thermique} (Fourier) $\rightarrow$ \textbf{Mecanique} ($\Gamma(\tau)$) $\rightarrow$ \textbf{Dommage} (D, Tsai-Wu) $\rightarrow$ \textbf{Sorties}
+
+Nos parametres d'entree : $\alpha$, $L_w$, $\beta$, proprietes materiaux.~>>
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 10 : Livrables (1min)]
+<<~3 livrables :
+\begin{enumerate}
+    \item \textbf{Module Python} : $\sim$3000 lignes, 5 modules dans \texttt{core/}
+    \item \textbf{Interface Streamlit} : 8 onglets, dashboard KPIs, 3D Plotly
+    \item \textbf{Documentation} : rapport synthese, tracabilite theorie-code
+\end{enumerate}~>>
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 11 : Methode Spectrale (1min30) -- TECHNIQUE]
+<<~La methode spectrale decompose les champs en series de Fourier :
+
+\[
+T(x) = \sum T_{mn} \sin(\delta x)
+\]
+
+\textbf{Avantages vs FEM} :
+\begin{itemize}
+    \item Semi-analytique : pas de discretisation
+    \item Rapidite : resolution directe
+    \item Precision : erreurs minimales
+\end{itemize}~>>
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 12 : Representation Spectrale Temperature (1min)]
+<<~Le champ de temperature :
+\[
+T(x_1, x_2, x_3) = \sum T_{mn}(x_3) \sin(\delta_1 x_1) \sin(\delta_2 x_2)
+\]
+
+$\delta = \pi/L_w$ est le nombre d'onde.
+
+$T_{mn}(x_3)$ ne depend que de la profondeur : simplification 3D $\rightarrow$ 1D.~>>
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 13 : Solution Thermique par Couche (1min)]
+<<~Dans chaque couche $i$, solution exponentielle :
+
+\[
+T^{(i)}(x_3) = A^{(i)} e^{\lambda^{(i)} x_3} + B^{(i)} e^{-\lambda^{(i)} x_3}
+\]
+
+$\lambda^{(i)} = \delta_\eta \sqrt{k_{\eta\eta}^{(i)}/k_{33}^{(i)}}$
+
+2N inconnues (A, B) determinees par continuite aux interfaces.~>>
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 14 : Loi de Hooke Thermo-Elastique (1min30) -- TECHNIQUE]
+<<~Formulation mecanique :
+\[
+\sigma_{ij} = C_{ijkl} (\varepsilon_{kl} - \alpha_{kl} \Delta T)
+\]
+
+Proprietes par couche (donnees ONERA/Safran) :
+\begin{center}
+\begin{tabular}{lcc}
+Materiau & $C_{11}$ & $\alpha$ \\
+\hline
+Substrat & 260 GPa & 13 $\mu\varepsilon$/K \\
+Bond Coat & 180 GPa & 14 $\mu\varepsilon$/K \\
+Ceramique & 50 GPa & 10 $\mu\varepsilon$/K \\
+\end{tabular}
+\end{center}
+
+Le contraste important (260 vs 50 GPa) genere les contraintes.~>>
+\end{lionelbox}
+
+\begin{lionelbox}[Slide 15 : Ansatz de Deplacement Modal (1min)]
+<<~Forme supposee des deplacements :
+
+$u_i = V_i(x_3) \times \text{trig}(\delta x_1, \delta x_2)$
+
+$V_i(x_3) = A_i \exp(\tau x_3)$
+
+\textbf{Condition de radiation} : $\text{Re}(\tau) < 0$ assure la stabilite.
+
+Je passe la parole a Maxime pour l'implementation et les resultats.~>>
+\end{lionelbox}
+
+%==============================================================================
+\section{MAXIME -- Slides 20-32 (10 min)}
+%==============================================================================
+
+\begin{maximebox}[Slide 20 : Criteres d'Endommagement (1min)]
+<<~Merci Lionel. Les criteres de dommage :
+
+\textbf{Indicateur D} : $D = \max(|\sigma_{ij}|/\sigma_{crit}^{ij})$
+
+$D < 0.5$ : Sur. $0.5 \leq D < 0.8$ : Prudence. $D \geq 0.8$ : Critique.
+
+\textbf{Tsai-Wu} pour materiaux anisotropes.~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 21 : Stabilite Numerique (1min)]
+<<~Defi : conditionnement peut depasser $10^{30}$.
+
+\textbf{Solutions} :
+\begin{itemize}
+    \item Preconditionnement $K' = D_r \cdot K \cdot D_c$
+    \item Regularisation Tikhonov (SVD)
+    \item Normalisation $C_{ref} = 200$ GPa
+\end{itemize}
+
+Precision atteinte : $10^{-8}$.~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 22 : Architecture Logicielle (1min)]
+<<~Repertoire \texttt{core/} :
+\begin{itemize}
+    \item \texttt{mechanical\_pdf.py} : Solveur Spectral (1031 lignes)
+    \item \texttt{mechanical.py} : Assemblage Multicouche (1507 lignes)
+    \item \texttt{damage\_analysis.py} : Criteres (367 lignes)
+    \item \texttt{calculation.py} : Solveur Thermique (269 lignes)
+    \item \texttt{constants.py} : Donnees Materiaux
+\end{itemize}
+
+Total : $\sim$3000 lignes Python.~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 23 : Dashboard Streamlit (1min)]
+<<~Interface avec :
+\begin{itemize}
+    \item 6 KPI Cards temps reel
+    \item Jauge de risque, radar multi-criteres
+    \item Visualisation 3D Plotly interactive
+    \item Badge "Conforme ONERA"
+\end{itemize}~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 24 : Resultats Thermiques (45s)]
+<<~Profil thermique T(z) :
+\begin{itemize}
+    \item Gradient substrat : $\sim$20\textdegree C/mm
+    \item Gradient ceramique : $\sim$400\textdegree C/mm
+    \item $T_{interface} \approx 1050$\textdegree C (marge 50\textdegree C vs $T_{crit}$)
+\end{itemize}~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 25 : Resultats Mecaniques (1min)]
+<<~Profils de contraintes :
+\begin{itemize}
+    \item $\sigma_{33}$ : pic $\sim$200 MPa a l'interface BC/Ceramique
+    \item $\sigma_{13}$ : pic $\sim$250 MPa
+    \item Risque de delamination si $\sigma_{33} > \sigma_{crit}$
+\end{itemize}~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 26 : Etudes Parametriques (45s)]
+<<~Sensibilite :
+\begin{itemize}
+    \item $\alpha \uparrow \Rightarrow D \downarrow$ (benefique)
+    \item $L_w \downarrow \Rightarrow D \uparrow$ (critique)
+    \item Recommandation : $\alpha \geq 0.2$
+\end{itemize}~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 27 : Validation ONERA (45s)]
+<<~Ecarts $< 1\%$ sur modules elastiques vs reference ONERA.
+
+Contraintes dans plage FEM (400--800 MPa).
+
+$\Rightarrow$ Modele valide.~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 28 : Demo Application (30s)]
+<<~Workflow : Parametrage $\rightarrow$ Calcul ($<$1s) $\rightarrow$ Visualisation $\rightarrow$ Export PDF/CSV.~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 29 : Limites (30s)]
+<<~Limites :
+\begin{itemize}
+    \item Geometrie plane (vs courbure reelle)
+    \item Thermique stationnaire
+    \item Elastique lineaire
+\end{itemize}
+
+Validite : $T < 1100$\textdegree C, $\sigma < 500$ MPa.~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 30 : Perspectives (30s)]
+<<~Evolutions :
+\begin{itemize}
+    \item Geometrie cylindrique
+    \item Fatigue thermique (cyclage)
+    \item Machine Learning (surrogate)
+    \item Materiaux avances (CMC)
+\end{itemize}~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 31 : Conclusion (30s)]
+<<~\textbf{Objectifs atteints} : modelisation + prediction zones critiques.
+
+\textbf{Outil valide} : Python/Streamlit + validation ONERA.
+
+\textbf{Tracabilite} : Theorie $\leftrightarrow$ Code.
+
+\textbf{Potentiel industriel} : aide conception rapide.~>>
+\end{maximebox}
+
+\begin{maximebox}[Slide 32 : Remerciements (30s)]
+<<~Merci a :
+\begin{itemize}
+    \item ONERA : Aurelien Vattre
+    \item ESTACA : Daniel Gaffie
+\end{itemize}
+
+Equipe : Johan, Achille, Lionel, Maxime.
+
+\begin{center}
+\textbf{MERCI DE VOTRE ATTENTION -- Questions ?}
+\end{center}~>>
+\end{maximebox}
+
+\end{document}
