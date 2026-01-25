@@ -274,72 +274,6 @@ def render(alpha_in, beta_in, lw_in, t_bottom, t_top, t_bottom_cata, t_top_cata)
     </div>
     """, unsafe_allow_html=True)
 
-    # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION (Full Width) ---
-    st.markdown("#### 📊 Impact Global (Approche Inverse)")
-    st.caption("Comparaison des épaisseurs requises pour maintenir la T° critique (1100°C) à l'interface.")
-
-    # La température cible est toujours T_crit.
-    target_temp = CONSTANTS['T_crit']
-
-    # 1. Calcul Alpha Nominal (Optimisé)
-    nom_res = find_alpha_for_temp(
-        target_temp=target_temp,
-        beta=beta_in,
-        lw=lw_in,
-        t_bottom=t_bottom,
-        t_top=t_top
-    )
-
-    # 2. Calcul Alpha Catastrophe (Optimisé)
-    cata_res = find_alpha_for_temp(
-        target_temp=target_temp,
-        beta=beta_in,
-        lw=lw_in,
-        t_bottom=t_bottom_cata,
-        t_top=t_top_cata
-    )
-
-    if nom_res['success'] and cata_res['success']:
-        alpha_nom = nom_res['alpha']
-        alpha_cata = cata_res['alpha']
-        
-        # Calcul des impacts
-        def get_metrics(alpha_val):
-            h3_val = alpha_val * CONSTANTS['h1']
-            blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
-            vol = h3_val * blade_surface
-            mass = vol * IMPACT_PARAMS['rho_ceram']
-            cost = vol * IMPACT_PARAMS['cost_per_vol']
-            co2 = mass * IMPACT_PARAMS['co2_per_kg']
-            return h3_val, blade_surface, vol, mass, cost, co2
-
-        # 1. Nominal Optimisé
-        h3_n, s_n, v_n, m_n, c_n, co_n = get_metrics(alpha_nom)
-        # 2. Catastrophe Optimisé
-        h3_c, s_c, v_c, m_c, c_c, co_c = get_metrics(alpha_cata)
-        # 3. Simulé (Manuel)
-        h3_s, s_s, v_s, m_s, c_s, co_s = get_metrics(alpha_in)
-        
-        df_imp = pd.DataFrame({
-            "Critère": ["Alpha (α)", "Épaisseur (µm)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
-            "Nominal (Calculé)": [f"{alpha_nom:.2f}", f"{h3_n*1e6:.0f}", f"{m_n:.3f}", f"{c_n:.2f}", f"{co_n:.2f}"],
-            "Catastrophe (Calculé)": [f"{alpha_cata:.2f}", f"{h3_c*1e6:.0f}", f"{m_c:.3f}", f"{c_c:.2f}", f"{co_c:.2f}"],
-            "Simulé (Manuel)": [f"{alpha_in:.2f}", f"{h3_s*1e6:.0f}", f"{m_s:.3f}", f"{c_s:.2f}", f"{co_s:.2f}"]
-        })
-        st.dataframe(df_imp, hide_index=True, use_container_width=True)
-        
-        st.info(f"""
-        **Analyse :**
-        - **Nominal (Calculé)** : Épaisseur min. pour T_top={t_top}°C.
-        - **Catastrophe (Calculé)** : Épaisseur min. pour T_top={t_top_cata}°C.
-        - **Simulé (Manuel)** : Valeurs actuelles avec votre Alpha={alpha_in:.2f}.
-        """)
-
-    else:
-        st.warning("Calcul impossible pour l'un des scénarios (hors limites).")
-
-    st.divider()
-
     # --- C. GRAPHIQUE PREMIUM : PROFIL THERMIQUE (Style demandée) ---
     st.markdown("### 🌡️ Profil Thermique à travers les Couches")
     
@@ -425,10 +359,8 @@ def render(alpha_in, beta_in, lw_in, t_bottom, t_top, t_bottom_cata, t_top_cata)
         fig_q1.add_trace(go.Scatter(x=z_mm, y=Q1_vals, mode='lines', line=dict(color='#10b981', width=3), name='Q1', fill='tozeroy'))
         fig_q1.update_layout(title="Flux Transverse (Q1)", xaxis_title="z (mm)", yaxis_title="Flux (W/m²)", height=300, margin=dict(l=20,r=20,t=40,b=20))
         st.plotly_chart(fig_q1, use_container_width=True)
-
+        
     
-
-
     # --- INTERPRÉTATION PHYSIQUE ---
     with st.expander("📚 Interprétation Physique des Graphiques", expanded=False):
         st.markdown("""
@@ -450,6 +382,84 @@ Ce graphique montre le flux latéral (dans le plan des couches). Il met en évid
 car les conductivités transverses changent brutalement d'un matériau à l'autre.
 Ces discontinuités peuvent être sources de **contraintes de cisaillement** thermomécaniques.
         """)
+    
+    st.divider()
+
+    # --- TÂCHE 1 : TABLEAU DE QUANTIFICATION (Full Width) ---
+    st.markdown("#### 📊 Impact Global (Approche Inverse)")
+    st.caption("Comparaison des épaisseurs requises pour maintenir la T° critique (1100°C) à l'interface.")
+
+    # La température cible est toujours T_crit.
+    target_temp = CONSTANTS['T_crit']
+
+    # 1. Calcul Alpha Nominal (Optimisé)
+    nom_res = find_alpha_for_temp(
+        target_temp=target_temp,
+        beta=beta_in,
+        lw=lw_in,
+        t_bottom=t_bottom,
+        t_top=t_top
+    )
+
+    # 2. Calcul Alpha Catastrophe (Optimisé)
+    cata_res = find_alpha_for_temp(
+        target_temp=target_temp,
+        beta=beta_in,
+        lw=lw_in,
+        t_bottom=t_bottom_cata,
+        t_top=t_top_cata
+    )
+
+    if nom_res['success'] and cata_res['success']:
+        alpha_nom = nom_res['alpha']
+        alpha_cata = cata_res['alpha']
+        
+        # Calcul des impacts
+        def get_metrics(alpha_val):
+            h3_val = alpha_val * CONSTANTS['h1']
+            blade_surface = 2 * IMPACT_PARAMS['blade_height'] * IMPACT_PARAMS['blade_chord']
+            vol = h3_val * blade_surface
+            mass = vol * IMPACT_PARAMS['rho_ceram']
+            cost = vol * IMPACT_PARAMS['cost_per_vol']
+            co2 = mass * IMPACT_PARAMS['co2_per_kg']
+            return h3_val, blade_surface, vol, mass, cost, co2
+
+        # 1. Nominal Optimisé
+        h3_n, s_n, v_n, m_n, c_n, co_n = get_metrics(alpha_nom)
+        # 2. Catastrophe Optimisé
+        h3_c, s_c, v_c, m_c, c_c, co_c = get_metrics(alpha_cata)
+        # 3. Simulé (Manuel)
+        h3_s, s_s, v_s, m_s, c_s, co_s = get_metrics(alpha_in)
+        
+        df_imp = pd.DataFrame({
+            "Critère": ["Alpha (α)", "Épaisseur (µm)", "Surcharge (kg/aube)", "Coût (€/aube)", "Carbone (kgCO2/aube)"],
+            "Nominal (Calculé)": [f"{alpha_nom:.2f}", f"{h3_n*1e6:.0f}", f"{m_n:.3f}", f"{c_n:.2f}", f"{co_n:.2f}"],
+            "Catastrophe (Calculé)": [f"{alpha_cata:.2f}", f"{h3_c*1e6:.0f}", f"{m_c:.3f}", f"{c_c:.2f}", f"{co_c:.2f}"],
+            "Simulé (Manuel)": [f"{alpha_in:.2f}", f"{h3_s*1e6:.0f}", f"{m_s:.3f}", f"{c_s:.2f}", f"{co_s:.2f}"]
+        })
+        st.dataframe(df_imp, hide_index=True, use_container_width=True)
+        
+        st.info(f"""
+        **Analyse :**
+        - **Nominal (Calculé)** : Épaisseur min. pour T_top={t_top}°C.
+        - **Catastrophe (Calculé)** : Épaisseur min. pour T_top={t_top_cata}°C.
+        - **Simulé (Manuel)** : Valeurs actuelles avec votre Alpha={alpha_in:.2f}.
+        """)
+
+    else:
+        st.warning("Calcul impossible pour l'un des scénarios (hors limites).")
+
+
+    
+
+    
+
+
+    
+
+
+
+
 
     # ═══════════════════════════════════════════════════════════════════════════
     # NOUVEAU : PROFILS DE CONTRAINTES MÉCANIQUES
