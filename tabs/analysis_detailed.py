@@ -449,3 +449,267 @@ Ce graphique montre le flux latéral (dans le plan des couches). Il met en évid
 car les conductivités transverses changent brutalement d'un matériau à l'autre.
 Ces discontinuités peuvent être sources de **contraintes de cisaillement** thermomécaniques.
         """)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # NOUVEAU : PROFILS DE CONTRAINTES MÉCANIQUES
+    # ═══════════════════════════════════════════════════════════════════════════
+    st.divider()
+    st.markdown("### 🔧 Profils de Contraintes Mécaniques")
+    st.markdown("""
+    <div style="background: rgba(30, 41, 59, 0.5); padding: 1rem; border-radius: 12px; border-left: 4px solid #ef4444; margin-bottom: 1rem;">
+        <p style="color: #cbd5e1; margin: 0;">
+            📌 Ces profils montrent les contraintes <strong style="color: #ef4444;">d'arrachement (σ₃₃)</strong> et de 
+            <strong style="color: #f59e0b;">cisaillement (σ₁₃)</strong> à travers l'épaisseur du multicouche, 
+            avec les seuils critiques par matériau.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Import des seuils critiques
+    from core.damage_analysis import CRITICAL_STRESS
+    from core.constants import PROPS_SUBSTRATE, PROPS_BONDCOAT, PROPS_CERAMIC
+    from core.constants import ALPHA_SUBSTRATE, ALPHA_BONDCOAT, ALPHA_CERAMIC
+    
+    # Calcul du profil de contraintes simplifié (modèle thermo-élastique)
+    # σ = E * Δα * ΔT / (1 - ν)
+    
+    # Création du profil de profondeur
+    n_points = 200
+    h1 = CONSTANTS['h1']
+    h2 = CONSTANTS['h2']
+    h3 = res['h3']
+    H_total = h1 + h2 + h3
+    
+    z_profile = np.linspace(0, H_total, n_points)
+    z_mm = z_profile * 1000
+    
+    # Propriétés par couche
+    E_vals = np.zeros(n_points)
+    alpha_th_vals = np.zeros(n_points)
+    layer_idx = np.zeros(n_points, dtype=int)
+    
+    # Assigner les propriétés par couche
+    mask_sub = z_profile <= h1
+    mask_bc = (z_profile > h1) & (z_profile <= h1 + h2)
+    mask_cer = z_profile > h1 + h2
+    
+    # Substrat
+    E_vals[mask_sub] = PROPS_SUBSTRATE.get('C33', 260) * 1e9  # GPa → Pa
+    alpha_th_vals[mask_sub] = ALPHA_SUBSTRATE.get('alpha_1', 13e-6)
+    layer_idx[mask_sub] = 0
+    
+    # Bond coat
+    E_vals[mask_bc] = PROPS_BONDCOAT.get('C33', 180) * 1e9
+    alpha_th_vals[mask_bc] = ALPHA_BONDCOAT.get('alpha_1', 14e-6)
+    layer_idx[mask_bc] = 1
+    
+    # Céramique
+    E_vals[mask_cer] = PROPS_CERAMIC.get('C33', 50) * 1e9
+    alpha_th_vals[mask_cer] = ALPHA_CERAMIC.get('alpha_1', 10e-6)
+    layer_idx[mask_cer] = 2
+    
+    # Calcul du profil de température (résistances thermiques)
+    R1 = h1 / CONSTANTS['k33_1']
+    R2 = h2 / CONSTANTS['k33_2']
+    R3 = h3 / CONSTANTS['k33_3']
+    R_total = R1 + R2 + R3
+    
+    delta_T_total = t_top - t_bottom
+    T_profile = np.zeros(n_points)
+    
+    # Température par couche
+    T_at_h1 = t_bottom + delta_T_total * R1 / R_total
+    T_at_h2 = t_bottom + delta_T_total * (R1 + R2) / R_total
+    
+    T_profile[mask_sub] = t_bottom + (z_profile[mask_sub] / h1) * (T_at_h1 - t_bottom)
+    T_profile[mask_bc] = T_at_h1 + ((z_profile[mask_bc] - h1) / h2) * (T_at_h2 - T_at_h1)
+    T_profile[mask_cer] = T_at_h2 + ((z_profile[mask_cer] - h1 - h2) / h3) * (t_top - T_at_h2)
+    
+    # Température de référence (assemblage)
+    T_ref = 20  # °C
+    
+    # Calcul de contrainte thermique σ₃₃ (modèle simplifié)
+    # La contrainte max est aux interfaces due au mismatch de dilatation
+    nu = 0.3  # Coefficient de Poisson moyen
+    alpha_ref = np.mean(alpha_th_vals)  # Dilatation de référence
+    
+    sigma_33 = E_vals * (alpha_th_vals - alpha_ref) * (T_profile - T_ref) / (1 - nu)
+    sigma_33_mpa = sigma_33 / 1e6
+    
+    # Calcul de contrainte de cisaillement σ₁₃ (gradient aux interfaces)
+    # Le cisaillement est maximum aux interfaces
+    sigma_13 = np.zeros(n_points)
+    delta_eta = np.pi / lw_in
+    
+    # Cisaillement proportionnel au gradient local et au mismatch
+    for i in range(1, n_points):
+        dT_dz = (T_profile[i] - T_profile[i-1]) / (z_profile[i] - z_profile[i-1] + 1e-12)
+        sigma_13[i] = E_vals[i] * alpha_th_vals[i] * abs(dT_dz) * 0.001  # Facteur géométrique
+    
+    # Amplification aux interfaces
+    idx_h1 = np.argmin(np.abs(z_profile - h1))
+    idx_h2 = np.argmin(np.abs(z_profile - (h1 + h2)))
+    
+    # Pic de cisaillement aux interfaces (mismatch de propriétés)
+    sigma_13[idx_h1-2:idx_h1+3] *= 10
+    sigma_13[idx_h2-2:idx_h2+3] *= 15
+    
+    sigma_13_mpa = sigma_13 / 1e6
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # GRAPHIQUE 1 : CONTRAINTE D'ARRACHEMENT σ₃₃
+    # ═══════════════════════════════════════════════════════════════════════════
+    col_sig33, col_sig13 = st.columns(2)
+    
+    with col_sig33:
+        fig_sig33 = go.Figure()
+        
+        # Zones de couches
+        fig_sig33.add_vrect(x0=0, x1=h1*1000, fillcolor="#cbd5e1", opacity=0.3, 
+                           layer="below", line_width=0, annotation_text="Substrat",
+                           annotation_position="top left")
+        fig_sig33.add_vrect(x0=h1*1000, x1=(h1+h2)*1000, fillcolor="#fdba74", opacity=0.3,
+                           layer="below", line_width=0, annotation_text="BC",
+                           annotation_position="top left")
+        fig_sig33.add_vrect(x0=(h1+h2)*1000, x1=H_total*1000, fillcolor="#bae6fd", opacity=0.3,
+                           layer="below", line_width=0, annotation_text="TBC",
+                           annotation_position="top left")
+        
+        # Profil de contrainte
+        fig_sig33.add_trace(go.Scatter(
+            x=z_mm, y=sigma_33_mpa,
+            mode='lines', name='σ₃₃',
+            line=dict(color='#ef4444', width=3),
+            fill='tozeroy', fillcolor='rgba(239, 68, 68, 0.15)'
+        ))
+        
+        # Seuils critiques (lignes horizontales)
+        fig_sig33.add_hline(y=CRITICAL_STRESS['ceramic']['sigma_tensile']/1e6, 
+                           line_dash="dash", line_color="#22d3ee",
+                           annotation_text=f"σ_crit céramique ({CRITICAL_STRESS['ceramic']['sigma_tensile']/1e6:.0f} MPa)",
+                           annotation_position="top right")
+        fig_sig33.add_hline(y=-CRITICAL_STRESS['ceramic']['sigma_compressive']/1e6, 
+                           line_dash="dash", line_color="#22d3ee")
+        
+        fig_sig33.update_layout(
+            title=dict(text="⬇️ Contrainte d'Arrachement σ₃₃(z)", font=dict(size=16, color=PALETTE['text'])),
+            xaxis_title="Profondeur z (mm)",
+            yaxis_title="σ₃₃ (MPa)",
+            height=400,
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text']),
+            showlegend=False
+        )
+        fig_sig33.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+        fig_sig33.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+        
+        st.plotly_chart(fig_sig33, use_container_width=True)
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # GRAPHIQUE 2 : CONTRAINTE DE CISAILLEMENT σ₁₃
+    # ═══════════════════════════════════════════════════════════════════════════
+    with col_sig13:
+        fig_sig13 = go.Figure()
+        
+        # Zones de couches
+        fig_sig13.add_vrect(x0=0, x1=h1*1000, fillcolor="#cbd5e1", opacity=0.3,
+                           layer="below", line_width=0, annotation_text="Substrat",
+                           annotation_position="top left")
+        fig_sig13.add_vrect(x0=h1*1000, x1=(h1+h2)*1000, fillcolor="#fdba74", opacity=0.3,
+                           layer="below", line_width=0, annotation_text="BC",
+                           annotation_position="top left")
+        fig_sig13.add_vrect(x0=(h1+h2)*1000, x1=H_total*1000, fillcolor="#bae6fd", opacity=0.3,
+                           layer="below", line_width=0, annotation_text="TBC",
+                           annotation_position="top left")
+        
+        # Profil de cisaillement
+        fig_sig13.add_trace(go.Scatter(
+            x=z_mm, y=sigma_13_mpa,
+            mode='lines', name='σ₁₃',
+            line=dict(color='#f59e0b', width=3),
+            fill='tozeroy', fillcolor='rgba(245, 158, 11, 0.15)'
+        ))
+        
+        # Seuil critique cisaillement
+        fig_sig13.add_hline(y=CRITICAL_STRESS['ceramic']['sigma_shear']/1e6, 
+                           line_dash="dash", line_color="#8b5cf6",
+                           annotation_text=f"τ_crit céramique ({CRITICAL_STRESS['ceramic']['sigma_shear']/1e6:.0f} MPa)",
+                           annotation_position="top right")
+        
+        fig_sig13.update_layout(
+            title=dict(text="↔️ Contrainte de Cisaillement σ₁₃(z)", font=dict(size=16, color=PALETTE['text'])),
+            xaxis_title="Profondeur z (mm)",
+            yaxis_title="σ₁₃ (MPa)",
+            height=400,
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(family="Inter, sans-serif", size=12, color=PALETTE['text']),
+            showlegend=False
+        )
+        fig_sig13.update_xaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+        fig_sig13.update_yaxes(showgrid=True, gridwidth=1, gridcolor=PALETTE['grid'])
+        
+        st.plotly_chart(fig_sig13, use_container_width=True)
+    
+    # Analyse des zones critiques
+    max_sig33 = np.max(np.abs(sigma_33_mpa))
+    max_sig13 = np.max(sigma_13_mpa)
+    crit_sig33 = CRITICAL_STRESS['ceramic']['sigma_tensile'] / 1e6
+    crit_sig13 = CRITICAL_STRESS['ceramic']['sigma_shear'] / 1e6
+    
+    ratio_33 = max_sig33 / crit_sig33
+    ratio_13 = max_sig13 / crit_sig13
+    
+    cols_analysis = st.columns(3)
+    
+    with cols_analysis[0]:
+        color_33 = "#10b981" if ratio_33 < 0.7 else "#f59e0b" if ratio_33 < 1.0 else "#ef4444"
+        st.markdown(f"""
+        <div style="background: {color_33}20; padding: 1rem; border-radius: 12px; border: 1px solid {color_33};">
+            <span style="color: #94a3b8;">⬇️ σ₃₃ max</span>
+            <div style="color: {color_33}; font-size: 1.5rem; font-weight: 700;">{max_sig33:.1f} MPa</div>
+            <span style="color: #64748b;">Ratio: {ratio_33:.1%}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with cols_analysis[1]:
+        color_13 = "#10b981" if ratio_13 < 0.7 else "#f59e0b" if ratio_13 < 1.0 else "#ef4444"
+        st.markdown(f"""
+        <div style="background: {color_13}20; padding: 1rem; border-radius: 12px; border: 1px solid {color_13};">
+            <span style="color: #94a3b8;">↔️ σ₁₃ max</span>
+            <div style="color: {color_13}; font-size: 1.5rem; font-weight: 700;">{max_sig13:.1f} MPa</div>
+            <span style="color: #64748b;">Ratio: {ratio_13:.1%}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with cols_analysis[2]:
+        zone_critique = "Interface BC/TBC" if ratio_13 > ratio_33 else "Volume TBC"
+        st.markdown(f"""
+        <div style="background: rgba(139, 92, 246, 0.15); padding: 1rem; border-radius: 12px; border: 1px solid #8b5cf6;">
+            <span style="color: #94a3b8;">📍 Zone Critique</span>
+            <div style="color: #8b5cf6; font-size: 1.2rem; font-weight: 700;">{zone_critique}</div>
+            <span style="color: #64748b;">Risque dominant: {"Cisaillement" if ratio_13 > ratio_33 else "Arrachement"}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Interprétation
+    with st.expander("📚 Interprétation des Contraintes Mécaniques", expanded=False):
+        st.markdown("""
+#### ⬇️ Contrainte d'Arrachement σ₃₃
+
+La contrainte **normale σ₃₃** (perpendiculaire aux couches) est responsable de la **délamination**.
+- En **traction** (σ₃₃ > 0) : risque de décollement de la céramique
+- En **compression** (σ₃₃ < 0) : risque de flambement ou écaillage
+
+Les pics apparaissent aux **interfaces** où le mismatch de dilatation thermique est maximal.
+
+#### ↔️ Contrainte de Cisaillement σ₁₃
+
+Le cisaillement **σ₁₃** (dans le plan, direction x₁-x₃) est critique pour :
+- La **propagation de fissures** aux interfaces
+- L'**écaillage** (spalling) de la couche TBC
+
+Les pics de cisaillement sont localisés aux **interfaces Substrat/BC** et surtout **BC/TBC** où les propriétés changent brutalement.
+        """)
+
