@@ -132,8 +132,25 @@ def render():
         col1, col2, col3 = st.columns(3)
         
         with col1:
+            # Ajout de la clé pour contrôle via bouton
             perturb_pct = st.slider("Variation latérale (%)", 0, 50, 5, step=1,
+                                  key="perturb_pct",
                                   help="Simule un point chaud sinusoïdal")
+            
+            # Explication pédagogique
+            with st.expander("💡 Qu'est-ce que c'est ?", expanded=False):
+                st.markdown("""
+                **C'est l'intensité du "Point Chaud".**
+                
+                - **0% (Uniforme)** : Toute la surface est à la même température.  
+                  *Résultat :* Dilatation libre, peu de cisaillement.
+                
+                - **30% (Point Chaud)** : Une zone est beaucoup plus chaude que sa voisine (ex: +300°C sur 2cm).  
+                  *Résultat :* La zone chaude veut se dilater mais est retenue par la zone froide à côté ⮕ **Cisaillement Violent (σ₁₃)** aux interfaces.
+                
+                C'est ce paramètre qui casse le revêtement !
+                """)
+
             T_perturb_top = t_top_sidebar * (perturb_pct / 100.0)
             T_perturb_bottom = t_bottom_sidebar * (perturb_pct / 100.0)
         
@@ -141,12 +158,21 @@ def render():
             method = st.radio("Solveur", ["spectral", "clt"], index=0, horizontal=True,
                              help="Spectral (recommandé) | CLT (classique)")
         
-        with col3:
             if method == "spectral":
                 n_modes = st.slider("Modes Fourier", 1, 21, 5, step=2)
             else:
                 n_modes = 1
             show_math = st.checkbox("Détails math.", value=False)
+            
+    # Bouton de démonstration critique
+    if st.button("💥 Config. CRITIQUE (Test)", help="Charge des paramètres extrêmes pour provoquer des alertes rouges"):
+        # Force les paramètres dans la session state pour la réactivité
+        st.session_state['alpha_input'] = 0.8  # TBC épais (mais réaliste)
+        st.session_state['beta_input'] = 0.5   # Très anisotrope
+        st.session_state['lw_input'] = 0.02    # Gradient très localisé (20mm)
+        st.session_state['T_top'] = 1600.0     # Surchauffe extrême
+        st.session_state['perturb_pct'] = 30   # Perturbation massive (30%)
+        st.rerun() # Recharge la page pour appliquer les changements à la sidebar
     
     # --- CALCUL AUTOMATIQUE ET RÉACTIF ---
     # Plus besoin de bouton, le calcul est lancé automatiquement grâce au cache
@@ -161,6 +187,10 @@ def render():
     # --- AFFICHAGE DES RÉSULTATS ---
     if results:
         display_spectral_results(results, show_math)
+
+# ... (reste du fichier tel quel jusqu'à display_spectral_results) ...
+# Je dois cibler la partie graphique plus bas pour les labels, 
+# donc ce replace_file_content s'arrête ici pour la partie 1 et 2.
 
 @st.cache_data(show_spinner="Calcul mécanique en cours...")
 def compute_mech_results(h_tbc, h_bc_unused, T_hat, Lw, method, alpha, beta, t_bottom, t_top, n_modes=1):
@@ -611,11 +641,15 @@ def display_spectral_results(results, show_math):
                                  annotation_position="bottom right",
                                  annotation_font=dict(size=10, color="#22d3ee"))
                 
-                # Lignes verticales pour interfaces
-                fig_s33.add_vline(x=h_sub_mm, line_dash="dot", line_color="#94a3b8", line_width=1,
-                                 annotation_text="Sub/BC", annotation_position="top")
-                fig_s33.add_vline(x=h_sub_mm + h_bc_mm, line_dash="dot", line_color="#f59e0b", line_width=1,
-                                 annotation_text="BC/TBC", annotation_position="top")
+                # Lignes verticales pour interfaces avec labels décalés
+                fig_s33.add_vline(x=h_sub_mm, line_dash="dot", line_color="#94a3b8", line_width=1)
+                fig_s33.add_vline(x=h_sub_mm + h_bc_mm, line_dash="dot", line_color="#f59e0b", line_width=1)
+                
+                # Labels Interfaces (Position "paper" pour rester en haut du graphe)
+                fig_s33.add_annotation(x=h_sub_mm, y=1.05, yref="paper", text="Sub/BC", showarrow=False, 
+                                     font=dict(size=9, color="#94a3b8"), xanchor="right", xshift=-2)
+                fig_s33.add_annotation(x=h_sub_mm + h_bc_mm, y=1.05, yref="paper", text="BC/TBC", showarrow=False, 
+                                     font=dict(size=9, color="#f59e0b"), xanchor="left", xshift=2)
                 
                 fig_s33.update_layout(
                     title=dict(text="⬇️ Contrainte d'Arrachement σ₃₃(z)", font=dict(size=16, color='#f1f5f9')),
@@ -626,7 +660,8 @@ def display_spectral_results(results, show_math):
                     font=dict(color='#f1f5f9'),
                     showlegend=False,
                     xaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)'),
-                    yaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)')
+                    yaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)'),
+                    margin=dict(t=50) # Marge pour les labels top
                 )
                 st.plotly_chart(fig_s33, use_container_width=True)
             
@@ -663,11 +698,15 @@ def display_spectral_results(results, show_math):
                                  annotation_position="top left",
                                  annotation_font=dict(size=10, color="#f472b6"))
                 
-                # Lignes verticales pour interfaces
-                fig_s13.add_vline(x=h_sub_mm, line_dash="dot", line_color="#94a3b8", line_width=1,
-                                 annotation_text="Sub/BC", annotation_position="top")
-                fig_s13.add_vline(x=h_sub_mm + h_bc_mm, line_dash="dot", line_color="#f59e0b", line_width=1,
-                                 annotation_text="BC/TBC", annotation_position="top")
+                # Lignes verticales pour interfaces avec labels décalés
+                fig_s13.add_vline(x=h_sub_mm, line_dash="dot", line_color="#94a3b8", line_width=1)
+                fig_s13.add_vline(x=h_sub_mm + h_bc_mm, line_dash="dot", line_color="#f59e0b", line_width=1)
+                
+                # Labels Interfaces
+                fig_s13.add_annotation(x=h_sub_mm, y=1.05, yref="paper", text="Sub/BC", showarrow=False, 
+                                     font=dict(size=9, color="#94a3b8"), xanchor="right", xshift=-2)
+                fig_s13.add_annotation(x=h_sub_mm + h_bc_mm, y=1.05, yref="paper", text="BC/TBC", showarrow=False, 
+                                     font=dict(size=9, color="#f59e0b"), xanchor="left", xshift=2)
                 
                 fig_s13.update_layout(
                     title=dict(text="↔️ Contrainte de Cisaillement σ₁₃(z)", font=dict(size=16, color='#f1f5f9')),
@@ -678,7 +717,8 @@ def display_spectral_results(results, show_math):
                     font=dict(color='#f1f5f9'),
                     showlegend=False,
                     xaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)'),
-                    yaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)')
+                    yaxis=dict(gridcolor='rgba(96, 165, 250, 0.1)'),
+                    margin=dict(t=50)
                 )
                 st.plotly_chart(fig_s13, use_container_width=True)
             
