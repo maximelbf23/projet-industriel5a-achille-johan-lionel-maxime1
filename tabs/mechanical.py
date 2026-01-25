@@ -180,7 +180,7 @@ def render():
     # Appel de la fonction cachée
     # On passe toutes les dépendances explicites pour que le cache fonctionne bien
     results = compute_mech_results(
-        h_tbc_um, h_bc_um, T_hat, Lw, method, 
+        h_tbc_um, h_bc_um, T_hat, Lw, "spectral", 
         alpha_sidebar, beta_sidebar, T_perturb_bottom, T_perturb_top, n_modes
     )
     
