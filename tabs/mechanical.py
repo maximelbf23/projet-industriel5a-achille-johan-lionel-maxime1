@@ -364,8 +364,9 @@ def compute_mech_results(h_tbc, h_bc_unused, T_hat, Lw, method, alpha, beta, t_b
         return None
 
 def display_spectral_results(results, show_math):
-    """Affiche les résultats de l'analyse spectrale avec visualisations premium."""
+    """Affiche les résultats de l'analyse spectrale avec visualisations premium (Axes Inversés style Profil)."""
     
+    # Extraction des données
     tau_roots = results['tau_roots']
     eigenvectors = results['eigenvectors']
     params = results['params']
@@ -373,7 +374,7 @@ def display_spectral_results(results, show_math):
     stress = full_results.get('stress_profile', {})
     
     # === HEADER PREMIUM ===
-    st.markdown("""
+    st.markdown(f"""
     <div style="background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 50%, #1e1b4b 100%);
                 padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; position: relative; overflow: hidden;">
         <div style="position: absolute; top: -30px; right: -30px; width: 150px; height: 150px; 
@@ -382,12 +383,116 @@ def display_spectral_results(results, show_math):
             🔬 Résultats de l'Analyse Spectrale
         </h2>
         <p style="color: #94a3b8; margin: 0.3rem 0 0 0;">
-            Méthode: <strong style="color: #60a5fa;">{method}</strong> | 
-            6 modes propres calculés | 
+            Méthode: <strong style="color: #60a5fa;">SPECTRAL</strong> | 
+            {params.get('method', 'SUPERPOSITION')} | 
             Système multicouche résolu
         </p>
     </div>
-    """.format(method=params['method'].upper()), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+    # Récupération des données pour les graphes
+    z_mm = stress['z'] * 1000.0
+    
+    # Paramètres géométriques (en mm pour affichage)
+    h_tbc_mm = params['h_tbc'] / 1000.0
+    h_bc_mm = params['h_bc'] / 1000.0
+    H_total_mm = z_mm[-1]
+    h_sub_mm = H_total_mm - h_tbc_mm - h_bc_mm
+    
+    col_s33, col_s13 = st.columns(2)
+
+    # === CONFIGURATION STYLE ===
+    def style_layout(fig, title, xaxis_title):
+        fig.update_layout(
+            title=dict(text=title, font=dict(size=18, color='#f1f5f9')),
+            xaxis_title=xaxis_title,
+            yaxis_title="Profondeur z (µm)", # AXE Y = PROFONDEUR
+            height=600, # Plus haut pour bien voir le profil
+            plot_bgcolor='rgba(15, 23, 42, 0.8)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#94a3b8'),
+            showlegend=False,
+            xaxis=dict(gridcolor='rgba(148, 163, 184, 0.1)', zerolinecolor='rgba(148, 163, 184, 0.2)', side='top'), # Axe X en haut style scientifique
+            yaxis=dict(gridcolor='rgba(148, 163, 184, 0.1)', autorange="reversed"), # 0 en haut (Surface ou Substrat ?)
+            # Convention: z=0 est le bas du substrat, H est la surface libre (TBC).
+            # L'utilisateur veut voir le TBC en HAUT ou le Substrat en BAS ?
+            # Graphiquement: 0 en bas du chart, H en haut.
+            # "autorange='reversed'" met H en BAS. 
+            # Si on veut z=0 en bas, on laisse normal. Mais souvent en métallurgie "Profondeur" part de la surface.
+            # Ici z est coordonnée globale. Laissons z=0 en bas.
+            # ATTENTION: L'utilisateur a montré un graphe où "Profondeur" était en Y.
+            # Son graphe montrait 0 en bas et 300 en haut. Donc PAS reversed si z est croissant vers la surface.
+            # MAIS si z est "profondeur depuis surface", c'est l'inverse.
+            # Notre z part de 0 (interface int) vers H (surface ext).
+            # Donc z=H est la surface chaude.
+            # On va laisser z croissant vers le haut (HAUTE TEMPERATURE EN HAUT).
+            margin=dict(t=80, b=40, l=60, r=40)
+        )
+        return fig
+
+    # === GRAPHIQUE 1: σ33 (Arrachement) ===
+    with col_s33:
+        fig_s33 = go.Figure()
+        
+        sigma_33_mpa = stress['sigma_33'] / 1e6
+        # X = Contrainte, Y = Profondeur
+        fig_s33.add_trace(go.Scatter(
+            x=sigma_33_mpa, y=z_mm * 1000, 
+            mode='lines', name='σ₃₃',
+            line=dict(color='#22d3ee', width=4, shape='spline'),
+            fill='tozerox', fillcolor='rgba(34, 211, 238, 0.1)',
+            orientation='h' # Important pour fill horizontal
+        ))
+        
+        # Zones de couches (Horizontal Rectangles)
+        # Attention: y0, y1 en microns. h_sub, h_bc sont relative thicknesses ou absolute positions?
+        # Notre modèle: z=0 -> z=h_sub -> z=h_sub+h_bc -> z=H
+        z_int1 = h_sub_mm * 1000
+        z_int2 = (h_sub_mm + h_bc_mm) * 1000
+        z_surf = H_total_mm * 1000
+        
+        # Substrat (Bas)
+        fig_s33.add_hrect(y0=0, y1=z_int1, fillcolor="#334155", opacity=0.3, layer="below", line_width=0, annotation_text="SUBSTRAT", annotation_position="inside left")
+        # BC
+        fig_s33.add_hrect(y0=z_int1, y1=z_int2, fillcolor="#f59e0b", opacity=0.4, layer="below", line_width=0)
+        # TBC (Haut)
+        fig_s33.add_hrect(y0=z_int2, y1=z_surf, fillcolor="#3b82f6", opacity=0.1, layer="below", line_width=0, annotation_text="TBC", annotation_position="inside left")
+        
+        # Seuil Critique (Ligne Verticale)
+        from core.damage_analysis import CRITICAL_STRESS
+        crit_val = CRITICAL_STRESS['ceramic']['sigma_tensile']/1e6
+        fig_s33.add_vline(x=crit_val, line_dash="dash", line_color="#ef4444", line_width=2,
+                         annotation_text=f"CRITIQUE ({crit_val:.0f} MPa)", annotation_position="top right")
+        
+        style_layout(fig_s33, "Arrachement σ₃₃ (Normal)", "Contrainte (MPa)")
+        # Zoom sur les couches supérieures (BC + TBC)
+        # On montre de h_sub - 50um jusqu'à Surface
+        fig_s33.update_yaxes(range=[z_int1 - 100, z_surf + 20])
+        
+        st.plotly_chart(fig_s33, use_container_width=True)
+
+    # === GRAPHIQUE 2: σ13 (Cisaillement) ===
+    with col_s13:
+        fig_s13 = go.Figure()
+        
+        sigma_13_mpa = stress['sigma_13'] / 1e6
+        fig_s13.add_trace(go.Scatter(
+            x=sigma_13_mpa, y=z_mm * 1000,
+            mode='lines', name='σ₁₃',
+            line=dict(color='#a855f7', width=4, shape='spline'),
+            fill='tozerox', fillcolor='rgba(168, 85, 247, 0.1)',
+            orientation='h'
+        ))
+        
+        # Zones
+        fig_s13.add_hrect(y0=0, y1=z_int1, fillcolor="#334155", opacity=0.3, layer="below", line_width=0)
+        fig_s13.add_hrect(y0=z_int1, y1=z_int2, fillcolor="#f59e0b", opacity=0.4, layer="below", line_width=0, annotation_text="Bond Coat", annotation_position="inside right")
+        fig_s13.add_hrect(y0=z_int2, y1=z_surf, fillcolor="#3b82f6", opacity=0.1, layer="below", line_width=0)
+        
+        style_layout(fig_s13, "Cisaillement σ₁₃ (Shear)", "Contrainte (MPa)")
+        fig_s13.update_yaxes(range=[z_int1 - 100, z_surf + 20])
+        
+        st.plotly_chart(fig_s13, use_container_width=True)
     
     # === SCHÉMA STRUCTUREL 3D ===
     if stress and 'z' in stress:
