@@ -19,7 +19,6 @@ from core.constants import ALPHA_SUBSTRATE, ALPHA_BONDCOAT, ALPHA_CERAMIC
 def cached_solve_tbc_model(alpha, beta, lw, t_bottom, t_top):
     return solve_tbc_model_v2(alpha, beta, lw, t_bottom, t_top)
 
-@st.cache_data
 def compute_real_damage_indicator(alpha, lw, t_top, t_bottom):
     """
     Calcule l'indicateur d'endommagement D basé sur la physique réelle.
@@ -704,7 +703,7 @@ def render():
     with col_temp:
         fig_temp = go.Figure()
         fig_temp.add_trace(go.Scatter(
-            x=x_plot_fourier * 1000, y=np.clip(T_vals_fourier, t_bottom, t_top),
+            x=x_plot * 1000, y=T_vals,
             mode='lines',
             line=dict(color='#3b82f6', width=3),
             fill='tozeroy',

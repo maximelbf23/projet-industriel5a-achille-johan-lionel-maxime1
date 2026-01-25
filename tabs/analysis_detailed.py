@@ -414,7 +414,8 @@ def render(alpha_in, beta_in, lw_in, t_bottom, t_top, t_bottom_cata, t_top_cata)
         hovermode="x unified",
         legend=dict(
             orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-            bgcolor="rgba(255,255,255,0.8)", bordercolor="#e2e8f0", borderwidth=1
+            bgcolor="rgba(255,255,255,0.95)", bordercolor="#e2e8f0", borderwidth=1,
+            font=dict(color="#334155", size=11)
         ),
         plot_bgcolor='white',
         paper_bgcolor='white',

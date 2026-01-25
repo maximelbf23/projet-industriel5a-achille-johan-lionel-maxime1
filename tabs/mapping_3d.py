@@ -124,16 +124,23 @@ def render(lw_in, t_bottom, t_top):
                 z_data.append(z_row)
                 progress_bar.progress((i + 1) / res_grid)
             
-            # Stockage des résultats
+            # Stockage des résultats ET des paramètres utilisés
             st.session_state['z_3d'] = z_data
             st.session_state['x_3d'] = alpha_vals
             st.session_state['y_3d'] = beta_vals
             st.session_state['plot_type'] = plot_type
+            st.session_state['temps_used'] = (t_bottom, t_top)  # Pour affichage
             progress_bar.empty()
 
     with col_3d_viz:
 
         if 'z_3d' in st.session_state:
+            
+            # Vérifier si les températures ont changé depuis la génération
+            temps_used = st.session_state.get('temps_used', (None, None))
+            if temps_used != (t_bottom, t_top):
+                st.warning(f"⚠️ **Données obsolètes** : Surface générée avec T={temps_used[0]}→{temps_used[1]}°C. "
+                          f"Températures actuelles : {t_bottom}→{t_top}°C. Cliquez sur **Générer** pour actualiser.")
 
             current_type = st.session_state.get('plot_type', "Température")
 
