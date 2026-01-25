@@ -164,15 +164,18 @@ def render():
                 n_modes = 1
             show_math = st.checkbox("Détails math.", value=False)
             
-    # Bouton de démonstration critique
-    if st.button("💥 Config. CRITIQUE (Test)", help="Charge des paramètres extrêmes pour provoquer des alertes rouges"):
-        # Force les paramètres dans la session state pour la réactivité
-        st.session_state['alpha_input'] = 0.8  # TBC épais (mais réaliste)
-        st.session_state['beta_input'] = 0.5   # Très anisotrope
-        st.session_state['lw_input'] = 0.02    # Gradient très localisé (20mm)
-        st.session_state['T_top'] = 1600.0     # Surchauffe extrême
-        st.session_state['perturb_pct'] = 30   # Perturbation massive (30%)
-        st.rerun() # Recharge la page pour appliquer les changements à la sidebar
+    # Fonction callback pour le bouton critique
+    def set_critical_config():
+        st.session_state['alpha_input'] = 0.8
+        st.session_state['beta_input'] = 0.5
+        st.session_state['lw_input'] = 0.02
+        st.session_state['T_top'] = 1600.0
+        st.session_state['perturb_pct'] = 30
+    
+    # Bouton de démonstration critique avec callback
+    st.button("💥 Config. CRITIQUE (Test)", 
+              help="Charge des paramètres extrêmes pour provoquer des alertes rouges",
+              on_click=set_critical_config)
     
     # --- CALCUL AUTOMATIQUE ET RÉACTIF ---
     # Plus besoin de bouton, le calcul est lancé automatiquement grâce au cache
